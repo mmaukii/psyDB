@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div id="toast" class="toast">Gespeichert!</div>
+{% include 'fensterTerminAnpassen.html' %}
+{% include 'fensterDoku.html' %}
+
+<nav class="navbar">
+
+    <a href="/" class="nav-link">Übersicht</a>
+    <a href="/kunden" class="nav-link">Klienten</a>
+    <a href="/dokumentation" class="nav-link">Doku</a>
+    <a href="/termine" class="nav-link">Offene Termine</a>
+    <a href="/rechnungen" class="nav-link">Rechnungen</a>
+    <a href="/kalender" class="nav-link">Kalender</a>
+    <a href="/gruppen" class="nav-link">Gruppen</a>
+    <a href="/einstellungen" class="nav-link">Einstellungen</a>
+    <a href="/hilfe" class="nav-link" style="margin-left:auto; color:#2980b9; font-weight:bold;">Hilfe</a>
+
+    <!-- Button oben rechts -->
+    <button onclick="window.close()" 
+            style="position: absolute; top: 0; right: 0; margin: 10px 20px 0 0;">
+        Beenden
+    </button>
+</nav>
+
+
+
+
+<div class="page">
+    {% block page %}{% endblock %}
+</div>
+
+<script src="{{ url_for('static', filename='js/allgemein.js') }}"></script>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

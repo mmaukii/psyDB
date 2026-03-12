@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block page %}
+<div class="hilfe-wrapper" style="max-width: 900px; margin: 0 auto; padding: 24px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001;">
+  <div id="hilfeMarkdownContent">
+    <!-- Der Markdown-Inhalt wird hier angezeigt -->
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
+
+<script>
+fetch("/static/bedienung_uebersicht.md")
+  .then(response => response.text())
+  .then(md => {
+    document.getElementById("hilfeMarkdownContent").innerHTML = marked.parse(md);
+  });
+</script>
+{% endblock %}

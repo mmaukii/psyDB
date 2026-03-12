@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block page %}
+<div class="rechnungen-wrapper">
+
+    
+    <!-- Linke Seite: Filter -->
+    <div class="filter-seite">
+      <div id="filterContainerRechnungen">
+          <label>Rechnungsnummer: <input type="text" id="filterRechnungsNr"></label>
+          <label>Kunde: <input type="text" id="filterRechnungsKunde"></label>
+          <label>
+            Status
+            <select id="filterRechnungsStatus">
+                <option value="">– alle –</option>
+                <option value="0" selected>offen</option>
+                <option value="1">bezahlt</option>
+            </select>
+        </label>
+        <label>
+            Von:
+            <input type="date" id="RechnungsDatumVon">
+        </label>
+
+        <label>
+            Bis:
+            <input type="date" id="RechnungsDatumBis">
+        </label>
+          <button id="toggleButtonRechnung" class="toggleButtonBearbeiten">Bearbeitungsmodus</button>
+      </div>
+
+       
+    </div>
+    
+    <!-- Rechte Seite: obere Tabelle -->
+    <div class="tabellen-seite">
+      <table id="rechnungsTabelle">
+          <thead>
+              <tr>
+                  <th>Rechnungs-Nr</th>
+                  <th>Kürzel</th>
+                  <th>Vorname</th>
+                  <th>Nachname</th>
+                  <th>Datum</th>
+                  <th>Betrag</th>
+                  <th>Zahlungsziel</th>
+                  <th>Status</th>           
+                  <th>Aktionen</th> 
+              </tr>
+          </thead>
+          <tbody></tbody>
+      </table>
+
+      <!-- Bereich, den man ein- und ausblenden kann -->
+		<div id="rechnungBereich"
+			style="
+				display: none;
+				grid-column: 1 / -1;
+				width: 100%;
+				margin-top: 16px;
+			">
+			<!-- Erste Zeile: Rechnungsnr, Datum, Button -->
+			<div style="display: flex; gap: 16px; align-items: flex-end; margin-bottom: 12px;">
+				<div class="field" style="flex:1;">
+					<label>Rechnungsnr:
+						<input type="text" id="rechnungsnr">
+					</label>
+					<input type="text" id="rechnungid" style="display:none;">
+				</div>
+				<div class="field" style="flex:1;">
+					<label>Datum:
+						<input type="text" id="rechnungsdatum">
+					</label>
+					<input type="text" id="rechnungsdatumid" style="display:none;">
+				</div>
+				<div style="flex:0 0 auto; align-self: flex-end;">
+					<button id="saveBtnRechnungTextRnr">Speichern</button>
+				</div>
+			</div>
+
+			<!-- Zweite Zeile: Textfelder und Kommentar nebeneinander -->
+			<div style="display: flex; gap: 16px; width: 100%;">
+				<div class="field" style="flex:1;">
+					<label for="rechnungTextOben">Text Rechnung oben:</label>
+					<textarea name="rechnungTextOben" id="rechnungTextOben" rows="5" style="width: 100%; height: 120px;"></textarea>
+				</div>
+				<div class="field" style="flex:1;">
+					<label for="rechnungTextUnten">Text Rechnung unten:</label>
+					<textarea name="rechnungTextUnten" id="rechnungTextUnten" rows="5" style="width: 100%; height: 120px;"></textarea>
+				</div>
+				<div class="field" style="flex:1;">
+					<label for="kommentar">Kommentar:</label>
+					<textarea name="kommentar" id="kommentar" rows="5" style="width: 100%; height: 120px;"></textarea>
+				</div>
+			</div>
+		</div>
+
+      <!-- Untere Tabelle -->
+       <h3 style="margin-top: 0em; margin-bottom: 0em;">Termine</h3>
+      <table id="TermineproRechnungTabelle">
+        <thead>
+            <tr>               
+                <th>Datum</th>
+                <th>Beschreibung</th>
+                <th>Betrag</th>
+            </tr>
+        </thead>
+        <tbody id="termineproRechnungBody">
+            <!-- Terminn werden hier dynamisch eingefügt -->
+        </tbody>
+    </table>
+     <!-- Untere Tabelle -->
+      <h3 style="margin-top: 0em; margin-bottom: 0em;">Mahnung</h3>
+      <table id="mahnungenproRechnungTabelle">
+        <thead>
+            <tr> 
+                <th>Datum</th>
+                <th>Nummer</th>          
+                <th>Kommentar</th>
+                <th>Verzugszinsen %</th>
+                <th>Mahnspesen</th>
+                <th>Verzugszinsen</th>
+                <th>Zahlungsziel</th>
+                <th>Aktion</th>
+            </tr>
+        </thead>
+        <tbody id="mahnungenproRechnungBody">
+            <!-- Terminn werden hier dynamisch eingefügt -->
+        </tbody>
+    </table>
+
+    </div>
+  
+  </div>
+
+  {% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/rechnungen.js') }}"></script>
+{% endblock %}

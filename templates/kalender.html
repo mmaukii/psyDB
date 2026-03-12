@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block page %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+
+
+
+    <script src="{{ url_for('static', filename='js/index.global.min.js') }}"></script>
+    <style>
+        #eventPopup {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid black;
+            padding: 10px;
+            z-index: 1000;
+        }
+        #eventPopup input {
+            display: block;
+            margin-bottom: 5px;
+            width: 200px;
+        }
+        #eventPopup button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <label style="display:flex; align-items:center; gap:6px;">
+            <span>Aktualisieren:</span>
+            <button id="syncButton">Praxiskalender</button>
+            <button id="syncExterneButton">Externe Events</button>
+        </label>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <input type="checkbox" id="toggleExterne" checked>
+            Externe Events anzeigen
+            
+        </div>
+    </div>
+    <div id="calendar"></div>
+
+    
+</body>
+</html>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/fensterTerminAnpassen.js"></script>
+<script src="{{ url_for('static', filename='js/kalender.js') }}"></script>
+{% endblock %}

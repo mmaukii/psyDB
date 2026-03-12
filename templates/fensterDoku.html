@@ -1,0 +1,81 @@
+<!-- =============================== -->
+<!-- === DOKU MODAL === -->
+<!-- =============================== -->
+<div id="fensterDoku" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+
+    <h3 id="dokuModalTitle">Dokumentation</h3>
+
+    <form id="dokuForm">
+      <!-- IDs -->
+      <input type="hidden" id="dokuId" name="dokuId">
+      <input type="hidden" id="termineId" name="termineId">
+      <input type="hidden" id="gruppentermineId" name="gruppentermineId">
+
+      <label for="dokuText">Dokumentation:</label><br>
+      <textarea
+        id="dokuText"
+        name="doku"
+        rows="10"
+        style="width:100%;"
+        required
+      ></textarea>
+      <br><br>
+
+      <button type="submit">Doku speichern</button>
+    </form>
+  </div>
+</div>
+<style>
+/* Hintergrund Overlay */
+/* Nur für #fensterDoku */
+#fensterDoku {
+  display: none; /* unsichtbar standardmäßig */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* Scroll falls nötig */
+  background-color: rgba(0,0,0,0.4); /* leicht transparent */
+}
+
+/* Nur für den Inhalt des Modals */
+#fensterDoku .modal-content {
+  background-color: #fefefe;
+  margin: 5% auto; /* zentriert */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 90%;          /* Standardbreite */
+  max-width: 900px;    /* max. Breite */
+  height: auto;        /* Höhe passt sich Inhalt an */
+  min-height: 400px;   /* Mindesthöhe */
+  box-sizing: border-box;
+  border-radius: 8px;
+  position: relative;
+}
+
+/* Close Button nur für dieses Modal */
+#fensterDoku .close {
+  color: #aaa;
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#fensterDoku .close:hover,
+#fensterDoku .close:focus {
+  color: black;
+}
+
+/* Textarea nur innerhalb dieses Modals */
+#fensterDoku textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+</style>

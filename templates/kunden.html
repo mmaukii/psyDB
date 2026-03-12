@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block page %}
+<div class="auswahl-links-wrapper">
+	<!-- LINKER BEREICH: Kundenliste -->
+		<div id="left">
+			<select id="kundenAktivFilter" 
+					style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #fff;">
+				<option value="aktiv">Nur aktive Kunden</option>
+				<option value="inaktiv">Nur inaktive Kunden</option>
+				<option value="alle">Alle Kunden</option>
+			</select>
+
+			<input type="text" id="search" placeholder="Filter..." 
+				style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #fff;">
+			<table id="kundentabelle">
+				<thead>
+					<tr><th>Kürzel</th></tr>
+				</thead>
+				<tbody>
+					{% for k in kunden %}
+					<tr
+						data-id="{{ k['id'] }}"
+						data-nachname="{{ k['nachname'] }}"
+						data-vorname="{{ k['vorname'] }}"
+						data-email="{{ k['email'] }}"
+						data-adresse="{{ k['adresse'] }}"
+						data-plz="{{ k['plz'] }}"
+						data-ort="{{ k['ort'] }}"
+						data-erminesatz="{{ k['stundensatz'] }}"
+						data-kuerzel="{{ k['kuerzel'] }}"
+						data-geschlecht="{{ k['geschlecht'] }}"
+						data-therapieform="{{ k['therapieform'] }}"
+						data-gebdatum="{{ k['gebdatum'] }}"
+						data-ust="{{ k['ust'] }}"
+						data-standort_id="{{ k['standort_id'] }}"
+						data-druckvorlage_id="{{ k['druckvorlage_id'] }}"
+						data-doku="{{ k['doku'] }}"
+						data-rechnungTextObenVorgabe="{{ k['rechnungTextObenVorgabe'] }}"
+						data-rechnungTextUntenVorgabe="{{ k['rechnungTextUntenVorgabe'] }}"
+						data-aktiv="{{ k['aktiv'] }}"
+					>
+						<td>{{ k['kuerzel'] }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+
+		<!-- RECHTER BEREICH: Details und Termine -->
+		<div id="right">
+		
+
+		<!-- Button für neuen Termin -->
+		<div class="button-row" style="display:flex; align-items:center; width:100%; gap:8px; margin-bottom:16px;">
+
+    <!-- LINKS: Neuer Termin & Bearbeiten -->
+	<div style="display:flex; gap:8px;">
+		<button id="toggleButton" class="toggleButtonBearbeiten">Bearbeiten</button>
+		<button type="button" id="mailKundeBtn" title="Mail an Kunde" style="font-size: 20px; line-height: 1;">📧</button>
+	</div>
+
+    <!-- RECHTS: Speichern, Neu, Löschen -->
+    <div style="margin-left:auto; display:flex; gap:8px;">
+		<button type="submit" id="saveBtn">Speichern</button>
+        <button type="button" id="neuBtn">Neu</button>
+        <button type="button" id="loeschenBtn">Löschen</button>
+    </div>
+
+</div>
+
+		<div id="right">
+
+			<form id="kundenForm" method="post" action="{{ url_for('kunden.add_kunde') }}" 
+			style="display: grid; 
+         grid-template-columns: 1fr 1fr 1fr 2fr auto; 
+         gap: 12px 20px;">
+				<input type="hidden" name="id" id="id">
+
+			<div class="field">
+				<label for="vorname">Vorname:</label>
+				<input type="text" name="vorname" id="vorname">
+			</div>
+			
+			<div class="field">
+				   <label for="nachname" style="font-weight:bold;">Nachname:</label>
+				   <input type="text" name="nachname" id="nachname" required class="required-field">
+			</div>
+
+			   <div class="field">
+					  <label for="kuerzel" style="font-weight:bold;">Kürzel:</label>
+					  <input type="text" name="kuerzel" id="kuerzel" required class="required-field">
+			   </div>
+
+			<div class="field">
+				<label for="email">E-Mail:</label>
+				<input type="email" name="email" id="email">
+			</div>
+
+			<div class="field" style="display:flex; align-items:center; justify-self:start;">
+				<label style="margin:0;">
+					<input type="checkbox" name="aktiv" id="aktiv" value="1">
+					aktiv
+				</label>
+			</div>
+
+			<!-- Bereich, den man ein- und ausblenden kann -->
+			<div id="kundenBereich"
+				style="
+					display: none;
+					grid-column: 1 / -1;
+					width: 100%;
+					grid-template-columns: repeat(12, 1fr);
+					gap: 10px;
+				">
+
+				<div class="field" style="grid-column: span 3;">
+					<label for="adresse">Adresse:</label>
+					<input type="text" name="adresse" id="adresse">
+				</div>
+
+				<div class="field"style="grid-column: span 2;">
+					<label for="plz">PLZ:</label>
+					<input type="text" name="plz" id="plz">
+				</div>
+
+				<div class="field"style="grid-column: span 3;">
+					<label for="ort">Ort:</label>
+					<input type="text" name="ort" id="ort">
+				</div>
+
+				
+
+				<div class="field">
+					<label for="geschlecht">Geschlecht:</label>
+					<select name="geschlecht" id="geschlecht">
+						<option value="">– bitte wählen –</option>
+						<option value="m">Männlich</option>
+						<option value="w">Weiblich</option>
+						<option value="d">Divers</option>
+					</select>
+				</div>
+
+				<div class="field">
+					<label for="gebdatum">Geburtsdatum:</label>
+					<input type="date" name="gebdatum" id="gebdatum">
+				</div>
+				<!-- Neue Felder: SVNR, Krankenkasse, Diagnose in einer Zeile -->
+					
+						<div class="field" style="grid-column: span 2;">
+							<label for="svnr">SVNR:</label>
+							<input type="number" name="svnr" id="svnr">
+						</div>
+						<div class="field" >
+							<label for="krankenkasse">Krankenkasse:</label>
+							<input type="text" name="krankenkasse" id="krankenkasse">
+						</div>
+						<div class="field" style="grid-column: span 2;">
+							<label for="diagnose">Diagnose:</label>
+							<input type="text" name="diagnose" id="diagnose">
+						</div>
+					
+
+				<div class="field"style="grid-column: span 2;">
+					<label for="stundensatz">Terminkosten €:</label>
+					<input type="text" name="stundensatz" id="stundensatz">
+				</div>
+				<div class="field" style="grid-column: span 2;">
+					   <label for="standortKuerzel" style="font-weight:bold;">Standort:</label>
+					   <select id="standortKuerzel" name="standort_id" class="required-field">
+						   <option value="">-- bitte wählen --</option>
+					   </select>
+				</div>
+				<div class="field" style="grid-column: span 2;">
+					   <label for="druckvorlageId" style="font-weight:bold;">Druckvorlage:</label>
+					   <select id="druckvorlageId" name="druckvorlage_id" class="required-field">
+						   <option value="">-- bitte wählen --</option>
+					   </select>
+				</div>
+				<div class="field"style="grid-column: span 1;">
+					<label for="therapieform">Form:</label>
+					<select name="therapieform" id="therapieform">
+						<option value="">– bitte wählen –</option>
+						<option value="1">Einzel</option>
+						<option value="2">Paar</option>
+						<option value="3">Gruppe</option>
+						<option value="4">Supervision</option>
+					</select>
+				</div>
+				<div class="field" style="display: inline-flex; align-items: center; gap: 6px;">
+					<input type="checkbox" name="ust" id="ust" value="1" style="margin: 0; width: auto;">
+					<label for="ust" style="margin: 0; white-space: nowrap;">USt.</label>
+				</div>
+				<div class="field" style="grid-column: span 6;">
+					<label>Gruppen</label>
+
+					<div id="gruppenTags"></div>
+
+					<input
+						type="text"
+						id="gruppenInput"
+						placeholder="Gruppe hinzufügen…"
+						autocomplete="off"
+					>
+
+					<ul id="gruppenSuggestions" class="suggestions"></ul>
+
+					<input type="hidden" name="gruppen" id="gruppenHidden">
+					</div>
+
+				<input type="hidden" name="gruppen" id="gruppenHidden">
+				
+				
+				
+
+					
+					<!-- Textfelder nebeneinander -->
+					<div style="display: flex; gap: 16px; width: 100%; grid-column: span 12; margin-top: 8px;">
+						<div class="field" style="flex:1;">
+							<label for="rechnungTextObenVorgabe">Text Rechnung oben:</label>
+							<textarea name="rechnungTextObenVorgabe" id="rechnungTextObenVorgabe" rows="5" style="width: 100%; height: 120px;"></textarea>
+						</div>
+						<div class="field" style="flex:1;">
+							<label for="rechnungTextUntenVorgabe">Text Rechnung unten:</label>
+							<textarea name="rechnungTextUntenVorgabe" id="rechnungTextUntenVorgabe" rows="5" style="width: 100%; height: 120px;"></textarea>
+						</div>
+					</div>
+			</div>
+
+
+			
+		</form>
+
+		</div>
+
+
+			<h3 style="margin: 0; display: flex; justify-content: space-between; align-items: center;">
+				<div style="display: flex; align-items: center;">
+					<span>Termine des Kunden</span>
+					<button class="tab active" data-tab="kunden-termine" style="margin-left: 20px;">Termine</button>
+					<button class="tab" data-tab="kunden-doku">Doku</button>
+				</div>
+				<div style="display: flex; gap: 8px; align-items: center;">
+					<button type="button" id="neuTerminBtn">Neuer Termin</button>
+					<button id="toggleAbgesagtBtn" data-show="false">Abgesagte anzeigen</button>
+				</div>
+			</h3>
+
+			<div class="tab-content active" id="kunden-termine">
+				<table id="termineproKundeTabelle">
+					<thead>
+						<tr><th>Datum</th>
+							<th>Startzeit</th>
+							<th>Endzeit</th>
+							<th>Beschreibung</th>
+							<th>Betrag</th>
+							<th>Aktion</th>
+						</tr>
+					</thead>
+					<tbody id="termineProKundeListe">
+						<!-- Termine werden hier dynamisch eingefügt -->
+					</tbody>
+				</table>
+			</div>
+
+			<div class="tab-content" id="kunden-doku" style="grid-column: 1 / -1;">
+				<div style="display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start;">
+					<textarea id="kundenDokuText" rows="6" style="width: 100%; height: 160px;"></textarea>
+					<button type="button" id="kundenDokuSaveBtn" style="justify-self: end; width: 160px;">Doku speichern</button>
+				</div>
+			</div>
+		</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/fensterDoku.js"></script>
+<script src="/static/js/fensterTerminAnpassen.js"></script>
+<script src="/static/js/kunden.js"></script>
+{% endblock %}

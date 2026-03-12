@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block page %}
+<div class="auswahl-links-wrapper">
+
+    <!-- LINKER BEREICH -->
+    <div id="left">
+        <select id="gruppenAktivFilter">
+				<option value="aktiv">Nur aktive Gruppen</option>
+				<option value="inaktiv">Nur inaktive Gruppen</option>
+				<option value="alle">Alle Gruppen</option>
+			</select>
+
+        <input type="text" id="search" placeholder="Filter..." style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #fff;">
+			
+
+        <table id="gruppentabelle">
+            <thead>
+                <tr><th>Kürzel</th></tr>
+            </thead>
+            <tbody id="gruppenListe">
+                {% for g in gruppen %}
+                    <tr
+                        data-id="{{ g['id'] }}"
+                        data-gruppenname="{{ g['gruppenname'] }}"
+                        data-standardbetrag="{{ g['standardbetrag'] }}"
+                        data-dauer_min="{{ g['dauer_min'] }}"
+                        data-gruppenkuerzel="{{ g['gruppenkuerzel'] }}"
+                        data-doku="{{ g['doku'] }}"
+                        data-rechnungstext="{{ g['rechnungstext'] }}"
+                        
+                    >
+                        <td>{{ g['gruppenkuerzel'] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- RECHTER BEREICH -->
+    <div id="right" style="
+            display: grid; 
+            grid-template-columns: 1fr auto; 
+            gap: 20px;
+            align-items: start;
+        ">
+        <!-- Buttons und Tabs in einer Zeile -->
+           <!-- LINKER BUTTON-BEREICH (Neu/Bearbeiten) -->
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button id="toggleButton" class="toggleButtonBearbeiten">Bearbeiten</button>
+        <button type="button" id="mailGruppeBtn" title="Mail an Teilnehmer" style="font-size: 20px; line-height: 1;">📧</button>
+    </div>
+
+    <!-- RECHTER BUTTON-BEREICH (Speichern/Löschen) -->
+    <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center;">
+        <button type="submit" form="gruppenForm">Speichern</button>
+        <button type="button" id="neuBtnGruppe">Neu</button>
+        <button type="button" id="loeschenBtnGruppe">Löschen</button>
+    </div>
+
+       
+        <!-- Linker Bereich: Formular über 3 Spalten -->
+        <form id="gruppenForm" method="post"
+            style="
+                grid-column: 1 / span 3;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 12px 20px;
+                border: 1px solid #ccc;      /* Rahmen um den Bereich */
+                border-radius: 6px;           /* leicht abgerundete Ecken */
+                padding: 12px;                /* Abstand innen */
+                background-color: #fff;    /* optional: hellgrau für Kontrast */
+                 box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            ">
+
+    <input type="hidden" name="gruppenForm_id" id="gruppenForm_id">
+
+    <div class="field">
+        <label for="gruppenname">Gruppenname:</label>
+        <input type="text" name="gruppenname" id="gruppenname" required>
+    </div>
+
+    <div class="field">
+        <label for="gruppenkuerzel">Kürzel:</label>
+        <input type="text" name="gruppenkuerzel" id="gruppenkuerzel" required>
+    </div>
+     <div class="field">
+        <label for="dauer_min">Dauer min:</label>
+        <input type="number" name="dauer_min" id="dauer_min" style="width: 100%; box-sizing: border-box;">
+    </div>
+
+
+    <!-- Ausblendbarer Bereich -->
+    <div id="gruppenBereich"
+         style="
+            grid-column: 1 / -1;
+            display: none;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 12px 20px;
+         ">
+            <div class="field">
+                <label for="standardbetrag">Standardbetrag (€):</label>
+                <input type="text" name="standardbetrag" id="standardbetrag">
+            </div>
+           
+            <div class="field" style="grid-column: span 1;">
+                <label>
+                    <input type="checkbox" name="aktiv" id="aktiv" value="1">
+                    aktiv
+                </label>
+            </div>
+
+
+            
+
+            <div class="field" style="grid-column: 1 / -1;">
+                <label for="rechnungstext">Rechnungstext:</label>
+                <textarea name="rechnungstext" id="rechnungstext"
+                        rows="5" style="width: 100%;"></textarea>
+            </div>
+
+           
+        </div>
+
+        <input type="hidden" name="kunden_ids" id="kunden_ids">
+                <!-- Rechte unabhängige Spalte: Kundenauswahl -->
+        <div id="kundenAuswahl" class="multi-container"
+            style="display: none; grid-column: 4; align-self: start; max-width: 260px;">
+            
+            <label>Teilnehmer:</label>
+            <div id="selectedKunden" style="overflow-x: hidden;"></div>
+            <input id="searchKundefuergruppe" type="text" placeholder="Teilnehmer suchen...">
+            <div id="list"
+                style="border:1px solid #ccc; max-height:150px; overflow-y:auto; margin-top:8px;font-size: 10px; color: #333;">
+            </div>
+        </div>
+   
+
+    </form>
+
+
+        <!-- UNTERER BEREICH: Termine pro Kunde -->
+    <h3 style="margin: 0; display: flex; justify-content: space-between; align-items: center; grid-column: 1 / -1;">
+        <!-- Linke Gruppe: Überschrift + Tabs -->
+        <div style="display: flex; align-items: center;">
+            <span>Termine</span>
+            <!-- Abstand nur zwischen Text und erstem Button -->
+            <button class="tab active" data-tab="termine" style="margin-left: 20px;">Termine</button>
+            <button class="tab" data-tab="anwesenheit">Anwesenheit</button>
+            <button class="tab" data-tab="preise">Preise für Teilnehmer</button>
+            <button class="tab" data-tab="gruppen-doku">Doku</button>
+        </div>
+
+        <!-- Rechter Button -->
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" id="neuTerminBtn">Neuer Termin</button>
+            <button id="toggleAbgesagtBtn" data-show="false">Abgesagte anzeigen</button>
+        </div>
+    </h3>
+        
+
+        <div class="tab-content active" id="termine" style="grid-column: 1 / -1;">
+
+            <table id="termineproGruppeTabelle">
+                <thead>
+                    <tr><th>Datum</th>
+                        <th>Startzeit</th>
+                        <th>Endzeit</th>
+                        <th>Beschreibung</th>
+                        <th>Betrag</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+                <tbody id="termineProGruppeListe">
+                    <!-- Termine werden hier dynamisch eingefügt -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tab: Anwesenheit -->
+         <div class="tab-content" id="anwesenheit" style="grid-column: 1 / -1;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Beschreibung</th>
+                        <th>Teilnehmer</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+                 <tbody id="termineProGruppeAnwesenheitsListe">
+                    <!-- Termine werden hier dynamisch eingefügt -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Tab: Preise -->
+         <div class="tab-content" id="preise" style="grid-column: 1 / -1;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Teilnehmer</th>
+                        <th>Betrag</th>
+                    </tr>
+                </thead>
+                 <tbody id="BetragTeilnehmerListe">
+                    <!-- Termine werden hier dynamisch eingefügt -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tab-content" id="gruppen-doku" style="grid-column: 1 / -1;">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start;">
+                <textarea id="gruppenDokuText" rows="6" style="width: 100%; height: 160px;"></textarea>
+                <button type="button" id="gruppenDokuSaveBtn" style="justify-self: end; width: 160px;">Doku speichern</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/fensterDoku.js"></script>
+<script src="{{ url_for('static', filename='js/fensterTerminAnpassen.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gruppen.js') }}"></script>
+{% endblock %}
+
+

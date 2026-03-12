@@ -1,0 +1,678 @@
+.required-field {
+    border: 2px solid #ccc !important;
+}
+
+/* === Toast === */
+#toast {
+    background: rgba(0, 122, 204, 0.4);
+    color: #fff;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: opacity 0.3s;
+    max-width: 350px;
+    word-break: break-word;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+}
+#toast.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+#toast.toast-warn {
+    background: rgba(0, 122, 204, 0.9);
+    color: #fff;
+    opacity: 1;
+}
+body {
+	font-family: system-ui, sans-serif;
+	padding: 10px;
+	background: #fafafa;
+}
+
+/* === Modal === */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    cursor: pointer;
+}
+
+
+
+/* === Toast === */
+
+
+/* === Tabs === */
+/* .tabs {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.tab {
+	padding: 8px 16px;
+	background: #ddd;
+	border-radius: 4px 4px 0 0;
+	cursor: pointer;
+}
+
+.tab.active {
+	background: #fff;
+	border-bottom: 2px solid white;
+	font-weight: bold;
+}
+
+/* === Standard-Tab Layout === */
+/* .tab-content {
+	display: none;
+	background: white;
+	padding: 10px;
+	border-radius: 0 8px 8px 8px;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.tab-content.active {
+	display: flex;
+	gap: 20px;
+} */
+
+/* === Kalender-Tab (eigener Stil) === */
+/* #kalender.tab-content {
+	display: none; /* bleibt unsichtbar bis aktiv */
+/* 	background: none;
+	padding: 0;
+	box-shadow: none;
+	border-radius: 0;
+} */
+
+/* #kalender.tab-content.active {
+	display: block; 
+} */ 
+
+/* --- Layout nur für den Tab "gestellte Rechnungen" --- */
+.rechnungen-wrapper {
+	display: flex;
+	gap: 20px;
+	align-items: flex-start;
+}
+
+.rechnungen-wrapper .filter-seite {
+	flex: 0.2;
+	min-width: 150px;
+	background: #fff;
+	padding: 10px;
+	border-radius: 8px;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.rechnungen-wrapper .tabellen-seite {
+	flex: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.rechnungen-wrapper table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.rechnungen-wrapper th,
+.rechnungen-wrapper td {
+	border: 1px solid #ccc;
+	padding: 6px 8px;
+}
+
+.rechnungen-wrapper th {
+	background: #f2f2f2;
+}
+
+/* --- Allgemeine Tabellen --- */
+#left, #right {
+	padding: 6px;
+	border-radius: 8px;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+	background: white;
+}
+
+#left { flex: 0.25; }
+#right { flex: 2; }
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+th, td {
+	border: 1px solid #ccc;
+	padding: 6px 8px;
+}
+
+th { background: #f2f2f2; }
+tr:hover { background: #f9f9f9; cursor: pointer; }
+tr.selected { background: #d0f0d0; }
+
+input[type="text"],
+input[type="email"],
+input[type="number"] ,
+input[type="date"] ,
+input[type="time"] ,
+textarea,
+select {
+    width: 100%;
+    padding: 6px;
+    margin-bottom: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff; /* 👈 Hintergrund weiß */
+    color: #000;            /* optional: Text schwarz */
+}
+
+/* optional: Spinner entfernen */
+input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+button {
+	margin-right: 6px;
+	padding: 6px 12px;
+	border: none;
+	border-radius: 4px;
+	background: #007acc;
+	color: white;
+	cursor: pointer;
+}
+
+button:hover { background: #005fa3; }
+
+/* Grün für "Neu" */
+button#neuBtn, button#neuBtnGruppe, button#neuTerminBtn { 
+    background: #4caf50; 
+}
+
+/* Rot für "Löschen" */
+button#loeschenBtn, button#loeschenBtnGruppe { 
+    background: #e53935; 
+}
+
+/* Aktionen-Spalten möglichst schmal (Rechnungen, Kunden, Gruppen) */
+#rechnungsTabelle th:last-child,
+#rechnungsTabelle td:last-child,
+#termineproKundeTabelle th:last-child,
+#termineproKundeTabelle td:last-child,
+#termineproGruppeTabelle th:last-child,
+#termineproGruppeTabelle td:last-child {
+    white-space: nowrap;
+    width: 1%;
+}
+
+/* --- FullCalendar Layout --- */
+#calendar {
+  width: 100%;
+  height: 85vh; /* passt Höhe an Bildschirm an */
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  padding: 10px;
+}
+
+#eventPopup {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid black;
+    padding: 10px;
+    z-index: 1000;
+}
+
+.abgesagt {
+  color: gray;
+  text-decoration: line-through;
+  /* kein display: none hier */
+}
+
+/* #kalender.tab-content {
+  visibility: hidden;
+  position: absolute;
+  left: -9999px;
+}
+#kalender.tab-content.active {
+  visibility: visible;
+  position: static;
+  left: 0;
+} */
+
+
+
+.toggleButtonBearbeiten {
+    /* optionaler Basisstil */
+    background-color: #007bff;
+    color: white;
+    border: 2px solid transparent; /* Standard: kein sichtbarer Rahmen */
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.toggleButtonBearbeiten.active {
+    border: 4px solid #b30000;  /* roter Rahmen, wenn aktiv */
+}
+
+.multi-container {
+    margin-top: 10px;
+}
+#selectedKunden {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 35px;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    margin-bottom: 10px;
+}
+.tag {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    background: #007bff;
+    color: white;
+    border-radius: 12px;
+    font-size: 13px;
+}
+.tag span {
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+#search {
+    width: 100%;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+#list {
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+    background: white;
+}
+#list div {
+    padding: 6px;
+    cursor: pointer;
+}
+#list div:hover {
+    background: #e9e9e9;
+}
+
+.auswahl-links-wrapper {
+    display: flex;
+    gap: 20px;
+}
+
+#left, #right {
+    padding: 10px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+#left {
+    flex: 0.3; /* linke Spalte */
+    min-width: 250px;
+}
+
+#right {
+    flex: 1; /* Formularseite */
+}
+
+.navbar a {
+    padding: 10px;
+    text-decoration: none;
+    color: #333;
+}
+
+.navbar a.active {
+    background: #007acc !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+.nav-link.active {
+    background-color: #2c7be5;
+    color: white;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.navbar + * {
+    margin-top: 15px; /* alles direkt nach Navbar bekommt Abstand */
+}
+
+.toast {
+  visibility: hidden;
+  min-width: 220px;
+  background: #1e88e5;        /* Button-Blau */
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 12px 20px;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.35s ease, visibility 0.35s;
+  z-index: 9999;
+  font-size: 16px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  pointer-events: none;
+}
+
+.toast.show {
+  visibility: visible;
+  opacity: 0.5;
+}
+
+#gruppentabelle tr.selected {
+     background: #d0f0d0; ;  
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin: 25px 0 10px;
+}
+
+.tab {
+    padding: 8px 16px;
+    border: none;
+    background: #b3afaf;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.tab.active {
+    background: #2c7be5;
+    color: white;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    padding: 8px;
+    border: 1px solid #ccc;
+}
+
+#selectedKundenContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    min-height: 35px;
+}
+
+#kundenBereich {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6 gleiche Spalten */
+    gap: 12px; /* horizontal + vertikal gleicher Abstand */
+    width: 100%;
+}
+
+#kundenBereich .field input,
+#kundenBereich .field select,
+#kundenBereich .field textarea {
+    width: 100%; /* füllt die Spalte automatisch */
+    box-sizing: border-box; /* Padding + Border werden zur Spalte gerechnet */
+}
+
+.anwesenheit-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    margin: 2px;
+    background-color: #f6f7f8;
+    color: #333;
+    border-radius: 12px;
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.anwesenheit-tag.selected {
+    background-color: #2c7be5;
+    color: white;
+}
+
+
+
+#rightDoku {
+    width: 100%;            /* volle Breite innerhalb Grid */
+    box-sizing: border-box; /* Padding zählt mit */
+}
+
+
+#dokuListe {
+    width: 100%;           /* volle Breite wie Tabelle */
+    box-sizing: border-box; /* Padding zählt mit */
+}
+
+.doku-item {
+    display: block;        /* Block-Element */
+    width: 100%;           /* volle Breite des Containers */
+    box-sizing: border-box; /* Padding + Border zählen zur Breite */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 10px;
+    background-color: #fff;
+    margin-bottom: 6px;    /* Abstand zwischen Items */
+}
+.doku-header {
+    display: flex;               /* flexibles Layout */
+    justify-content: space-between; /* Name links, Button rechts */
+    align-items: center;         /* vertikal zentriert */
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+}
+
+.doku-datum {
+    font-weight: bold;
+    color: #333;
+}
+
+.doku-edit-btn {
+    background: #007acc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.doku-edit-btn:hover {
+    background: #005fa3;
+}
+
+/* Container für alle Gruppen-Tags */
+#gruppenTags {
+	display: flex;         /* nebeneinander */
+	flex-wrap: wrap;       /* neue Zeilen, wenn nötig */
+	gap: 6px;              /* Abstand zwischen Tags */
+	align-items: flex-start;
+}
+
+/* Einzelner Tag */
+#gruppenTags .tag {
+	display: inline-flex;  /* nur so breit wie Inhalt */
+	align-items: center;
+	padding: 5px 10px;
+	background: #007bff;   /* Blau */
+	color: white;
+	border-radius: 12px;
+	font-size: 13px;
+	width: fit-content;    /* Inhalt bestimmt Breite */
+}
+
+/* X-Button innerhalb Tag */
+#gruppenTags .tag button {
+	margin-left: 8px;
+	cursor: pointer;
+	font-weight: bold;
+	background: rgba(255,255,255,0.2);
+	border: none;
+	border-radius: 50%;
+	width: 18px;
+	height: 18px;
+	color: white;
+	font-size: 12px;
+	line-height: 1;
+}
+
+/* Vorschläge Dropdown */
+.suggestions {
+	position: absolute;
+	background: white;
+	border: 1px solid #ccc;
+	max-height: 150px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	width: 200px; /* passt ggf. an */
+	z-index: 1000;
+}
+
+.suggestions li {
+	padding: 6px 10px;
+	cursor: pointer;
+}
+
+.suggestions li:hover, .suggestions li.active {
+	background: #007bff;
+	color: white;
+}
+
+/* Kalender Scroll im Wochen/Tag-View erlauben */
+#calendar {
+    height: auto;
+    min-height: 500px;
+}
+
+#calendar.is-timegrid {
+    height: 85vh;
+}
+
+#calendar.is-daygrid {
+    height: auto;
+}
+
+/* Scroll nur in timeGrid (Woche/Tag) */
+.fc .fc-timegrid .fc-scroller {
+    overflow: auto !important;
+}
+
+.fc .fc-timegrid .fc-view-harness {
+    height: 100% !important;
+}
+
+/* Kein Scroll im Month-View (dayGrid) */
+.fc .fc-daygrid .fc-scroller {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+.fc .fc-daygrid .fc-view-harness {
+    height: auto !important;
+}
+
+/* Optional: bei dayGridMonth die Zahl hervorheben */
+/* Heute-Tag kräftiger hervorheben */
+.fc .fc-day-today {
+    background-color: #fffb99 !important; /* z.B. hellgelb */
+}
+
+
+/* Alle Filterfelder links einheitlich */
+.filter-seite input[type="text"],
+.filter-seite input[type="date"],
+.filter-seite select {
+    width: 100%;               /* volle Breite der Spalte */
+    padding: 6px;              /* gleiche Innenabstände wie Textfelder */
+    margin: 0;                 /* kein extra Abstand nach oben/unten */
+    border: 1px solid #ccc;    /* gleicher Rahmen wie Textfelder */
+    border-radius: 4px;        /* gleiche abgerundete Ecken */
+    box-sizing: border-box;    /* Padding + Border werden in Breite/Höhe gerechnet */
+    background-color: #fff;    /* Hintergrund weiß */
+    font-size: 14px;           /* gleiche Schrift wie Textfelder */
+    line-height: 1.2;          /* verhindert Überstehen */
+    vertical-align: middle;    /* optische Zentrierung */
+}
+
+/* Labels direkt oberhalb oder neben Input */
+.filter-seite label {
+    display: flex;
+    flex-direction: column; /* Label oben, Input darunter */
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+/* Schriftgröße kleiner für externe Events */
+.external-event .fc-event-title {
+    font-size: 0.75rem; /* z.B. 12px */
+    color: #97999c !important; /* Grau, überschreibt FullCalendar default */
+}
+
+.external-event .fc-event-title,
+.external-event .fc-event-time {
+  font-weight: normal !important;
+}
+.external-event .fc-event-title,
+.external-event .fc-event-time {
+  font-weight: normal !important;
+  color: #97999c !important; /* Grau, überschreibt FullCalendar default */
+}
+.external-event .fc-daygrid-event-dot {
+  border-color: #97999c !important;   /* Punktfarbe */
+}
+/* Mehrtägige externe Events */
+.external-event {
+    background-color: transparent !important; /* transparent */
+    border-color: #acacac !important;         /* optional Rahmen */
+}
+
+#gruppenInput {
+    border: none !important;
+}

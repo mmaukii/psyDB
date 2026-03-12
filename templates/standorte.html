@@ -1,0 +1,132 @@
+
+{% extends "base.html" %}
+{% block page %}
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Standorte Tabelle</title>
+<style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    td[contenteditable="true"] { background-color: #f9f9f9; }
+    button { cursor: pointer; }
+    .pfadCell { display: flex; gap: 8px; align-items: center; }
+    .pfadInput { flex: 1; min-width: 0; }
+    .pfadFile { flex: 0 0 auto; }
+</style>
+</head>
+<body>
+
+<h2>Standorte</h2>
+<button id="addStandortBtn">Neuen Standort hinzufügen</button>
+<table id="standorteTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Adresse</th>
+            <th>PLZ</th>
+            <th>Ort</th>
+            <th>Email</th>
+            <th>Kürzel</th>
+            <th>Bankname</th>
+            <th>BIC</th>
+            <th>IBAN</th>
+            <th>Name Kontobesitzer</th>
+            <th>Standard</th>
+            <th>Aktionen</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<br><br><br>
+
+<h2>Druckvorlagen</h2>
+<button id="addDruckvorlageBtn">Neue Druckvorlage hinzufügen</button>
+<table id="druckvorlagenTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Kürzel</th>
+            <th>Pfad</th>
+            <th>Aktionen</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<br><br><br>
+<h2>Programmvariablen</h2>
+
+<!-- Logo-File Picker -->
+<div style="margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
+    <label for="logoFilePicker"><strong>Logo-Datei:</strong></label>
+    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+        <input type="file" id="logoFilePicker" accept="image/*" style="flex: 1;">
+        <input type="text" id="logoFileInput" placeholder="Relativer Pfad (z.B. Vorlagen/logo.png)" style="flex: 2;" readonly>
+    </div>
+    <small style="color: #666; display: block; margin-top: 5px;">
+        ℹ️ Wählen Sie eine Bilddatei aus. Der Pfad wird automatisch gespeichert.
+    </small>
+</div>
+
+
+
+<!-- Programmvariablen Tabelle -->
+
+<table id="programmvariablenTable">
+    <thead>
+        <tr>
+            <th>Bezeichnungen</th>
+            <th>Wert</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<button id="saveProgrammvariablenBtn">Änderungen speichern</button>
+<br><br><br>
+<h2>Standardtexte für Rechnungen & Mahnungen</h2>
+<table id="standardtexteTable" style="width:100%;">
+    <colgroup>
+      <col style="width: 25%;">
+      <col style="width: 75%;">
+    </colgroup>
+    <thead>
+        <tr>
+            <th>Texttyp</th>
+            <th>Text</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<button id="saveStandardtexteBtn">Standardtexte speichern</button>
+
+<br><br><br><br><br>
+<!-- WebDAV Passwort -->
+<div style="margin-bottom: 20px;">
+    <label for="webdavPassword"><strong>WebDAV Passwort:</strong></strong></label>
+    <input type="password" id="webdavPassword" placeholder="Passwort eingeben">
+    <button id="saveWebdavPasswordBtn">Passwort speichern</button>
+</div>
+<br><br>
+<!-- Datenbank Passwort ändern -->
+<div style="margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
+    <label for="dbPassphraseCurrent"><strong>Datenbank Passwort ändern</strong></label>
+    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px; flex-wrap: wrap;">
+        <input type="password" id="dbPassphraseCurrent" placeholder="Aktuelles Passwort">
+        <input type="password" id="dbPassphraseNew" placeholder="Neues Passwort">
+        <input type="password" id="dbPassphraseNewConfirm" placeholder="Neues Passwort bestätigen">
+        <button id="changeDbPassphraseBtn">Passwort ändern</button>
+    </div>
+    <small style="color: #666; display: block; margin-top: 5px;">
+        ℹ️ Für Änderungen wird das aktuelle Passwort benötigt.
+    </small>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/einstellungen.js') }}"></script>
+{% endblock %}
+
+

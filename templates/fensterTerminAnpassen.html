@@ -1,0 +1,98 @@
+<!-- Modal für neuen Termin -->
+ <link rel="stylesheet" href="/static/css/modal-fix.css">
+ <div id="fensterTerminAnpassen" class="modal">
+	<div class="modal-content" id="modalContent">
+		<div class="modal-header" id="modalHeader" style="cursor: move; background-color: #f0f0f0; padding: 10px; margin: -10px -10px 10px -10px; border-radius: 5px 5px 0 0; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+			<h3 id="modalTitle" style="margin: 0; flex: 1;">Termin bearbeiten</h3>
+			<span class="close" style="cursor: pointer; font-size: 24px; font-weight: bold; color: #999; hover: #000;">&times;</span>
+		</div>
+		<form id="terminForm" style="margin-top: 10px;">
+		<input type="hidden" id="terminId" name="terminId">
+		<input type="hidden" id="kundeId" name="kundeId">
+		<input type="hidden" id="gruppeId" name="gruppeId">
+	
+	
+		<div id="kundenGruppeRow" style="display:flex; gap:15px;">
+    
+			<div id="kundeWrapper" style="display:none; flex:1;">
+				<label for="kunde" id="kundeLabel">Kunde:</label>
+				<select id="kunde" name="kunde_id" style="width:100%;"></select>
+			</div>
+
+			<div id="gruppeWrapper" style="display:none; flex:1;">
+				<label for="gruppe" id="gruppeLabel">Gruppe:</label>
+				<select id="gruppe" name="gruppe_id" style="width:100%;"></select>
+			</div>
+
+		</div>
+		
+		 <div id="gruppennameWrapper" style="display:none;">
+			<label for="gruppe">Gruppe:</label>
+			<select id="gruppe" name="gruppen_id"></select>
+		</div>	
+
+		<label for="datum">Datum:</label>
+		<input type="date" id="datum" name="datum" required>
+
+		<!-- 📅 STARTZEIT, ENDZEIT, BETRAG NEBENEINANDER -->
+		<div style="display: flex; gap: 15px; align-items: flex-end;">
+			<div style="flex: 1;">
+				<label for="startzeit">Startzeit</label>
+				<input type="time" id="startzeit" name="startzeit" required style="width: 100%; box-sizing: border-box;">
+			</div>
+			<div style="flex: 1;">
+				<label for="endzeit">Endzeit</label>
+				<input type="time" id="endzeit" name="endzeit" required style="width: 100%; box-sizing: border-box;">
+			</div>
+			<div style="flex: 1;">
+				<label for="betrag">Betrag €</label>
+				<input type="text" id="betrag" name="betrag" required style="width: 100%; box-sizing: border-box; text-align: right;">
+			</div>
+		</div>
+
+		<label for="beschreibung">Beschreibung:</label>
+		<input type="text" id="beschreibung" name="beschreibung" required>
+
+		<!-- 🔄 SERIENTERMINE -->
+		<div id="serieSection" style="margin-top: 5px;">
+			<label>
+				<input type="checkbox" id="istSerie" name="istSerie">
+				<strong>Serientermin</strong>
+			</label>
+
+			<div id="serieOptions" style="display: none; margin-top: 8px;">
+				<!-- ⏳ ABSTAND UND WIEDERHOLUNGEN NEBENEINANDER -->
+				<div style="display: flex; gap: 15px; margin-bottom: 10px;">
+					<div style="flex: 1;">
+						<label for="serieIntervall">Abstand (Wochen):</label>
+						<input type="number" id="serieIntervall" name="serieIntervall"
+							value="1" min="1" max="52"
+							style="width: 100%; box-sizing: border-box;">
+					</div>
+
+					<div style="flex: 1;">
+						<label for="serieAnzahl">Wiederholungen:</label>
+						<input type="number" id="serieAnzahl" name="serieAnzahl"
+							value="1" min="1" max="52"
+							style="width: 100%; box-sizing: border-box;">
+					</div>
+				</div>
+				<!-- Enddatum in einer Zeile, wie Datum -->
+				<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+					<strong>Enddatum:</strong>
+					<div id="enddatumDisplay"
+						style="padding: 8px; border: 1px solid #ccc; border-radius: 3px; min-width: 80px;">
+						- <!-- hier wird dynamisch das Enddatum gesetzt -->
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+			<button type="submit">Termin speichern</button>
+			<button type="button" id="absageTerminBtn" style="display:none;">Absagen/Entfallen</button>		
+			<button type="button" id="deleteTerminBtn" style="margin-left:auto; background:#e74c3c; color:white;">Termin löschen</button>
+		</div>
+		</form>
+	</div>
+</div>

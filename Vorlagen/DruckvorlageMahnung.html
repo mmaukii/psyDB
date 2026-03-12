@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Rechnung {{ rechnung.rechnungsnr }}</title>
+
+<style>
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  margin: 40px;
+  font-size: 18px;
+  color: #333;
+  line-height: 1.7;
+}
+
+/* ===== KOPF ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 15px;
+  margin-bottom: 30px;
+}
+
+.firma {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.logo img {
+  width: 100px;
+  height: auto;
+}
+
+/* ===== RECHNUNGSDATEN ===== */
+.rechnungsdaten {
+  margin-top: 15px;
+  text-align: right;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.rechnungsdaten div {
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* ===== ADRESSE ===== */
+.adresse {
+  margin: 30px 0;
+}
+
+/* ===== H1 ===== */
+h1 {
+  font-size: 22px;
+  margin: 20px 0;
+}
+
+/* ===== TEXT ===== */
+.text {
+  margin: 20px 0;
+}
+
+/* ===== TABELLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background: #f4f4f4;
+  text-align: left;
+}
+
+.right {
+  text-align: right;
+}
+
+.total {
+  font-weight: bold;
+}
+
+/* ===== META-TABELLE OHNE LINIEN ===== */
+.no-lines,
+.no-lines td,
+.no-lines tr {
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* ===== FUSSZEILE ===== */
+.footer {
+  position: fixed;
+  bottom: 30px;
+  left: 40px;
+  right: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+}
+
+.qr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qr img {
+  width: 60px;
+}
+
+.bankdaten {
+  text-align: right;
+  line-height: 1.4;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===== KOPF ===== -->
+<div class="header" style="width:100%; display: table;">
+  <div style="display: table-cell; vertical-align: middle; text-align: left;">
+    <strong>{{ firma.name }}</strong><br>
+    {{ firma.adresse }}<br>
+    {{ firma.plz }} {{ firma.ort }}<br>
+    {{ firma.email }}{% if firma.tel %} | {{ firma.tel }}{% endif %}
+  </div>
+
+  <div style="display: table-cell; vertical-align: middle; text-align: right; width: 120px;">
+    <img src="{{ logo_path }}" alt="Logo" style="max-height: 60px; width: auto; display: inline-block;">
+  </div>
+</div>
+
+<!-- ===== RECHNUNGSDATEN / META ===== -->
+<table class="meta-table no-lines" style="width:100%; border-collapse:collapse;">
+  <tr> <tr>
+    <td style="width:75%; text-align:right; font-weight:bold;">
+      Betrifft
+    </td>
+    <td style="width:25%; text-align:right;">
+      <!-- leer -->
+    </td>
+  </tr>
+    <td style="width:85%; text-align:right; font-weight:bold;">
+      Rechnungsnummer:
+    </td>
+    <td style="width:15%; text-align:right;">
+      {{ rechnung.rechnungsnr }}
+    </td>
+  </tr>
+  <tr>
+    <td style="text-align:right; font-weight:bold;">
+      Rechnungsdatum:
+    </td>
+    <td style="text-align:right;">
+      {{ rechnung.datum[8:10] }}.{{ rechnung.datum[5:7] }}.{{ rechnung.datum[0:4] }}
+    </td>
+  </tr>
+  <tr>
+    <td style="text-align:right; font-weight:bold;">
+      Mahnungsdatum:
+    </td>
+    <td style="text-align:right;">
+      {{ mahnung.datum[8:10] }}.{{ mahnung.datum[5:7] }}.{{ mahnung.datum[0:4] }}
+    </td>
+  </tr>
+</table>
+
+<!-- ===== KUNDE ===== -->
+<div class="adresse">
+  <strong>{{ kunde.vorname }} {{ kunde.nachname }}</strong><br>
+  {{ kunde.adresse }}<br>
+  {{ kunde.plz }} {{ kunde.ort }}
+</div>
+
+<h1>{{ mahnung.mahnungsnr }}. Mahnung für die Rechnung {{ rechnung.rechnungsnr }}</h1>
+
+<div class="text">
+  Guten Tag!<br><br>
+  leider konnte ich bis heute keinen Zahlungseingang zur oben genannten Rechnung über <span style="white-space: nowrap;">{{ gesamtbetrag_formatted }} €</span>
+  feststellen. Ich ersuche Sie daher, den offenen Betrag zuzüglich gesetzlicher Verzugszinsen und einer
+  pauschalen Mahngebühr bis spätestens <strong>{{ zahlungsziel }}</strong> zu begleichen.
+  Nachfolgend die aktuelle Forderungsaufstellung:
+</div>
+
+<table style="width: 70%; border-collapse: collapse; margin: 1em auto;">
+    <tr>
+        <td style="text-align: left;">Offener Rechnungsbetrag:</td>
+        <td style="text-align: right; white-space: nowrap;">
+            {{ "{:,.2f}".format(rechnung.betrag).replace(',', 'X').replace('.', ',').replace('X', '.') }} €
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: left;">Verzugszinsen ({{ mahnung.verzugszinsenProz }} % p.a. für {{ verzugstage }} Tage):</td>
+        <td style="text-align: right; white-space: nowrap;">
+            {{ "{:,.2f}".format(verzugszinsen).replace(',', 'X').replace('.', ',').replace('X', '.') }} €
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: left;">Mahnspesen (pauschal):</td>
+        <td style="text-align: right; white-space: nowrap;">
+            {{ "{:,.2f}".format(mahnspesen).replace(',', 'X').replace('.', ',').replace('X', '.') }} €
+        </td>
+    </tr>
+    <tr style="font-weight: bold; border-top: 1px solid #000;">
+        <td style="text-align: left;">Gesamtbetrag:</td>
+        <td style="text-align: right; white-space: nowrap;">
+            {{ "{:,.2f}".format(rechnung.betrag + verzugszinsen + mahnspesen).replace(',', 'X').replace('.', ',').replace('X', '.') }} €
+        </td>
+    </tr>
+</table>
+
+<div class="text">
+{% if mahnung.mahnungsnr == 1 %}
+    <p>Bitte begleichen Sie den offenen Betrag zeitnah.</p>
+{% else %}
+    <p>Sollte bis zum <strong>{{ zahlungsziel }}</strong> keine Zahlung eingehen, sehe ich mich gezwungen, weitere rechtliche Schritte einzuleiten.</p>
+{% endif %}
+</div>
+
+</body>
+</html>

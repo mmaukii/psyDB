@@ -1,0 +1,25 @@
+<table style="width:100%; font-size:14px;">
+  <tr>
+    <td style="vertical-align:top;">
+      <br>
+       <img src="{{ qr_code_path }}"
+         alt="QR-Code"
+         style="height:100px; width:auto; margin-right:10px; float:left;">
+      <span>
+        <br><br>
+      QR-Code scannen<br>
+      und bezahlen
+    </span>
+    </td>
+
+    <td style="vertical-align:top; text-align:right; min-width:220px;">
+      
+      <br>
+      <strong>Bankverbindung</strong><br>
+      {{ firma.bankname }}<br>
+      {{ firma.kontoName }}<br>
+      IBAN: {{ firma.iban }}<br>
+      BIC: {{ firma.bic }}
+    </td>
+  </tr>
+</table>

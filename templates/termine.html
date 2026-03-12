@@ -1,0 +1,68 @@
+ {% extends "base.html" %}
+{% block page %}
+ <div class="rechnungen-wrapper">
+        <div class="filter-seite">
+            <div>
+                <button id="filterLeeren">Filter rückstellen</button>
+            </div>
+            <div id="filterTermineRechnungen" style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                <label>Vorname: <input type="text" id="filterVorname"></label>
+                <label>Nachname: <input type="text" id="filterNachname"></label>
+                <label>Kürzel: <input type="text" id="filterKuerzel"></label>
+                <label>Gruppe: <input type="text" id="filterGruppe"></label>
+                <select id="filterTermineStatus">
+                    <option value="">– alle –</option>
+                    <option value="0" selected>nicht abgesagt</option>
+                    <option value="1">abgesagt</option>
+                </select>
+                <label>
+                    Von:
+                    <input type="date" id="RechnungsDatumVon">
+                </label>
+
+                <label>
+                    Bis:
+                    <input type="date" id="RechnungsDatumBis">
+                </label>
+                    <!-- 🟢 Button zum Auslösen -->
+            
+            <div>
+                <button id="getSelectedButton">Rechnungen erstellen</button>
+            </div>
+        </div>
+    </div>
+    
+  
+     
+
+    <table id="offeneTermineTabelle">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAllTermine"></th>
+                <th>Datum</th>
+                <th>Vorname</th>
+                <th>Nachname</th>
+                <th>Kürzel</th>
+                <th>Startzeit</th>
+                <th>Endzeit</th>
+                <th>Beschreibung</th>
+                <th>Gruppe</th>
+                <th>Betrag</th>
+                <th>Aktionen</th>
+                <th hidden>abgesagt</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Termine werden hier dynamisch eingefügt -->
+        </tbody>
+    </table>  
+
+   
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/fensterTerminAnpassen.js') }}"></script>
+<script src="{{ url_for('static', filename='js/termine.js') }}"></script>
+{% endblock %}

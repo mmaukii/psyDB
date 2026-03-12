@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block page %}
+<div class="dashboard-wrapper">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <h1>Dashboard</h1>
+            <button id="praxiskalenderButton" style="padding: 6px 16px; font-size: 0.85em; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Praxiskalender aktualisieren</button>
+        <script src="{{ url_for('static', filename='js/dashboard_kalender_button.js') }}"></script>
+        </div>
+        <!-- Logo rechts oben -->
+        <img id="dashboardLogo" src="" alt="Logo" style="max-width: 150px; max-height: 80px; display: none;">
+    </div>
+        
+      
+        <div class="dashboard-grid">
+
+            <!-- Termine heute -->
+        <div class="dashboard-card">
+            <h2>Termine heute</h2>
+            {% if termine_heute %}
+                <ul>
+                    {% for t in termine_heute %}
+                        <li>{{ t.startzeit }} - {{ t.endzeit }}:  {{ t.kunde.kuerzel }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Keine Termine heute.</p>
+            {% endif %}
+        </div>
+
+        <!-- Unbezahlte Rechnungen älter als 14 Tage -->
+        <div class="dashboard-card">
+            <h2>Überfällige Rechnungen</h2>
+            {% if overdue_rechnungen %}
+                <ul>
+                    {% for r in overdue_rechnungen %}
+                        <li>Rechnung {{ r.rechnungsnr }} - {{ r.datum[8:10] }}.{{ r.datum[5:7] }}.{{ r.datum[0:4] }} - {{ "{:,.2f}".format(r.betrag).replace(",", "X").replace(".", ",").replace("X", ".") }} €</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Keine überfälligen Rechnungen.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Mahnungen -->
+        <div class="dashboard-card">
+            <h2>Überfällige Mahnungen</h2>
+            {% if mahnungen %}
+                <ul>
+                    {% for m in mahnungen %}
+                        <li>Mahnung {{ m.mahnungsnr }} für Rechnung {{ m.rechnung_id }} - {{ m.datum[8:10] }}.{{ m.datum[5:7] }}.{{ m.datum[0:4] }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Keine überfälligen Mahnungen.</p>
+            {% endif %}
+        </div>
+        
+    
+        
+        <!-- Termine morgen -->
+        <div class="dashboard-card">
+            <h2>Termine morgen</h2>
+            {% if termine_morgen %}
+                <ul>
+                    {% for t in termine_morgen %}
+                        <li>{{ t.startzeit }} - {{ t.endzeit }}: {{ t.kunde.kuerzel }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Keine Termine morgen.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Fehlende Rechnungsnummern -->
+        <div class="dashboard-card">
+            <h2>Fehlende Rechnungsnummern</h2>
+            {% if missing_numbers %}
+                <p>Folgende Rechnungsnummern fehlen: {{ missing_numbers|join(', ') }}</p>
+            {% else %}
+                <p>Alle Rechnungsnummern sind durchgängig.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Überschneidende Termine -->
+        <div class="dashboard-card">
+            <h2>Überschneidende Termine</h2>
+            {% if overlapping_termine %}
+                <ul>
+                    {% for current, next_t in overlapping_termine %}
+                        <li>{{ current.datum[8:10] }}.{{ current.datum[5:7] }}.{{ current.datum[0:4] }}: {{ current.startzeit }}-{{ current.endzeit }} {{ current.kunde.kuerzel }} überschneidet mit {{ next_t.startzeit }}-{{ next_t.endzeit }} {{ next_t.kunde.kuerzel }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Keine überschneidenden Termine gefunden.</p>
+            {% endif %}
+        </div>
+    </div>
+      {% if letzte_kalender_sync %}
+        <div style="margin-bottom: 2px; color: #555; font-size: 1.05em;">
+            <strong>Letzte Kalender-Synchronisierung:</strong>
+            {% if letzte_kalender_sync_diff %}
+                <span style="color: #111; font-weight: 500;">vor {{ letzte_kalender_sync_diff }}</span>
+            {% endif %}
+            <span style="color: #888; font-size: 0.98em;"> ({{ letzte_kalender_sync }})</span>
+        </div>
+        {% endif %}
+</div>
+
+<style>
+.dashboard-wrapper {
+    padding: 20px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.dashboard-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background: #f9f9f9;
+}
+
+.dashboard-card h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.dashboard-card ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.dashboard-card li {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+</style>
+
+<script>
+// Logo beim Laden anzeigen
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/programmvariablen')
+        .then(res => res.json())
+        .then(data => {
+            const logoVar = data.find(v => v.name === "logo_file");
+            const logoImg = document.getElementById("dashboardLogo");
+            
+            if (logoVar && logoVar.wert) {
+                logoImg.src = logoVar.wert;
+                logoImg.style.display = "block";
+            } else {
+                logoImg.style.display = "none";
+            }
+        }).catch(err => {
+            console.error("Fehler beim Laden des Logos:", err);
+        });
+});
+</script>
+{% endblock %}

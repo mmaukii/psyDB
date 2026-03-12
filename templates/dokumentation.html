@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block page %}
+
+<div class="auswahl-links-wrapper">
+
+
+  <!-- LINKE SEITE -->
+  <div id="left">
+    <select id="DokuFilter">
+				<option value="pers">Nur persönliche Dokumentation</option>
+				<option value="allg" selected>Nur allgemeine Dokumentation</option>
+				<option value="ges">Gesamte Dokumentationen</option>
+		</select>
+
+    <input type="text" id="search" placeholder="Filter..." 
+				style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #fff;">
+			
+    <table id="auswahlTabelle">
+      <thead>
+        <tr>
+          <th>Typ</th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- KUNDEN -->
+        {% for k in kunden %}
+        <tr class="kunde"
+            data-typ="kunde"
+            data-id="{{ k.id }}">
+          <td>👤</td>
+          <td>{{ k.kuerzel }} – {{ k.nachname }}</td>
+        </tr>
+        {% endfor %}
+
+        <!-- GRUPPEN -->
+        {% for g in gruppen %}
+        <tr class="gruppe"
+            data-typ="gruppe"
+            data-id="{{ g.id }}">
+          <td>👥</td>
+          <td>{{ g.gruppenkuerzel }} – {{ g.gruppenname }}</td>
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+
+  </div>
+
+  <!-- RECHTE SEITE -->
+    <div id="rightDoku" style="grid-column: 1 / -1;">
+      <details style="margin-bottom: 10px;">
+        <summary style="cursor: pointer; font-size: 0.9em; color: #555;">Hinweis zur Dokumentation</summary>
+        <div style="font-size: 0.9em; background: #f5f5f5; border: 1px solid #ddd; color: #555; padding: 10px 12px; border-radius: 6px; margin-top: 8px;">
+          Hier werden die Dokumentationen angezeigt. Wähle links einen Kunden oder eine Gruppe aus, um die zugehörige Dokumentation zu sehen.
+          Neue Dokumentation kann direkt bei Stunden der Kunden oder Gruppen hinzugefügt werden. Allgemeine Dokumentation kann über die Schaltfläche "Neue Dokumentation" in der oberen rechten Ecke erstellt werden.
+        </div>
+      </details>
+      <div class="tab-content active"  id="dokuListe"></div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/fensterDoku.js"></script>
+<script src="{{ url_for('static', filename='js/dokumentation.js') }}"></script>
+{% endblock %}
