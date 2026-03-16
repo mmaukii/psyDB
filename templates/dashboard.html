@@ -28,36 +28,6 @@
             {% endif %}
         </div>
 
-        <!-- Unbezahlte Rechnungen älter als 14 Tage -->
-        <div class="dashboard-card">
-            <h2>Überfällige Rechnungen</h2>
-            {% if overdue_rechnungen %}
-                <ul>
-                    {% for r in overdue_rechnungen %}
-                        <li>Rechnung {{ r.rechnungsnr }} - {{ r.datum[8:10] }}.{{ r.datum[5:7] }}.{{ r.datum[0:4] }} - {{ "{:,.2f}".format(r.betrag).replace(",", "X").replace(".", ",").replace("X", ".") }} €</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Keine überfälligen Rechnungen.</p>
-            {% endif %}
-        </div>
-        
-        <!-- Mahnungen -->
-        <div class="dashboard-card">
-            <h2>Überfällige Mahnungen</h2>
-            {% if mahnungen %}
-                <ul>
-                    {% for m in mahnungen %}
-                        <li>Mahnung {{ m.mahnungsnr }} für Rechnung {{ m.rechnung_id }} - {{ m.datum[8:10] }}.{{ m.datum[5:7] }}.{{ m.datum[0:4] }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Keine überfälligen Mahnungen.</p>
-            {% endif %}
-        </div>
-        
-    
-        
         <!-- Termine morgen -->
         <div class="dashboard-card">
             <h2>Termine morgen</h2>
@@ -71,17 +41,7 @@
                 <p>Keine Termine morgen.</p>
             {% endif %}
         </div>
-        
-        <!-- Fehlende Rechnungsnummern -->
-        <div class="dashboard-card">
-            <h2>Fehlende Rechnungsnummern</h2>
-            {% if missing_numbers %}
-                <p>Folgende Rechnungsnummern fehlen: {{ missing_numbers|join(', ') }}</p>
-            {% else %}
-                <p>Alle Rechnungsnummern sind durchgängig.</p>
-            {% endif %}
-        </div>
-        
+
         <!-- Überschneidende Termine -->
         <div class="dashboard-card">
             <h2>Überschneidende Termine</h2>
@@ -93,6 +53,44 @@
                 </ul>
             {% else %}
                 <p>Keine überschneidenden Termine gefunden.</p>
+            {% endif %}
+        </div>
+
+        <!-- Überfällige Rechnungen -->
+        <div class="dashboard-card">
+            <h2>Überfällige Rechnungen</h2>
+            {% if overdue_rechnungen %}
+                <ul>
+                    {% for r in overdue_rechnungen %}
+                        <li>Rechnung {{ r.rechnungsnr }} - {{ r.datum[8:10] }}.{{ r.datum[5:7] }}.{{ r.datum[0:4] }} - {{ "{:,.2f}".format(r.betrag).replace(",", "X").replace(".", ",").replace("X", ".") }} €</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Keine überfälligen Rechnungen.</p>
+            {% endif %}
+        </div>
+
+        <!-- Überfällige Mahnungen -->
+        <div class="dashboard-card">
+            <h2>Überfällige Mahnungen</h2>
+            {% if mahnungen %}
+                <ul>
+                    {% for m in mahnungen %}
+                        <li>Mahnung {{ m.mahnungsnr }} für Rechnung {{ m.rechnung_id }} - {{ m.datum[8:10] }}.{{ m.datum[5:7] }}.{{ m.datum[0:4] }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Keine überfälligen Mahnungen.</p>
+            {% endif %}
+        </div>
+
+        <!-- Fehlende Rechnungsnummern -->
+        <div class="dashboard-card">
+            <h2>Prüfung Rechnungsnummern</h2>
+            {% if missing_numbers %}
+                <p>Folgende Rechnungsnummern fehlen: {{ missing_numbers|join(', ') }}</p>
+            {% else %}
+                <p>Alle Rechnungsnummern sind durchgängig.</p>
             {% endif %}
         </div>
     </div>
