@@ -71,6 +71,7 @@ def add_gruppe():
     gruppenkuerzel = data.get("gruppenkuerzel")
     if not gruppenkuerzel:
         return jsonify({"success": False, "error": "Gruppenkuerzel ist erforderlich"}), 400
+    from datetime import datetime
     g = Gruppe(
         gruppenname=data["gruppenname"],
         standardbetrag=data.get("standardbetrag"),
@@ -78,7 +79,8 @@ def add_gruppe():
         gruppenkuerzel=gruppenkuerzel,
         rechnungstext=data.get("rechnungstext"),
         doku=data.get("doku"),
-        aktiv=data.get("aktiv", 1)
+        aktiv=data.get("aktiv", 1),
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     )
     db.session.add(g)
     db.session.commit()

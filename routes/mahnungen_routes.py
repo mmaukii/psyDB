@@ -101,7 +101,7 @@ def add_mahnung():
     m = Mahnung(
         rechnung_id=data.get("rechnung_id"),
         datum=data.get("datum"),
-        timestamp=data.get("timestamp"),
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
         kommentar=data.get("kommentar"),
         mahnungsnr=mahnungsnr,
         verzugszinsenProz=verzugszinsenProz,

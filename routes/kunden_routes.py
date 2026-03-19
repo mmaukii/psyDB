@@ -134,6 +134,7 @@ def add_kunde():
     if exists:
         return jsonify({"success": False, "error": "Kürzel bereits vergeben"}), 409
 
+    from datetime import datetime
     k = Kunde(
         nachname=data["nachname"],
         vorname=data.get("vorname"),
@@ -155,7 +156,8 @@ def add_kunde():
         aktiv=data.get("aktiv", 1),
         svnr=data.get("svnr"),
         krankenkasse=data.get("krankenkasse"),
-        diagnose=data.get("diagnose")
+        diagnose=data.get("diagnose"),
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     )
 
     db.session.add(k)

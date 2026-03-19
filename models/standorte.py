@@ -1,6 +1,8 @@
 from database import db
 
 
+from datetime import datetime
+
 class Standort(db.Model):
     __tablename__ = "standorte"
     standard = db.Column(db.Integer, default=0)  # 0/1 als Boolean
@@ -19,5 +21,5 @@ class Standort(db.Model):
     iban = db.Column(db.String)
     kontoName = db.Column(db.String)
     bankname = db.Column(db.String)
-
-
+    timestamp = db.Column(db.String)
+    changestamp = db.Column(db.String)

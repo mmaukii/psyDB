@@ -94,7 +94,7 @@ def add_gruppenstunde(gruppe_id):
         beschreibung=data.get("beschreibung"),
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     )
     db.session.add(gs)
     db.session.flush()  # ID erzeugen, bevor commit

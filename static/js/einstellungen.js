@@ -3,7 +3,7 @@ function loadEinstellungen() {
     fetch('/api/standorte')
         .then(res => res.json())
         .then(data => {
-            const tbody = document.querySelector("#einstellungenTable tbody");
+            const tbody = document.querySelector("#standorteTable tbody");
             tbody.innerHTML = "";
             data.forEach(s => {
                 const tr = document.createElement("tr");
@@ -73,7 +73,7 @@ function loadEinstellungen() {
                     });
                 });
                 tr.querySelector(".deleteBtn").addEventListener("click", () => {
-                    if (confirm("Einstellung wirklich löschen?")) {
+                    if (confirm("Standort wirklich löschen?")) {
                         fetch(`/api/standorte/${s.id}`, { method: "DELETE" })
                             .then(() => loadEinstellungen());
                     }
@@ -145,8 +145,8 @@ function loadDruckvorlagen() {
         });
 }
 
-document.getElementById("addEinstellungenBtn").addEventListener("click", () => {
-    const tbody = document.querySelector("#einstellungenTable tbody");
+document.getElementById("addStandortBtn").addEventListener("click", () => {
+    const tbody = document.querySelector("#standorteTable tbody");
     const tr = document.createElement("tr");
     tr.innerHTML = `
         <td contenteditable="true" data-field="name"></td>

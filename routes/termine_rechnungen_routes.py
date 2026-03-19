@@ -30,7 +30,12 @@ def add_termine_rechnung():
     if not rechnung_id or not termine_id:
         return jsonify({"error": "rechnung_id und termine_id erforderlich"}), 400
 
-    sr = TermineRechnung(rechnung_id=rechnung_id, termine_id=termine_id)
+    from datetime import datetime
+    sr = TermineRechnung(
+        rechnung_id=rechnung_id,
+        termine_id=termine_id,
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    )
     db.session.add(sr)
     db.session.commit()
     return jsonify({"success": True, "id": sr.id}), 201

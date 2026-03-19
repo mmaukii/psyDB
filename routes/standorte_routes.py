@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Standort
+from datetime import datetime
 
 standorte_bp = Blueprint("standorte", __name__)
 
@@ -60,7 +61,8 @@ def add_standort():
         iban=data.get("iban"),
         kontoName=data.get("kontoName"),
         bankname=data.get("bankname"),
-        standard=int(data.get("standard", 0))
+        standard=int(data.get("standard", 0)),
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S"),
     )
 
     db.session.add(s)
@@ -83,6 +85,7 @@ def update_standort(id):
             else:
                 setattr(s, field, data[field])
 
+    s.changestamp = datetime.utcnow()
     db.session.commit()
     return jsonify({"success": True})
 

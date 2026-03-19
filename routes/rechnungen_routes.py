@@ -64,6 +64,7 @@ def add_rechnung():
     
     # Timestamp automatisch setzen, falls nicht im Request
     now_timestamp = int(datetime.now().timestamp())
+    from datetime import datetime
     r = Rechnung(
         datum=data["datum"],
         betrag=data["betrag"],
@@ -72,7 +73,7 @@ def add_rechnung():
         rechnungTextOben=data.get("rechnungTextOben"),
         rechnungTextUnten=data.get("rechnungTextUnten"),
         kommentar=data.get("kommentar"),
-        timestamp=data.get("timestamp", now_timestamp),
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
         changestamp=data.get("changestamp"),
         zahlungsziel_tage=zahlungsziel_tage
     )
@@ -578,7 +579,8 @@ def create_rechnungen_aus_termine():
                 rechnungsnr=rechnungsnr,
                 rechnungTextOben=kunde.rechnungTextObenVorgabe,
                 rechnungTextUnten=kunde.rechnungTextUntenVorgabe,
-                zahlungsziel_tage=zahlungsziel_tage
+                zahlungsziel_tage=zahlungsziel_tage,
+                timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
             )
             db.session.add(rechnung)
             db.session.flush()  # 🔑 erzeugt rechnung.id OHNE commit
