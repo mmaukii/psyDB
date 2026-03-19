@@ -540,8 +540,15 @@ def create_rechnungen_aus_termine():
             kunde = Kunde.query.get(kunde_id)
             if not kunde:
                 raise ValueError(f"Kunde {kunde_id} nicht gefunden")
-        
-              # --- Rechnungsnummer generieren ---
+
+            # Prüfe, ob Druckvorlage vorhanden ist
+            if not kunde.druckvorlage_id:
+                return jsonify({
+                    "success": False,
+                    "error": f"Kunde {kunde.nachname} ({kunde_id}) hat keine Druckvorlage hinterlegt. Bitte zuerst eine Druckvorlage auswählen."
+                }), 400
+
+            # --- Rechnungsnummer generieren ---
             jahr = date.today().year % 100  # z. B. 25 für 2025
 
             # Höchste existierende Rechnungsnummer dieses Jahres abrufen

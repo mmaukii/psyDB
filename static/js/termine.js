@@ -423,6 +423,8 @@ document.getElementById('getSelectedButton').addEventListener('click', () => {
             });
 
         } else {
+            // Fehler z.B. keine Druckvorlage
+            alert(data.error || "Fehler beim Erstellen der Rechnung.");
             console.error("Fehler beim Erstellen der Rechnung:", data.error);
         }
     })
