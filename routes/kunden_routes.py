@@ -194,6 +194,35 @@ def update_kunde(id):
 @kunden_bp.delete("/kunden/<int:id>")
 def delete_kunde(id):
     k = Kunde.query.get_or_404(id)
+    from models import Termin, Rechnung, TermineRechnung
+    # Alle zugehörigen Termine finden
+    termine = Termin.query.filter_by(kunde_id=k.id).all()
+    termin_ids = [t.id for t in termine]
+
+    # Alle Zuordnungen in TermineRechnung löschen und Rechnungen sammeln
+    rechnungs_ids = set()
+    for termin_id in termin_ids:
+        zuordnungen = TermineRechnung.query.filter_by(termin_id=termin_id).all()
+        for z in zuordnungen:
+            rechnungs_ids.add(z.rechnung_id)
+            db.session.delete(z)
+
+    # Alle Termine löschen
+    for t in termine:
+        db.session.delete(t)
+
+    # Rechnungen löschen, die nur noch mit gelöschten Terminen verknüpft sind
+    from models import Mahnung
+    for rid in rechnungs_ids:
+        # Prüfe, ob noch Zuordnungen zu anderen Terminen existieren
+        rest = TermineRechnung.query.filter_by(rechnung_id=rid).count()
+        if rest == 0:
+            r = Rechnung.query.get(rid)
+            if r:
+                # Mahnungen zur Rechnung löschen
+                Mahnung.query.filter_by(rechnung_id=rid).delete(synchronize_session=False)
+                db.session.delete(r)
+
     db.session.delete(k)
     db.session.commit()
     return jsonify({"success": True})
