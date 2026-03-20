@@ -16,9 +16,12 @@
 </style>
 </head>
 <body>
+<h2 style="margin-bottom: 0;">Standorte</h2>
+<div style="display: flex; align-items: baseline; gap: 10px;">
+	<button id="addStandortBtn">Neuen Standort hinzufügen</button>
+	<span style="font-size: 0.95em; color: #666; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
+</div>
 
-<h2>Standorte</h2>
-<button id="addStandortBtn">Neuen Standort hinzufügen</button>
 <table id="standorteTable">
 	<thead>
 		<tr>
@@ -40,8 +43,11 @@
 </table>
 <br><br><br>
 
-<h2>Druckvorlagen</h2>
-<button id="addDruckvorlageBtn">Neue Druckvorlage hinzufügen</button>
+<h2 style="margin-bottom: 0;">Druckvorlagen</h2>
+<div style="display: flex; align-items: baseline; gap: 10px;">
+	<button id="addDruckvorlageBtn">Neue Druckvorlage hinzufügen</button>
+	<span style="font-size: 0.95em; color: #666; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
+</div>
 <table id="druckvorlagenTable">
 	<thead>
 		<tr>
@@ -54,7 +60,7 @@
 	<tbody></tbody>
 </table>
 <br><br><br>
-<h2>Programmvariablen</h2>
+<h2 style="margin-bottom: 0;">Programmvariablen</h2>
 
 <div style="margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
 	<label for="logoFilePicker"><strong>Logo-Datei:</strong></label>
@@ -66,7 +72,7 @@
 		ℹ️ Wählen Sie eine Bilddatei aus. Der Pfad wird automatisch gespeichert.
 	</small>
 </div>
-
+<span style="font-size: 0.95em; color: #666; font-weight: normal;">Eingegebene Werte müssen durch Klick auf Speicherbutton übernommen werden.</span>
 <table id="programmvariablenTable">
 	<thead>
 		<tr>
@@ -78,7 +84,9 @@
 </table>
 <button id="saveProgrammvariablenBtn">Änderungen speichern</button>
 <br><br><br>
-<h2>Standardtexte für Rechnungen & Mahnungen</h2>
+<h2 style="margin-bottom: 0;">Standardtexte für Rechnungen & Mahnungen</h2>
+<span style="font-size: 0.95em; color: #666; font-weight: normal;">Eingegebene Werte müssen durch Klick auf Speicherbutton übernommen werden.</span>
+
 <table id="standardtexteTable" style="width:100%;">
 	<colgroup>
 	  <col style="width: 25%;">
