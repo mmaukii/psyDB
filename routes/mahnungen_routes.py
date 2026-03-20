@@ -124,6 +124,8 @@ def update_mahnung(id):
     for field in ["rechnung_id", "datum", "timestamp", "kommentar", "mahnungsnr", "verzugszinsenProz", "zahlungsziel_tage", "mahnspesen", "verzugszinsen"]:
         if field in data:
             setattr(m, field, data[field])
+    # changestamp immer setzen
+    m.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
     return jsonify({"success": True})
 

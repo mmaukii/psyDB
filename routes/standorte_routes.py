@@ -85,7 +85,7 @@ def update_standort(id):
             else:
                 setattr(s, field, data[field])
 
-    s.changestamp = datetime.utcnow()
+    s.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
     return jsonify({"success": True})
 

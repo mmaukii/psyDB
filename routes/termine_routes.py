@@ -162,6 +162,8 @@ def update_stunde(id):
             print(f"Updating field {field} to {data[field]}")
             setattr(s, field, data[field])
 
+    # changestamp immer setzen
+    s.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
 
     # 🔄 Push direkt nach Anlage

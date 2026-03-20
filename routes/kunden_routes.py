@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Kunde, GruppenKunde, Gruppe
+from datetime import datetime
 
 kunden_bp = Blueprint("kunden", __name__)
 
@@ -134,7 +135,6 @@ def add_kunde():
     if exists:
         return jsonify({"success": False, "error": "Kürzel bereits vergeben"}), 409
 
-    from datetime import datetime
     k = Kunde(
         nachname=data["nachname"],
         vorname=data.get("vorname"),
@@ -189,6 +189,8 @@ def update_kunde(id):
         if field in data:
             setattr(k, field, data[field])
 
+    # changestamp immer setzen
+    k.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
     return jsonify({"success": True})
 

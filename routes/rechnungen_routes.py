@@ -74,7 +74,6 @@ def add_rechnung():
         rechnungTextUnten=data.get("rechnungTextUnten"),
         kommentar=data.get("kommentar"),
         timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
-        changestamp=data.get("changestamp"),
         zahlungsziel_tage=zahlungsziel_tage
     )
     db.session.add(r)
@@ -89,10 +88,12 @@ def update_rechnung(id):
     for field in [
         "datum","betrag","rechnungsnr",
         "bezahlt","rechnungTextOben","rechnungTextUnten",
-        "kommentar","timestamp","changestamp","zahlungsziel_tage"
+        "kommentar","timestamp","zahlungsziel_tage"
     ]:
         if field in data:
             setattr(r, field, data[field])
+    # changestamp immer setzen
+    r.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
     return jsonify({"success": True})
 

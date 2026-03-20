@@ -129,10 +129,7 @@ def update_gruppenstunde(id):
     for field in ["datum", "startzeit", "endzeit", "beschreibung", "kommentar", "betrag", "entfallen","doku"]:
         if field in data:
             setattr(gs, field, data[field])
-    gs.changestamp = datetime.utcnow().isoformat()
-
-  
-
+    gs.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
 
      # 🔄 Push nur, wenn data.push_termin vorhanden und == 1

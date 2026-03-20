@@ -97,7 +97,8 @@ def update_kunde_in_gruppe(gruppe_id, kunde_id):
 
     if "betrag" in data:
         gk.betrag = data["betrag"]
-
+    # changestamp immer setzen
+    gk.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
     return jsonify({"success": True})
 
