@@ -100,7 +100,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
     // Termine laden
     try {
         // 1️⃣ Fetch für Gruppentermine mit Teilnehmern
-        const response = await fetch(`api/gruppen/${gruppeId}/termine`);
+        const response = await fetch(`api/gruppentermine/${gruppeId}/termine`);
         if (!response.ok) throw new Error("Fehler beim Laden der Gruppentermine");
         const gruppentermine = await response.json();
         console.log("gruppentermine", gruppentermine)
@@ -114,6 +114,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
         const kunden = await fetch(`/api/gruppen/${gruppeId}/kunden`);
         if (!kunden.ok) throw new Error("Fehler beim Laden aller Kunden");
         const alleKunden = await kunden.json(); // enthält gruppe_id + kunde_id
+        console.log("alleKunden", alleKunden)
 
         if (gruppentermine.length === 0) {
             termineProGruppeListe.innerHTML = `<tr><td colspan="3">Keine Termine vorhanden.</td></tr>`;
@@ -136,7 +137,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                     <td>${st.beschreibung}</td>
                     <td>
                         <div class="anwesenheit-container">
-                            ${(Array.isArray(st.teilnehmer) ? st.teilnehmer : []).map(t => {
+                            ${st.teilnehmer.map(t => {
                                 // Prüfen, ob für diese Gruppentermin und diesen Kunden bereits eine Termin existiert
                                 const istSelected = alleTermine.some(s =>
                                     s.gruppentermin_id === st.id && s.kunde_id === t.kunde_id

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from database import db
-from models import Gruppentermin, Gruppe, Termin, GruppenKunde
+from models import Gruppentermin, Gruppe, Termin, GruppenKunde, Kunde
 from datetime import datetime
 from sqlalchemy import text
 from routes.kalender_routes import push_termin
@@ -158,8 +158,21 @@ def get_gruppentermine(gruppe_id):
 
             result = []
             for gs in termine:
-                # Teilnehmer abrufen
-                teilnehmer = [gk.kunde.name for gk in gs.kunden]  # gs.kunden ist Beziehung in deinem Modell
+
+                # Teilnehmer: alle Kunden, die in GruppenKunde dieser Gruppe zugeordnet sind, mit Kürzel
+                teilnehmer = []
+                gruppenkunden = GruppenKunde.query.filter_by(gruppe_id=gs.gruppe_id).all()
+                kunden = Kunde.query.all()
+                for k in gruppenkunden:
+                     print(k.__dict__)
+                for k in kunden:
+                    print(k.__dict__)
+                kunden_ids = [k.id for k in kunden]
+                kunden_map = {k.id: k.kuerzel for k in kunden}
+
+                for gk in gruppenkunden:
+                    if gk.kunde_id in kunden_ids:
+                        teilnehmer.append(kunden_map[gk.kunde_id])
 
                 result.append({
                     "id": gs.id,
