@@ -1,3 +1,5 @@
+
+
 {% extends "base.html" %}
 
 {% block page %}
@@ -144,12 +146,11 @@
     <h3 style="margin: 0; display: flex; justify-content: space-between; align-items: center; grid-column: 1 / -1;">
         <!-- Linke Gruppe: Überschrift + Tabs -->
         <div style="display: flex; align-items: center;">
-            <span>Termine</span>
             <!-- Abstand nur zwischen Text und erstem Button -->
-            <button class="tab active" data-tab="termine" style="margin-left: 20px;">Termine</button>
-            <button class="tab" data-tab="anwesenheit">Anwesenheit</button>
+            <button class="tab active" data-tab="termine" style="margin-left: 20px;">Termine der Gruppe</button>
+            <button class="tab" data-tab="anwesenheit">Anwesenheit bei Terminen</button>
             <button class="tab" data-tab="preise">Preise für Teilnehmer</button>
-            <button class="tab" data-tab="gruppen-doku">Doku</button>
+            <button class="tab" data-tab="gruppen-doku">Gruppendoku</button>
         </div>
 
         <!-- Rechter Button -->
@@ -160,7 +161,7 @@
     </h3>
         
 
-        <div class="tab-content active" id="termine" style="grid-column: 1 / -1;">
+        <div class="tab-content active" id="tFermine" style="grid-column: 1 / -1;">
 
             <table id="termineproGruppeTabelle">
                 <thead>
@@ -180,6 +181,10 @@
 
         <!-- Tab: Anwesenheit -->
          <div class="tab-content" id="anwesenheit" style="grid-column: 1 / -1;">
+                        <div style="margin-bottom:8px;color:#555;font-size:13px;">
+                            Hier Anwesenheit bei Terminen festlegen. Nach Klick auf das Speichersymbol werden Gruppentermine auf die einzelnen Kunden übetragen/gelöscht.
+                        </div>
+            
             <table class="table">
                 <thead>
                     <tr>

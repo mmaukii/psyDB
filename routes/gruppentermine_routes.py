@@ -170,9 +170,26 @@ def get_gruppentermine(gruppe_id):
                 kunden_ids = [k.id for k in kunden]
                 kunden_map = {k.id: k.kuerzel for k in kunden}
 
+
                 for gk in gruppenkunden:
                     if gk.kunde_id in kunden_ids:
-                        teilnehmer.append(kunden_map[gk.kunde_id])
+                        teilnehmer.append({
+                            "kunde_id": gk.kunde_id,
+                            "kuerzel": kunden_map[gk.kunde_id]
+                        })
+
+                # Zusätzlich: alle Termine mit gleichem gruppentermin_id (gs.id)
+                termine = Termin.query.filter_by(gruppentermin_id=gs.id).all()
+                vorhandene_ids = {tn["kunde_id"] for tn in teilnehmer}
+                for t in termine:
+                    if t.kunde_id in kunden_ids and t.kunde_id not in vorhandene_ids:
+                        teilnehmer.append({
+                            "kunde_id": t.kunde_id,
+                            "kuerzel": kunden_map[t.kunde_id]
+                        })
+                        vorhandene_ids.add(t.kunde_id)
+
+                
 
                 result.append({
                     "id": gs.id,
