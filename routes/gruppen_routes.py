@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Gruppe
+from datetime import datetime
 
 gruppen_bp = Blueprint("gruppen", __name__)
 
@@ -71,7 +72,6 @@ def add_gruppe():
     gruppenkuerzel = data.get("gruppenkuerzel")
     if not gruppenkuerzel:
         return jsonify({"success": False, "error": "Gruppenkuerzel ist erforderlich"}), 400
-    from datetime import datetime
     g = Gruppe(
         gruppenname=data["gruppenname"],
         standardbetrag=data.get("standardbetrag"),
@@ -97,6 +97,7 @@ def update_gruppe(id):
     for field in ["gruppenname", "standardbetrag", "dauer_min", "gruppenkuerzel", "rechnungstext", "doku", "aktiv"]:
         if field in data:
             setattr(g, field, data[field])
+    g.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
     return jsonify({"success": True})
 

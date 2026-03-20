@@ -56,7 +56,7 @@ def update_druckvorlage(id):
     for field in ["name", "pfad", "kuerzel"]:
         if field in data:
             setattr(v, field, data[field])
-
+    v.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
     db.session.commit()
     return jsonify({"success": True})
 

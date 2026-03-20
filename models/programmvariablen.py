@@ -9,3 +9,4 @@ class Programmvariable(db.Model):
     wert = db.Column(db.String, nullable=True)
     sort = db.Column(db.Integer, nullable=True)
     checkbox = db.Column(db.Boolean, nullable=True, default=False)
+    changestamp = db.Column(db.String, nullable=True)

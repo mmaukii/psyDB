@@ -159,11 +159,16 @@ def update_stunde(id):
         "abgesagt", "timestamp", "changestamp", "gruppentermin_id","doku","pers_doku"
     ]:
         if field in data:
-            print(f"Updating field {field} to {data[field]}")
+            #print(f"Updating field {field} to {data[field]}")
             setattr(s, field, data[field])
 
     # changestamp immer setzen
+    print("zeitpunkt aus Funktion", datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"))
+
     s.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    print("zeitpunkt changestamp:", s.changestamp)
+    print("zeitpunkt aus Funktion", datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"))
+
     db.session.commit()
 
     # 🔄 Push direkt nach Anlage

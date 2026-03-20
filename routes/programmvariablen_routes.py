@@ -5,6 +5,7 @@ from database import db
 from models import Programmvariable
 from config import use_passphrase_mode, verify_passphrase, set_passphrase, set_new_passphrase
 import keyring
+from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
 
@@ -54,10 +55,19 @@ def get_programmvariable_by_name(name):
 def update_programmvariable(id):
     v = Programmvariable.query.get_or_404(id)
     data = request.get_json()
-    if 'wert' in data:
+    wert_changed = False
+    checkbox_changed = False
+    if 'wert' in data and data['wert'] != v.wert:
         v.wert = data['wert']
-    if 'checkbox' in data:
+        wert_changed = True
+    if 'checkbox' in data and data['checkbox'] != v.checkbox:
         v.checkbox = data['checkbox']
+        checkbox_changed = True
+    if wert_changed or checkbox_changed:
+        v.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        print(f"Programmvariable '{v.name}' aktualisiert: wert={v.wert}, checkbox={v.checkbox}, changestamp={v.changestamp}")
+    else:
+        print(f"Programmvariable '{v.name}' keine Änderung: wert={v.wert}, checkbox={v.checkbox}")
     db.session.commit()
     return jsonify({"message": "Aktualisiert"})
 
