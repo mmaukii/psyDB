@@ -12,6 +12,8 @@ class Gruppe(db.Model):
     rechnungstext = db.Column(db.String)
     doku = db.Column(EncryptedString)
     aktiv = db.Column(db.Integer, default=1)
+    timestamp = db.Column(db.String)
+    changestamp = db.Column(db.String)
 
     # ✅ FEHLTE
     gruppentermine = db.relationship(

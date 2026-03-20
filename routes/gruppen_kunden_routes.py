@@ -71,7 +71,8 @@ def add_kunde_zu_gruppe(gruppe_id):
     gk = GruppenKunde(
         gruppe_id=gruppe_id,
         kunde_id=data["kunde_id"],
-        betrag=data.get("betrag")
+        betrag=data.get("betrag"),
+        timestamp=data.get("timestamp")
     )
 
     db.session.add(gk)

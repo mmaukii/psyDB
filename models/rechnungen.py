@@ -15,8 +15,8 @@ class Rechnung(db.Model):
     rechnungTextUnten = db.Column(db.String)
     kommentar = db.Column(db.String)
 
-    timestamp = db.Column(db.Integer)
-    changestamp = db.Column(db.Integer)
+    timestamp = db.Column(db.String)
+    changestamp = db.Column(db.String)
 
     zahlungsziel_tage = db.Column(db.Integer, nullable=True)
 

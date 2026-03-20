@@ -1,6 +1,8 @@
 from database import db
 
 
+from datetime import datetime
+
 class Druckvorlage(db.Model):
     __tablename__ = "druckvorlagen"
 
@@ -8,3 +10,5 @@ class Druckvorlage(db.Model):
     name = db.Column(db.String)
     pfad = db.Column(db.String)
     kuerzel = db.Column(db.String)
+    timestamp = db.Column(db.String)
+    changestamp = db.Column(db.String)

@@ -6,3 +6,5 @@ class GruppenKunde(db.Model):
     gruppe_id = db.Column(db.Integer, db.ForeignKey("gruppen.id"), primary_key=True)
     kunde_id = db.Column(db.Integer, db.ForeignKey("kunden.id"), primary_key=True)
     betrag = db.Column(db.Integer)
+    timestamp = db.Column(db.String)
+    changestamp = db.Column(db.String)

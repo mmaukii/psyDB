@@ -91,7 +91,6 @@ def add_stunde():
         betrag=data["betrag"],
         abgesagt=data.get("abgesagt"),
         timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
-        changestamp=data.get("changestamp"),
         gruppentermin_id=data.get("gruppentermin_id"),
     )
 

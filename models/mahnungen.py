@@ -13,6 +13,8 @@ class Mahnung(db.Model):
     zahlungsziel_tage = db.Column(db.Integer, nullable=True)
     verzugszinsen = db.Column(db.Float, default=0.0)
     mahnspesen = db.Column(db.Float, default=0.0)
+    timestamp = db.Column(db.String)
+    changestamp = db.Column(db.String)
     
     # Optional: Beziehung zu Rechnung, falls du darauf zugreifen willst
     rechnung = db.relationship("Rechnung", backref="mahnungen", lazy=True)

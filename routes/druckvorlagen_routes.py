@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Druckvorlage
+from datetime import datetime
 
 
 druckvorlagen_bp = Blueprint("druckvorlagen", __name__)
@@ -39,6 +40,7 @@ def add_druckvorlage():
         name=data.get("name"),
         pfad=data.get("pfad"),
         kuerzel=data.get("kuerzel"),
+        timestamp=datetime.now().replace(microsecond=0)
     )
 
     db.session.add(v)

@@ -589,7 +589,8 @@ def create_rechnungen_aus_termine():
             for s in kunden_termine:
                 link = TermineRechnung(
                     rechnung_id=rechnung.id,
-                    termin_id=s.id   # bleibt so
+                    termin_id=s.id,   # bleibt so
+                    timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
                 )
                 db.session.add(link)
 

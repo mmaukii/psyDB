@@ -9,7 +9,7 @@ app = Flask(__name__)
 def get_all_termine_rechnungen():
     all_sr = TermineRechnung.query.all()
     result = [
-        {"id": sr.id, "rechnung_id": sr.rechnung_id, "termine_id": sr.termine_id}
+        {"id": sr.id, "rechnung_id": sr.rechnung_id, "termin_id": sr.termin_id, "timestamp": sr.timestamp}
         for sr in all_sr
     ]
     return jsonify(result)
@@ -18,26 +18,28 @@ def get_all_termine_rechnungen():
 @app.route("api/termine_rechnungen/<int:id>", methods=["GET"])
 def get_termine_rechnung(id):
     sr = TermineRechnung.query.get_or_404(id)
-    return jsonify({"id": sr.id, "rechnung_id": sr.rechnung_id, "termine_id": sr.termine_id})
+    return jsonify({"id": sr.id, "rechnung_id": sr.rechnung_id, "termin_id": sr.termin_id, "timestamp": sr.timestamp})
 
-# --- Neue Zuordnung erstellen ---
+# --- Neue Zuordnung erstellen --- -Wird von keiner Logik verwendet!!!
 @app.route("api/termine_rechnungen", methods=["POST"])
 def add_termine_rechnung():
     data = request.get_json()
-    rechnung_id = data.get("rechnung_id")
-    termine_id = data.get("termine_id")
 
-    if not rechnung_id or not termine_id:
+    rechnung_id = data.get("rechnung_id")
+    termin_id = data.get("termine_id")
+
+    if not rechnung_id or not termin_id:
         return jsonify({"error": "rechnung_id und termine_id erforderlich"}), 400
 
     from datetime import datetime
     sr = TermineRechnung(
         rechnung_id=rechnung_id,
-        termine_id=termine_id,
-        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        termin_id=termin_id,
+        timestamp="hallo"
     )
     db.session.add(sr)
     db.session.commit()
+    print(f"timestamp nach Commit: {sr.timestamp}")
     return jsonify({"success": True, "id": sr.id}), 201
 
 # --- Zuordnung aktualisieren ---
@@ -47,7 +49,7 @@ def update_termine_rechnung(id):
     data = request.get_json()
     
     sr.rechnung_id = data.get("rechnung_id", sr.rechnung_id)
-    sr.termine_id = data.get("termine_id", sr.termine_id)
+    sr.termin_id = data.get("termine_id", sr.termin_id)
 
     db.session.commit()
     return jsonify({"success": True})
