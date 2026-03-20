@@ -114,9 +114,12 @@ def change_passphrase():
         return jsonify({"error": "Aktuelles Passwort ist falsch"}), 403
 
     payloads = _collect_encrypted_payloads()
-    set_passphrase(new_password)
+    #print(new_password)
+    #print("Payloads für Passphrase-Änderung gesammelt:", [(type(r).__name__, v) for r, v in payloads])
+    set_new_passphrase(new_password)
     for record, values in payloads:
         for field, value in values.items():
+            #print(f"[DEBUG] Vor setattr: {type(record).__name__} id={getattr(record, 'id', '?')} field={field} value={repr(value)[:80]}")
             setattr(record, field, value)
     db.session.commit()
 
