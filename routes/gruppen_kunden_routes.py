@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import GruppenKunde, Kunde, Gruppe
+from datetime import date, datetime, timedelta
+
 
 gruppenkunden_bp = Blueprint("gruppenkunden", __name__)
 
@@ -47,7 +49,7 @@ def update_gruppen_kunden(id):
     # Kunden hinzufügen
     hinzuzufuegen = neue_kunden_ids - aktuelle_kunden
     for kunde_id in hinzuzufuegen:
-        db.session.add(GruppenKunde(gruppe_id=id, kunde_id=kunde_id))
+        db.session.add(GruppenKunde(gruppe_id=id, kunde_id=kunde_id,timestamp=datetime.now().replace(microsecond=0)))
 
     # Kunden entfernen, die nicht mehr ausgewählt sind
     zu_entfernen = aktuelle_kunden - neue_kunden_ids
@@ -72,7 +74,7 @@ def add_kunde_zu_gruppe(gruppe_id):
         gruppe_id=gruppe_id,
         kunde_id=data["kunde_id"],
         betrag=data.get("betrag"),
-        timestamp=data.get("timestamp")
+        timestamp=datetime.now().replace(microsecond=0)
     )
 
     db.session.add(gk)

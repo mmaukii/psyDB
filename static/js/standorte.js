@@ -199,7 +199,19 @@ document.getElementById("addStandortBtn").addEventListener("click", () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(newData)
-        }).then(() => loadStandorte());
+        })
+        .then(async response => {
+            if (response.status === 409) {
+                const data = await response.json();
+                showToast(data.error || "Kürzel bereits vorhanden!", 3000);
+            } else if (response.ok) {
+                loadStandorte();
+                showToast("Standort gespeichert!");
+            } else {
+                const data = await response.json().catch(() => ({}));
+                showToast(data.error || "Fehler beim Speichern!", 3000);
+            }
+        });
     });
 });
 

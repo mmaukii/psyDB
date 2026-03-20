@@ -62,7 +62,7 @@ def add_standort():
         kontoName=data.get("kontoName"),
         bankname=data.get("bankname"),
         standard=int(data.get("standard", 0)),
-        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S"),
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
     )
 
     db.session.add(s)
