@@ -1,3 +1,40 @@
+// Datenbank Passwort ändern
+document.getElementById("changeDbPassphraseBtn").addEventListener("click", () => {
+    const current = document.getElementById("dbPassphraseCurrent").value;
+    const next = document.getElementById("dbPassphraseNew").value;
+    const confirm = document.getElementById("dbPassphraseNewConfirm").value;
+
+    if (!current || !next || !confirm) {
+        alert("Bitte alle Passwortfelder ausfüllen!");
+        return;
+    }
+    if (next !== confirm) {
+        alert("Neue Passwörter stimmen nicht überein!");
+        return;
+    }
+
+    fetch('/api/passphrase', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            current_password: current,
+            new_password: next
+        })
+    }).then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert("Datenbank Passwort geändert!");
+            document.getElementById("dbPassphraseCurrent").value = "";
+            document.getElementById("dbPassphraseNew").value = "";
+            document.getElementById("dbPassphraseNewConfirm").value = "";
+        } else {
+            alert("Fehler: " + data.error);
+        }
+    }).catch(err => {
+        console.error("Fehler:", err);
+        alert("Fehler beim Ändern des Passworts!");
+    });
+});
 // Kopie von standorte.js, angepasst auf einstellungen
 function loadEinstellungen() {
     fetch('/api/standorte')
