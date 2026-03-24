@@ -12,10 +12,10 @@ from sqlalchemy import desc, asc
 
 termine_bp = Blueprint("termine", __name__)
 
-# --- Alle Termine ---
+# --- Alle Termine die nicht nur offline gelöscht wurden ---
 @termine_bp.get("/termine")
 def get_all_termine():
-    termine = Termin.query.order_by(Termin.datum.desc(), Termin.startzeit).all()
+    termine = Termin.query.filter(Termin.nur_offline_geloescht == 0).order_by(Termin.datum.desc(), Termin.startzeit).all()
     return jsonify([{
         "id": s.id,
         "kunde_id": s.kunde_id,
@@ -33,10 +33,31 @@ def get_all_termine():
         "pers_doku": s.pers_doku
     } for s in termine])
 
-# --- Termine nach Kunde ---
+# --- Alle Termine die  nur offline gelöscht wurden ---
+@termine_bp.get("/termine_nur_offline_geloescht")
+def get_all_termine_nur_offline_geloescht():
+    termine = Termin.query.filter(Termin.nur_offline_geloescht == 1).order_by(Termin.datum.desc(), Termin.startzeit).all()
+    return jsonify([{
+        "id": s.id,
+        "kunde_id": s.kunde_id,
+        "datum": s.datum,
+        "startzeit": s.startzeit,
+        "endzeit": s.endzeit,
+        "beschreibung": s.beschreibung,
+        "kommentar": s.kommentar,
+        "betrag": s.betrag,
+        "abgesagt": s.abgesagt,
+        "timestamp": s.timestamp,
+        "changestamp": s.changestamp,
+        "gruppentermin_id": s.gruppentermin_id,
+        "doku": s.doku,
+        "pers_doku": s.pers_doku
+    } for s in termine])
+
+# --- Termine nach Kunde die nicht nur_offline_geloescht---
 @termine_bp.get("/termine/kunde/<int:kunde_id>")
 def get_termine_by_kunde(kunde_id):
-    termine = Termin.query.filter_by(kunde_id=kunde_id).order_by(Termin.datum.desc(), Termin.startzeit).all()
+    termine = Termin.query.filter_by(kunde_id=kunde_id).filter(Termin.nur_offline_geloescht == 0).order_by(Termin.datum.desc(), Termin.startzeit).all()
     return jsonify([{
         "id": s.id,
         "kunde_id": s.kunde_id,
@@ -199,9 +220,27 @@ def update_stunde(id):
 @termine_bp.delete("/termine/<int:id>")
 def delete_stunde(id):
     s = Termin.query.get_or_404(id)
-    db.session.delete(s)
-    db.session.commit()
-    return jsonify({"success": True})
+    # Event im Kalender löschen, falls vorhanden
+    online_delete_ok = True
+    if s.caldav_uid:
+        try:
+            from routes.kalender_routes import get_termin_calendar
+            cal = get_termin_calendar()
+            event = cal.event_by_uid(s.caldav_uid)
+            event.delete()
+            print(f"✅ Event {s.caldav_uid} aus WebDAV gelöscht")
+        except Exception as e:
+            print(f"⚠️ Event {s.caldav_uid} nicht im WebDAV gefunden (oder Fehler beim Löschen): {str(e)}")
+            online_delete_ok = False
+
+    if online_delete_ok:
+        db.session.delete(s)
+        db.session.commit()
+        return jsonify({"success": True})
+    else:
+        s.nur_offline_geloescht = 1
+        db.session.commit()
+        return jsonify({"success": False, "error": "Konnte online nicht gelöscht werden, nur_offline_geloescht=1"})
 
 # --- Termine mit aktivem Kunden, nicht abgesagt und nicht in Rechnung ---
 @termine_bp.get("/termine/nicht-abgesagt-aktive-kunde-nicht-in-rechnung")
@@ -382,6 +421,7 @@ def get_termine_kunde_rnr(kunde_id):
         .outerjoin(TermineRechnung, TermineRechnung.termin_id == Termin.id)
         .outerjoin(Rechnung, Rechnung.id == TermineRechnung.rechnung_id)
         .filter(Termin.kunde_id == kunde_id)
+        .filter(Termin.nur_offline_geloescht == 0)
         .order_by(desc(Termin.datum), desc(Termin.startzeit))
         .all()
     )

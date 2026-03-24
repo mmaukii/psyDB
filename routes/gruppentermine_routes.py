@@ -7,10 +7,10 @@ from routes.kalender_routes import push_termin
 
 gruppentermine_bp = Blueprint("gruppentermine", __name__)
 
-# --- Alle Gruppentermine ---
+# --- Alle Gruppentermine die nicht nur offline gelöscht wurden ---
 @gruppentermine_bp.get("/gruppentermine")
 def get_all_gruppentermine():
-    gs_list = Gruppentermin.query.order_by(Gruppentermin.datum, Gruppentermin.startzeit).all()
+    gs_list = Gruppentermin.query.filter(Gruppentermin.nur_offline_geloescht == 0).order_by(Gruppentermin.datum, Gruppentermin.startzeit).all()
     return jsonify([{
         "id": gs.id,
         "gruppe_id": gs.gruppe_id,
@@ -26,10 +26,11 @@ def get_all_gruppentermine():
         "doku": gs.doku
     } for gs in gs_list])
 
-# --- Alle termine einer bestimmten Gruppe ---
+# --- Alle termine einer bestimmten Gruppe die nicht nur offline gelöscht wurden ---
 @gruppentermine_bp.get("/gruppen/<int:gruppe_id>/termine")
 def get_termine_fuer_gruppe(gruppe_id):
     termine = Gruppentermin.query.filter_by(gruppe_id=gruppe_id)\
+        .filter(Gruppentermin.nur_offline_geloescht == 0)\
         .order_by(Gruppentermin.datum, Gruppentermin.startzeit)\
         .all()
 
@@ -72,13 +73,31 @@ def get_gruppenstunde(id):
 def delete_gruppenstunde(id):
     gs = Gruppentermin.query.get_or_404(id)
 
-    try:
-        db.session.delete(gs)
+    # Event im Kalender löschen, falls vorhanden
+    online_delete_ok = True
+    if gs.caldav_uid:
+        try:
+            from routes.kalender_routes import get_termin_calendar
+            cal = get_termin_calendar()
+            event = cal.event_by_uid(gs.caldav_uid)
+            event.delete()
+            print(f"✅ Event {gs.caldav_uid} aus WebDAV gelöscht")
+        except Exception as e:
+            print(f"⚠️ Event {gs.caldav_uid} nicht im WebDAV gefunden (oder Fehler beim Löschen): {str(e)}")
+            online_delete_ok = False
+
+    if online_delete_ok:
+        try:
+            db.session.delete(gs)
+            db.session.commit()
+            return jsonify({"success": True, "deleted_id": id})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "error": str(e)}), 500
+    else:
+        gs.nur_offline_geloescht = 1
         db.session.commit()
-        return jsonify({"success": True, "deleted_id": id})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Konnte online nicht gelöscht werden, nur_offline_geloescht=1"})
 
 
 # --- Neue Gruppentermin ---
@@ -153,9 +172,11 @@ def update_gruppenstunde(id):
         })
     return jsonify({"success": True, "id": gs.id})
 
+# --- Gruppenteremine mit terminen nur nicht offline gelöscht ---
 @gruppentermine_bp.get("/gruppentermine/<int:gruppe_id>/termine")
 def get_gruppentermine(gruppe_id):
             termine = Gruppentermin.query.filter_by(gruppe_id=gruppe_id)\
+                .filter(Gruppentermin.nur_offline_geloescht == 0)\
                 .order_by(Gruppentermin.datum, Gruppentermin.startzeit)\
                 .all()
 
