@@ -94,25 +94,31 @@ def add_gruppenstunde(gruppe_id):
         beschreibung=data.get("beschreibung"),
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
-        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
+        nur_offline_vorhanden=0
     )
     db.session.add(gs)
     db.session.flush()  # ID erzeugen, bevor commit
-
     db.session.commit()
 
-       # 🔄 Push direkt nach Anlage
     print(f"Neue Termin ID {gs.id} to calendar")
-    push_termin({
-        "gruppentermin_id": gs.id,
-        "datum": gs.datum,
-        "startzeit": gs.startzeit,
-        "endzeit": gs.endzeit,
-        "beschreibung": gs.beschreibung,
-        "kommentar": gs.kommentar,
-        "caldav_uid": None,
-        "kuerzel":gs.gruppe.gruppenkuerzel
-    })
+
+    try:
+        push_termin({
+            "gruppentermin_id": gs.id,
+            "datum": gs.datum,
+            "startzeit": gs.startzeit,
+            "endzeit": gs.endzeit,
+            "beschreibung": gs.beschreibung,
+            "kommentar": gs.kommentar,
+            "caldav_uid": None,
+            "kuerzel":gs.gruppe.gruppenkuerzel
+        })
+    except Exception as e:
+        print(f"Push Gruppentermin fehlgeschlagen, nur_offline_vorhanden wird auf 1 gesetzt: {e}")
+        gs.nur_offline_vorhanden = 1
+        db.session.commit()
+
     return jsonify({"success": True, "id": gs.id}), 201
 
 

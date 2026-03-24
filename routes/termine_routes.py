@@ -104,6 +104,7 @@ def add_stunde_mit_kunde(kunde_id):
     data = request.get_json()
     print("Termin anlegen mit Kunde ID:", kunde_id)
 
+
     s = Termin(
         kunde_id=kunde_id,
         datum=data["datum"],
@@ -113,13 +114,13 @@ def add_stunde_mit_kunde(kunde_id):
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
         timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
-        gruppentermin_id=data.get("gruppentermin_id")
+        gruppentermin_id=data.get("gruppentermin_id"),
+        nur_offline_vorhanden=0
     )
 
     db.session.add(s)
     db.session.commit()
 
-       # 🔄 Push direkt nach Anlage
     print(f"Neuer Termin ID {s.id} to calendar")
     event = {
         "id": s.id,
@@ -132,17 +133,22 @@ def add_stunde_mit_kunde(kunde_id):
         "caldav_uid": None
     }
 
-    push_termin({
-        "termin_id": s.id,
-        "datum": s.datum,
-        "startzeit": s.startzeit,
-        "endzeit": s.endzeit,
-        "beschreibung": s.beschreibung,
-        "kommentar": s.kommentar,
-        "abgesagt": s.abgesagt,
-        "caldav_uid": None,
-        "kuerzel": s.kunde.kuerzel
-    })
+    try:
+        push_termin({
+            "termin_id": s.id,
+            "datum": s.datum,
+            "startzeit": s.startzeit,
+            "endzeit": s.endzeit,
+            "beschreibung": s.beschreibung,
+            "kommentar": s.kommentar,
+            "abgesagt": s.abgesagt,
+            "caldav_uid": None,
+            "kuerzel": s.kunde.kuerzel
+        })
+    except Exception as e:
+        print(f"Push Termin fehlgeschlagen, nur_offline_vorhanden wird auf 1 gesetzt: {e}")
+        s.nur_offline_vorhanden = 1
+        db.session.commit()
 
     return jsonify(event), 201
 

@@ -23,6 +23,7 @@ class Gruppentermin(db.Model):
     caldav_etag = db.Column(db.String, nullable=True)
 
     pers_doku = db.Column(EncryptedString)
+    nur_offline_vorhanden = db.Column(db.Integer, default=0)
 
     gruppe = db.relationship(
         "Gruppe",

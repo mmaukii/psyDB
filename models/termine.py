@@ -28,3 +28,4 @@ class Termin(db.Model):
     kunde = db.relationship("Kunde", backref="termine")
 
     pers_doku = db.Column(EncryptedString)
+    nur_offline_vorhanden = db.Column(db.Integer, default=0)

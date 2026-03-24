@@ -1,3 +1,48 @@
+def sync_offline_termine_und_gruppentermine():
+    """
+    Synchronisiert alle Termine und Gruppentermine, die nur offline vorhanden sind (nur_offline_vorhanden=1).
+    """
+    from models import Termin, Gruppentermin
+    from routes.kalender_routes import push_termin
+    synced = 0
+    # Einzeltermine
+    for t in Termin.query.filter_by(nur_offline_vorhanden=1).all():
+        try:
+            push_termin({
+                "termin_id": t.id,
+                "datum": t.datum,
+                "startzeit": t.startzeit,
+                "endzeit": t.endzeit,
+                "beschreibung": t.beschreibung,
+                "kommentar": t.kommentar,
+                "abgesagt": t.abgesagt,
+                "caldav_uid": t.caldav_uid,
+                "kuerzel": t.kunde.kuerzel if t.kunde else None
+            })
+            t.nur_offline_vorhanden = 0
+            db.session.commit()
+            synced += 1
+        except Exception as e:
+            print(f"❗️Push Termin ID {t.id} fehlgeschlagen: {e}")
+    # Gruppentermine
+    for g in Gruppentermin.query.filter_by(nur_offline_vorhanden=1).all():
+        try:
+            push_termin({
+                "gruppentermin_id": g.id,
+                "datum": g.datum,
+                "startzeit": g.startzeit,
+                "endzeit": g.endzeit,
+                "beschreibung": g.beschreibung,
+                "kommentar": g.kommentar,
+                "caldav_uid": g.caldav_uid,
+                "kuerzel": g.gruppe.gruppenkuerzel if g.gruppe else None
+            })
+            g.nur_offline_vorhanden = 0
+            db.session.commit()
+            synced += 1
+        except Exception as e:
+            print(f"❗️Push Gruppentermin ID {g.id} fehlgeschlagen: {e}")
+    print(f"🔄 {synced} offline-Termine/Gruppentermine synchronisiert.")
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Termin, Gruppentermin, Kunde, Gruppe,Programmvariable
@@ -16,6 +61,8 @@ kalender_bp = Blueprint("kalender", __name__)
 # --- termine mit aktivem Kunden, nicht abgesagt und nicht in Rechnung ---
 @kalender_bp.get("/kalender/termine_anzuzeigen")
 def get_kalender_termine_anzuzueigen():
+    # Vor dem Anzeigen: Offline-Termine/Gruppentermine synchronisieren
+    sync_offline_termine_und_gruppentermine()
 
     # Einzeltermine (kundenbezogen)
     termine = (
@@ -674,6 +721,8 @@ def sync_calendar():
     logs = []
     print("🔄 Termin-Kalender-Synchronisation gestartet backend")
     try:
+        # Vor dem Sync: Offline-Termine/Gruppentermine synchronisieren
+        sync_offline_termine_und_gruppentermine()
         pull_termine_from_caldav(delete_action="abgesagt", log=logs)
         # Zeitstempel speichern
         pv = Programmvariable.query.filter_by(name="letzte_kalender_sync").first()
