@@ -62,7 +62,11 @@
             {% if overdue_rechnungen %}
                 <ul>
                     {% for r in overdue_rechnungen %}
-                        <li>Rechnung {{ r.rechnungsnr }} - {{ r.datum[8:10] }}.{{ r.datum[5:7] }}.{{ r.datum[0:4] }} - {{ "{:,.2f}".format(r.betrag).replace(",", "X").replace(".", ",").replace("X", ".") }} €</li>
+                        <li>RNr {{ r.rechnungsnr }}-{{ r.kuerzel }} vom {{ r.datum[8:10] }}.{{ r.datum[5:7] }}.{{ r.datum[2:4] }} - {{ "{:,.2f}".format(r.betrag).replace(",", "X").replace(".", ",").replace("X", ".") }} €
+                        {% if r.days_overdue is defined and r.days_overdue > 0 %}
+                            <span >({{ r.days_overdue }} d fällig)</span>
+                        {% endif %}
+                        </li>
                     {% endfor %}
                 </ul>
             {% else %}

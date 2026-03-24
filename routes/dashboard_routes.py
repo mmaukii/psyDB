@@ -19,10 +19,22 @@ def dashboard():
     # 1. Unbezahlte Rechnungen, die überfällig sind (Fälligkeitsdatum überschritten)
     all_unpaid = Rechnung.query.filter(Rechnung.bezahlt == 0).all()
     overdue_rechnungen = []
+    from models.termine_rechnungen import TermineRechnung
+    from models.termine import Termin
     for r in all_unpaid:
         if r.zahlungsziel_tage:
             due_date = date.fromisoformat(r.datum) + timedelta(days=r.zahlungsziel_tage)
             if due_date < today:
+                days_overdue = (today - due_date).days
+                setattr(r, 'days_overdue', days_overdue)
+                # Kundenkürzel über zugehörige Termine ermitteln
+                tr = TermineRechnung.query.filter_by(rechnung_id=r.id).first()
+                kuerzel = ""
+                if tr:
+                    termin = Termin.query.get(tr.termin_id)
+                    if termin and termin.kunde:
+                        kuerzel = termin.kunde.kuerzel
+                setattr(r, 'kuerzel', kuerzel)
                 overdue_rechnungen.append(r)
     # Sortiere nach Datum
     overdue_rechnungen.sort(key=lambda x: x.datum)
