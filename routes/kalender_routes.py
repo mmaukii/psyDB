@@ -1,3 +1,37 @@
+def cleanup_offline_deleted_termine():
+    """
+    Löscht alle Termine und Gruppentermine mit nur_offline_geloescht=1 sowohl online (CalDAV) als auch offline (DB).
+    Sollte aufgerufen werden, wenn wieder eine Verbindung zum Kalender besteht.
+    """
+    from models import Termin, Gruppentermin
+    from routes.kalender_routes import get_termin_calendar
+    deleted_count = 0
+    # Einzeltermine
+    for t in Termin.query.filter_by(nur_offline_geloescht=1).all():
+        if t.caldav_uid:
+            try:
+                cal = get_termin_calendar()
+                event = cal.event_by_uid(t.caldav_uid)
+                event.delete()
+                print(f"✅ Event {t.caldav_uid} aus WebDAV gelöscht (cleanup)")
+            except Exception as e:
+                print(f"⚠️ Event {t.caldav_uid} nicht im WebDAV gefunden (cleanup): {str(e)}")
+        db.session.delete(t)
+        deleted_count += 1
+    # Gruppentermine
+    for g in Gruppentermin.query.filter_by(nur_offline_geloescht=1).all():
+        if g.caldav_uid:
+            try:
+                cal = get_termin_calendar()
+                event = cal.event_by_uid(g.caldav_uid)
+                event.delete()
+                print(f"✅ Event {g.caldav_uid} aus WebDAV gelöscht (cleanup)")
+            except Exception as e:
+                print(f"⚠️ Event {g.caldav_uid} nicht im WebDAV gefunden (cleanup): {str(e)}")
+        db.session.delete(g)
+        deleted_count += 1
+    db.session.commit()
+    print(f"🧹 {deleted_count} nur_offline_geloescht-Termine/Gruppentermine endgültig gelöscht.")
 def sync_offline_termine_und_gruppentermine():
     """
     Synchronisiert alle Termine und Gruppentermine, die nur offline vorhanden sind (nur_offline_vorhanden=1).
@@ -63,6 +97,7 @@ kalender_bp = Blueprint("kalender", __name__)
 def get_kalender_termine_anzuzueigen():
     # Vor dem Anzeigen: Offline-Termine/Gruppentermine synchronisieren
     sync_offline_termine_und_gruppentermine()
+    cleanup_offline_deleted_termine()
 
     # Einzeltermine (kundenbezogen)
     termine = (
@@ -723,6 +758,7 @@ def sync_calendar():
     try:
         # Vor dem Sync: Offline-Termine/Gruppentermine synchronisieren
         sync_offline_termine_und_gruppentermine()
+        cleanup_offline_deleted_termine()
         pull_termine_from_caldav(delete_action="abgesagt", log=logs)
         # Zeitstempel speichern
         pv = Programmvariable.query.filter_by(name="letzte_kalender_sync").first()
