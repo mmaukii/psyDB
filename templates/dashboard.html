@@ -80,7 +80,14 @@
             {% if mahnungen %}
                 <ul>
                     {% for m in mahnungen %}
-                        <li>Mahnung {{ m.mahnungsnr }} für Rechnung {{ m.rechnung_id }} - {{ m.datum[8:10] }}.{{ m.datum[5:7] }}.{{ m.datum[0:4] }}</li>
+                        <li>
+                            {{ m.mahnungsnr }}. Mahnung für RNr {% if m.rechnung and m.rechnung.rechnungsnr %}{{ m.rechnung.rechnungsnr}}{% else %}{{ m.rechnung_id }}{% endif %}
+                            {% if m.kuerzel %}-{{ m.kuerzel }}{% endif %}
+                            <!-- {{ m.datum[8:10] }}.{{ m.datum[5:7] }}.{{ m.datum[2:4] }} -->
+                             {% if m.days_overdue is defined and m.days_overdue > 0 %}
+                                <span>({{ m.days_overdue }} d fällig)</span>
+                            {% endif %}
+                        </li>
                     {% endfor %}
                 </ul>
             {% else %}

@@ -40,12 +40,27 @@ def dashboard():
     overdue_rechnungen.sort(key=lambda x: x.datum)
     
     # 2. Überfällige Mahnungen
-    all_mahnungen = Mahnung.query.all()
+    from models.termine_rechnungen import TermineRechnung
+    from models.termine import Termin
     overdue_mahnungen = []
+    all_mahnungen = Mahnung.query.all()
     for m in all_mahnungen:
         if m.zahlungsziel_tage:
             due_date = date.fromisoformat(m.datum) + timedelta(days=m.zahlungsziel_tage)
             if due_date < today:
+                # Kürzel ermitteln
+                kuerzel = ""
+                termin = None
+                if m.rechnung:
+                    tr = TermineRechnung.query.filter_by(rechnung_id=m.rechnung.id).first()
+                    if tr:
+                        termin = Termin.query.get(tr.termin_id)
+                if termin and termin.kunde:
+                    kuerzel = termin.kunde.kuerzel
+                setattr(m, 'kuerzel', kuerzel)
+                # Fälligkeitsdauer berechnen
+                days_overdue = (today - due_date).days
+                setattr(m, 'days_overdue', days_overdue)
                 overdue_mahnungen.append(m)
     # Sortiere nach Datum absteigend und nimm die letzten 10
     overdue_mahnungen.sort(key=lambda x: x.datum, reverse=True)
