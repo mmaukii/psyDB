@@ -34,6 +34,8 @@ def cleanup_offline_deleted_termine():
         deleted_count += 1
     db.session.commit()
     print(f"🧹 {deleted_count} nur_offline_geloescht-Termine/Gruppentermine endgültig gelöscht.")
+
+
 def sync_offline_termine_und_gruppentermine():
     """
     Synchronisiert alle Termine und Gruppentermine, die nur offline vorhanden sind (nur_offline_vorhanden=1).

@@ -9,6 +9,7 @@
         </div>
         <!-- Logo rechts oben -->
         <img id="dashboardLogo" src="" alt="Logo" style="max-width: 150px; max-height: 80px; display: none;">
+
     </div>
         
       
@@ -150,24 +151,9 @@
 }
 </style>
 
-<script>
-// Logo beim Laden anzeigen
-document.addEventListener('DOMContentLoaded', () => {
-    fetch('/api/programmvariablen')
-        .then(res => res.json())
-        .then(data => {
-            const logoVar = data.find(v => v.name === "logo_file");
-            const logoImg = document.getElementById("dashboardLogo");
-            
-            if (logoVar && logoVar.wert) {
-                logoImg.src = logoVar.wert;
-                logoImg.style.display = "block";
-            } else {
-                logoImg.style.display = "none";
-            }
-        }).catch(err => {
-            console.error("Fehler beim Laden des Logos:", err);
-        });
-});
-</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
 {% endblock %}
