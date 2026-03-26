@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Gruppentermin, Gruppe, Termin, GruppenKunde, Kunde
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import text
 from routes.kalender_routes import push_termin
 
@@ -154,7 +154,7 @@ def update_gruppenstunde(id):
     for field in ["datum", "utc_starttime", "utc_endtime", "beschreibung", "kommentar", "betrag", "entfallen","doku"]:
         if field in data:
             setattr(gs, field, data[field])
-    gs.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    gs.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
 
      # 🔄 Push nur, wenn data.push_termin vorhanden und == 1

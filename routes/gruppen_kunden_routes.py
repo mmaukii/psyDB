@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import GruppenKunde, Kunde, Gruppe
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone    
 
 
 gruppenkunden_bp = Blueprint("gruppenkunden", __name__)
@@ -98,7 +98,7 @@ def update_kunde_in_gruppe(gruppe_id, kunde_id):
     if "betrag" in data:
         gk.betrag = data["betrag"]
     # changestamp immer setzen
-    gk.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    gk.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
     return jsonify({"success": True})
 

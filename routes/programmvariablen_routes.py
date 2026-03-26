@@ -5,7 +5,7 @@ from database import db
 from models import Programmvariable
 from config import use_passphrase_mode, verify_passphrase, set_passphrase, set_new_passphrase
 import keyring
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 from werkzeug.utils import secure_filename
 
@@ -64,7 +64,7 @@ def update_programmvariable(id):
         v.checkbox = data['checkbox']
         checkbox_changed = True
     if wert_changed or checkbox_changed:
-        v.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        v.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         print(f"Programmvariable '{v.name}' aktualisiert: wert={v.wert}, checkbox={v.checkbox}, changestamp={v.changestamp}")
     else:
         print(f"Programmvariable '{v.name}' keine Änderung: wert={v.wert}, checkbox={v.checkbox}")

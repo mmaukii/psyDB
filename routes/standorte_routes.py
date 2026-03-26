@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Standort
-from datetime import datetime
+from datetime import datetime, timezone
 
 standorte_bp = Blueprint("standorte", __name__)
 
@@ -85,7 +85,7 @@ def update_standort(id):
             else:
                 setattr(s, field, data[field])
 
-    s.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    s.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
     return jsonify({"success": True})
 

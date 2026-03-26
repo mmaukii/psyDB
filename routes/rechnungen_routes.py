@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, render_template_string, current_app as app,  send_file
 from database import db
 from models import Rechnung, Termin, TermineRechnung, Kunde, Mahnung, Programmvariable, Druckvorlage
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import os
 import subprocess
 import sys
@@ -93,7 +93,7 @@ def update_rechnung(id):
         if field in data:
             setattr(r, field, data[field])
     # changestamp immer setzen
-    r.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    r.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
     return jsonify({"success": True})
 

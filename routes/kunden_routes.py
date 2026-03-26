@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Kunde, GruppenKunde, Gruppe
-from datetime import datetime
+from datetime import datetime, timezone
 
 kunden_bp = Blueprint("kunden", __name__)
 
@@ -190,7 +190,7 @@ def update_kunde(id):
             setattr(k, field, data[field])
 
     # changestamp immer setzen
-    k.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    k.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
     return jsonify({"success": True})
 

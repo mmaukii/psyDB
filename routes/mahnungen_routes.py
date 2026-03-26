@@ -5,7 +5,7 @@ import os
 import subprocess
 import qrcode
 import pdfkit
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import math
 
 def get_mahnung_config():
@@ -125,7 +125,7 @@ def update_mahnung(id):
         if field in data:
             setattr(m, field, data[field])
     # changestamp immer setzen
-    m.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    m.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
     return jsonify({"success": True})
 

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Druckvorlage
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 druckvorlagen_bp = Blueprint("druckvorlagen", __name__)
@@ -56,7 +56,7 @@ def update_druckvorlage(id):
     for field in ["name", "pfad", "kuerzel"]:
         if field in data:
             setattr(v, field, data[field])
-    v.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    v.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
     return jsonify({"success": True})
 
