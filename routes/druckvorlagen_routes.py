@@ -40,7 +40,7 @@ def add_druckvorlage():
         name=data.get("name"),
         pfad=data.get("pfad"),
         kuerzel=data.get("kuerzel"),
-        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     )
 
     db.session.add(v)

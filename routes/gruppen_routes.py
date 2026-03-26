@@ -80,7 +80,7 @@ def add_gruppe():
         rechnungstext=data.get("rechnungstext"),
         doku=data.get("doku"),
         aktiv=data.get("aktiv", 1),
-        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
     db.session.add(g)
     db.session.commit()

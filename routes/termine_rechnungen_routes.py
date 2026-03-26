@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from database import db
 from models import TermineRechnung
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 
@@ -35,7 +36,7 @@ def add_termine_rechnung():
     sr = TermineRechnung(
         rechnung_id=rechnung_id,
         termin_id=termin_id,
-        timestamp="hallo"
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
     db.session.add(sr)
     db.session.commit()

@@ -111,7 +111,7 @@ def add_stunde():
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
         abgesagt=data.get("abgesagt"),
-        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         gruppentermin_id=data.get("gruppentermin_id"),
     )
 
@@ -134,7 +134,7 @@ def add_stunde_mit_kunde(kunde_id):
         beschreibung=data.get("beschreibung"),
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
-        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         gruppentermin_id=data.get("gruppentermin_id"),
         nur_offline_vorhanden=0
     )

@@ -157,7 +157,7 @@ def add_kunde():
         svnr=data.get("svnr"),
         krankenkasse=data.get("krankenkasse"),
         diagnose=data.get("diagnose"),
-        timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
 
     db.session.add(k)

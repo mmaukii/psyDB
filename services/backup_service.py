@@ -1,6 +1,6 @@
 import os
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 
 def backup_sqlite_db(db_path, max_backups=10):
     if not os.path.exists(db_path):
@@ -15,7 +15,7 @@ def backup_sqlite_db(db_path, max_backups=10):
     os.makedirs(backup_dir, exist_ok=True)
 
     # Timestamp: yyMMdd_HHMM
-    timestamp = datetime.now().strftime("%y%m%d_%H%M")
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     backup_name = f"{timestamp}_{db_name}"
     backup_path = os.path.join(backup_dir, backup_name)
 

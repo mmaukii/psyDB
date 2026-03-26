@@ -1,7 +1,7 @@
 
 from flask import Blueprint, Flask, render_template, request, redirect, url_for, render_template_string, jsonify, make_response
 import sqlite3
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from database import db
 import os
 import signal
@@ -53,8 +53,7 @@ with app.app_context():
             iban='xx',
             kontoName='dummy',
             bankname='dummy',
-            timestamp=datetime.now().isoformat(),
-            changestamp=datetime.now().isoformat(),
+            timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             standard=1
         )
         db.session.add(dummy)

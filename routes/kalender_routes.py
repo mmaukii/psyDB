@@ -626,7 +626,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(kunde.stundensatz) if kunde.stundensatz is not None else 0,
-                    timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
+                    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     caldav_uid=uid,
                     caldav_etag=etag
                 )
@@ -660,7 +660,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(gruppe.standardbetrag) if gruppe.standardbetrag is not None else 0,
-                    timestamp=datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S"),
+                    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     caldav_uid=uid,
                     caldav_etag=etag
                 )

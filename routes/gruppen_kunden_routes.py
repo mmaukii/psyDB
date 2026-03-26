@@ -49,7 +49,7 @@ def update_gruppen_kunden(id):
     # Kunden hinzufügen
     hinzuzufuegen = neue_kunden_ids - aktuelle_kunden
     for kunde_id in hinzuzufuegen:
-        db.session.add(GruppenKunde(gruppe_id=id, kunde_id=kunde_id,timestamp=datetime.now().replace(microsecond=0)))
+        db.session.add(GruppenKunde(gruppe_id=id, kunde_id=kunde_id,timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")))
 
     # Kunden entfernen, die nicht mehr ausgewählt sind
     zu_entfernen = aktuelle_kunden - neue_kunden_ids
@@ -74,7 +74,7 @@ def add_kunde_zu_gruppe(gruppe_id):
         gruppe_id=gruppe_id,
         kunde_id=data["kunde_id"],
         betrag=data.get("betrag"),
-        timestamp=datetime.now().replace(microsecond=0)
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
 
     db.session.add(gk)
