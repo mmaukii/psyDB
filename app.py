@@ -39,6 +39,26 @@ with app.app_context():
     db.create_all()
     # Initiale Programmvariablen einfügen, falls nicht vorhanden
     from models import Programmvariable
+    from models import Standort
+    # Dummy-Standort anlegen, falls keiner existiert
+    if not Standort.query.first():
+        dummy = Standort(
+            name='Dummy',
+            adresse='xx',
+            plz='xx',
+            ort='xx',
+            email='dummy@example.com',
+            kuerzel='XX',
+            bic='xx',
+            iban='xx',
+            kontoName='dummy',
+            bankname='dummy',
+            timestamp=datetime.now().isoformat(),
+            changestamp=datetime.now().isoformat(),
+            standard=1
+        )
+        db.session.add(dummy)
+        db.session.commit()
     if not Programmvariable.query.filter_by(name='max_backups').first():
         db.session.add(Programmvariable(name='max_backups', bezeichnung='Maximale Backups', wert='10'))
     if not Programmvariable.query.filter_by(name='mahnspesen').first():
