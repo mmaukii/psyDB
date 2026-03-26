@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 def cleanup_offline_deleted_termine():
     """
     Löscht alle Termine und Gruppentermine mit nur_offline_geloescht=1 sowohl online (CalDAV) als auch offline (DB).
@@ -368,25 +370,34 @@ def push_termin(termin: dict, delete_from_db=False):
             return  # Fertig, kein weiteres Update nötig
 
         # Wenn nicht abgesagt → normales Push/Update
-        dtstart = datetime.fromisoformat(f"{termin['datum']}T{termin.get('utc_starttime') or '00:00'}")
-        dtend   = datetime.fromisoformat(f"{termin['datum']}T{termin.get('utc_endtime') or '00:00'}")
+        dtstart = datetime.fromisoformat(
+            f"{termin['datum']}T{termin.get('utc_starttime') or '00:00'}"
+        ).replace(tzinfo=timezone.utc)
+
+        dtend = datetime.fromisoformat(
+            f"{termin['datum']}T{termin.get('utc_endtime') or '00:00'}"
+        ).replace(tzinfo=timezone.utc)
+
         terminkalender_var = Programmvariable.query.filter_by(name='termine_kalender').first()
         terminkalender_name =terminkalender_var.wert
+
+        print(f"Push Termin: {title}, Start: {dtstart}, End: {dtend}, UID: {uid}, Kalender: {terminkalender_name}")
+        
         vevent = f"""BEGIN:VCALENDAR
-            VERSION:2.0
-            PRODID:-//{terminkalender_name}//termine Sync//DE
-            CALSCALE:GREGORIAN
-            BEGIN:VEVENT
-            UID:{uid}
-            DTSTAMP:{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}
-            DTSTART:{dtstart.strftime('%Y%m%dT%H%M%S')}
-            DTEND:{dtend.strftime('%Y%m%dT%H%M%S')}
-            SUMMARY:{title}
-            DESCRIPTION:{termin.get('beschreibung') or ''}
-            LAST-MODIFIED:{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}
-            END:VEVENT
-            END:VCALENDAR
-            """
+VERSION:2.0
+PRODID:-//{terminkalender_name}//termine Sync//DE
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:{uid}
+DTSTAMP:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}
+DTSTART;TZID=UTC:{dtstart.strftime('%Y%m%dT%H%M%S')}
+DTEND;TZID=UTC:{dtend.strftime('%Y%m%dT%H%M%S')}
+SUMMARY:{title}
+DESCRIPTION:{termin.get('beschreibung') or ''}
+LAST-MODIFIED:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}
+END:VEVENT
+END:VCALENDAR
+"""
         if termin.get("caldav_uid"):
             # Update
             event = cal.event_by_uid(uid)
@@ -626,7 +637,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(kunde.stundensatz) if kunde.stundensatz is not None else 0,
-                    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    timestamp = datetime.now(datetime_.timezone.utc).isoformat().replace("+00:00", "Z"),
                     caldav_uid=uid,
                     caldav_etag=etag
                 )
@@ -660,7 +671,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(gruppe.standardbetrag) if gruppe.standardbetrag is not None else 0,
-                    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    timestamp = datetime.now(datetime_.timezone.utc).isoformat().replace("+00:00", "Z"),
                     caldav_uid=uid,
                     caldav_etag=etag
                 )
