@@ -80,6 +80,7 @@ rechnungsTabelle.addEventListener("click", async (e) => {
             document.getElementById("kommentar").value = data.rechnung.kommentar || "";
             document.getElementById("rechnungsdatum").value = datumDeutsch || "";
             document.getElementById("rechnungsdatumid").value = datumDeutsch || "";
+            document.getElementById("zahlungsverweis").value = data.rechnung.zahlungsverweis || "";
         
     } catch (err) {
         console.error(err);
@@ -127,13 +128,14 @@ document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", asyn
     }
 
     const data = {
-        rechnungsnr: document.getElementById("rechnungsnr").value,
-        rechnungTextOben: document.getElementById("rechnungTextOben").value,
-        rechnungTextUnten: document.getElementById("rechnungTextUnten").value,
-        rechnungId: document.getElementById("rechnungid").value,
-        datum: parseGermanDateToISO(document.getElementById("rechnungsdatum").value),
-        kommentar: document.getElementById("kommentar").value,
-        termine: getCheckedTermine()  
+      rechnungsnr: document.getElementById("rechnungsnr").value,
+      rechnungTextOben: document.getElementById("rechnungTextOben").value,
+      rechnungTextUnten: document.getElementById("rechnungTextUnten").value,
+      rechnungId: document.getElementById("rechnungid").value,
+      datum: parseGermanDateToISO(document.getElementById("rechnungsdatum").value),
+      kommentar: document.getElementById("kommentar").value,
+      zahlungsverweis: document.getElementById("zahlungsverweis").value,
+      termine: getCheckedTermine()  
     };
 
     // rechnungId ist bereits oben deklariert, keine erneute Zuweisung nötig
@@ -213,10 +215,18 @@ async function ladeRechnungen() {
       const id = e.target.dataset.id;
       const neuerStatus = e.target.value;
 
+      // Prompt für Zahlungsverweis
+      let zahlungsverweis = prompt("Optional: Zahlungsverweis für diese Rechnung eingeben (z.B. Zahlungsreferenz, Bank, Verwendungszweck etc.):", "");
+      // Wenn Abbrechen gedrückt, prompt gibt null zurück → trotzdem Status speichern, aber kein Zahlungsverweis
+      const body = { bezahlt: neuerStatus };
+      if (zahlungsverweis !== null && zahlungsverweis.trim() !== "") {
+        body.zahlungsverweis = zahlungsverweis.trim();
+      }
+
       await fetch(`api/rechnungen/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bezahlt: neuerStatus })
+        body: JSON.stringify(body)
       });
     });
   });

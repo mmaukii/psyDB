@@ -33,7 +33,8 @@ def get_all_rechnungen():
         "kommentar": r.kommentar,
         "timestamp": r.timestamp,
         "changestamp": r.changestamp,
-        "zahlungsziel_tage": r.zahlungsziel_tage
+        "zahlungsziel_tage": r.zahlungsziel_tage,
+        "zahlungsverweis": r.zahlungsverweis
     } for r in rechnungen])
 
 # --- Einzelne Rechnung ---
@@ -51,7 +52,8 @@ def get_rechnung(id):
         "kommentar": r.kommentar,
         "timestamp": r.timestamp,
         "changestamp": r.changestamp,
-        "zahlungsziel_tage": r.zahlungsziel_tage
+        "zahlungsziel_tage": r.zahlungsziel_tage,
+        "zahlungsverweis": r.zahlungsverweis
     })
 
 # --- Rechnung anlegen ---
@@ -88,7 +90,7 @@ def update_rechnung(id):
     for field in [
         "datum","betrag","rechnungsnr",
         "bezahlt","rechnungTextOben","rechnungTextUnten",
-        "kommentar","timestamp","zahlungsziel_tage"
+        "kommentar","timestamp","zahlungsziel_tage","zahlungsverweis"
     ]:
         if field in data:
             setattr(r, field, data[field])
@@ -124,6 +126,7 @@ def get_rechnungen_mit_kunde():
             Rechnung.rechnungTextUnten,
             Rechnung.kommentar,
             Rechnung.zahlungsziel_tage,
+            Rechnung.zahlungsverweis,
             Kunde.id.label("kunde_id"),
             Kunde.vorname,
             Kunde.nachname,
@@ -153,6 +156,7 @@ def get_rechnungen_mit_kunde():
             "rechnungTextUnten": r.rechnungTextUnten,
             "kommentar": r.kommentar,
             "zahlungsziel_tage": r.zahlungsziel_tage,
+            "zahlungsverweis": r.zahlungsverweis,
             "kunde_id": r.kunde_id,
             "vorname": r.vorname,
             "nachname": r.nachname,
@@ -230,7 +234,8 @@ def get_termine_fuer_rechnung(rechnung_id):
             "kommentar": rechnung.kommentar,
             "datum": rechnung.datum,
             "zahlungsziel_tage": rechnung.zahlungsziel_tage,
-            "zahlungsziel_datum": zahlungsziel_datum
+            "zahlungsziel_datum": zahlungsziel_datum,
+            "zahlungsverweis": rechnung.zahlungsverweis
         },
         "termine": termine_json
     })

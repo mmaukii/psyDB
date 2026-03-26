@@ -20,6 +20,8 @@ class Rechnung(db.Model):
 
     zahlungsziel_tage = db.Column(db.Integer, nullable=True)
 
+    zahlungsverweis = db.Column(db.String, nullable=True)    
+
     termine_rechnungen = db.relationship(
         "TermineRechnung",
         backref="rechnung",
