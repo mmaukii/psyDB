@@ -105,6 +105,27 @@ function getCheckedTermine() {
 
 document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", async () => {
 
+    // Rechnungsnummer aus dem Formular
+    const rechnungsnr = document.getElementById("rechnungsnr").value.trim();
+    // Rechnungsdaten laden (dataRn)
+    const rechnungId = document.getElementById("rechnungid").value;
+    const response1 = await fetch(`/api/rechnungen`); // Annahme: liefert alle Rechnungen als Array
+    if (!response1.ok) throw new Error("Fehler beim Laden der Rechnungen");
+    const dataRn = await response1.json();
+    //console.log("Alle Rechnungen:", dataRn);
+    //console.log("Aktuelle Rechnungsnummer:", rechnungsnr, "Aktuelle Rechnung ID:", rechnungId);
+
+    // Prüfen, ob Rechnungsnummer schon vorhanden (außer für aktuelle Rechnung)
+    const exists = dataRn.some(r => {
+      const rnr = (r.rechnungsnr || "").toString().trim();
+      const rid = (r.id || r.rechnung_id || "").toString();
+      return rnr === rechnungsnr && rid !== rechnungId;
+    });
+    if (exists) {
+      alert("Diese Rechnungsnummer ist bereits vergeben. Bitte wählen Sie eine andere Nummer.");
+      return;
+    }
+
     const data = {
         rechnungsnr: document.getElementById("rechnungsnr").value,
         rechnungTextOben: document.getElementById("rechnungTextOben").value,
@@ -115,7 +136,7 @@ document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", asyn
         termine: getCheckedTermine()  
     };
 
-    rechnungId = document.getElementById("rechnungid").value;
+    // rechnungId ist bereits oben deklariert, keine erneute Zuweisung nötig
 
     const response = await fetch(`/api/rechnungen/${rechnungId}`, {
         method: "PUT",
