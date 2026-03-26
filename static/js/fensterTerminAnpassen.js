@@ -44,14 +44,16 @@ window.openfensterTerminAnpassen = async function ({
     document.getElementById("datum").value = datum;
 
     // --- Zeitfelder: UTC aus DB -> lokale Zeit für Anzeige ---
-    function utcToLocalInputTime(utcTime) {
-        if (!utcTime) return "";
-        // utcTime: "HH:MM" oder "HH:MM:SS"
+     function utcToLocalTime(dateStr, utcTime) {
+        if (!dateStr || !utcTime) return "";
         const [h, m, s] = utcTime.split(":");
-        // Datum für den Tag, Zeit als UTC
-        const d = new Date(Date.UTC(1970, 0, 1, h, m, s || 0));
-        // Lokale Zeit extrahieren
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        const date = new Date(Date.UTC(
+            parseInt(dateStr.slice(0, 4)),
+            parseInt(dateStr.slice(5, 7)) - 1,
+            parseInt(dateStr.slice(8, 10)),
+            h, m, s || 0
+        ));
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     if (utc_starttime === "") {
@@ -59,11 +61,11 @@ window.openfensterTerminAnpassen = async function ({
         const jetzt = new Date();
         document.getElementById("utc_starttime").value = `${String(jetzt.getHours()).padStart(2, "0")}:00`;
     } else {
-        document.getElementById("utc_starttime").value = utcToLocalInputTime(utc_starttime);
+        document.getElementById("utc_starttime").value = utcToLocalTime(datum, utc_starttime);
     }
 
     if (utc_endtime !== "") {
-        document.getElementById("utc_endtime").value = utcToLocalInputTime(utc_endtime);
+        document.getElementById("utc_endtime").value = utcToLocalTime(datum, utc_endtime);
     } else {
         berechneEndzeit(); // Automatische Berechnung
     }
@@ -491,20 +493,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = Object.fromEntries(formData);
 
         // Zeitfelder: lokale Zeit -> UTC für Speicherung
-        function localInputTimeToUTCStr(localTime) {
-            if (!localTime) return "";
+        function localInputTimeToUTCStr(dateStr,localTime ) {
+            if (!localTime || !dateStr) return "";
             // localTime: "HH:MM" oder "HH:MM:SS"
             const [h, m, s] = localTime.split(":");
-            const now = new Date();
-            // Erzeuge lokale Zeit
-            const localDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s || 0);
+            // Datum als YYYY-MM-DD
+            const year = parseInt(dateStr.slice(0, 4));
+            const month = parseInt(dateStr.slice(5, 7)) - 1;
+            const day = parseInt(dateStr.slice(8, 10));
+            // Erzeuge lokale Zeit mit Datum
+            const localDate = new Date(year, month, day, h, m, s || 0);
             // UTC-Anteile extrahieren
             const utcH = String(localDate.getUTCHours()).padStart(2, "0");
             const utcM = String(localDate.getUTCMinutes()).padStart(2, "0");
             return `${utcH}:${utcM}`;
         }
-        data.utc_starttime = localInputTimeToUTCStr(data.utc_starttime);
-        data.utc_endtime = localInputTimeToUTCStr(data.utc_endtime);
+        data.utc_starttime = localInputTimeToUTCStr(data.datum,data.utc_starttime );
+        data.utc_endtime = localInputTimeToUTCStr(data.datum,data.utc_endtime);
 
         if (data.kunde_id==""){
             delete data.kunde_id;       
@@ -529,6 +534,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 terminDatum.setDate(terminDatum.getDate() + (i * intervall * 7));
                 const neuerTermin = { ...data };
                 neuerTermin.datum = terminDatum.toISOString().split("T")[0];
+                // UTC-Zeiten für das jeweilige Datum berechnen
+                neuerTermin.utc_starttime = localInputTimeToUTCStr(neuerTermin.datum, data.utc_starttime);
+                neuerTermin.utc_endtime = localInputTimeToUTCStr(neuerTermin.datum, data.utc_endtime);
                 termineDaten.push(neuerTermin);
             }
         }

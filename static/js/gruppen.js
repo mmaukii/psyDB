@@ -128,10 +128,22 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
                 const rowStyle = (st.entfallen && toggleAbgesagtBtn.dataset.show === "false") ? "display:none;" : "";
 
+                function utcToLocalTime(dateStr, utcTime) {
+                    if (!dateStr || !utcTime) return "";
+                    const [h, m, s] = utcTime.split(":");
+                    const date = new Date(Date.UTC(
+                        parseInt(dateStr.slice(0, 4)),
+                        parseInt(dateStr.slice(5, 7)) - 1,
+                        parseInt(dateStr.slice(8, 10)),
+                        h, m, s || 0
+                    ));
+                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}"
-                    data-utc_starttime="${st.utc_starttime}" 
-                    data-utc_endtime="${st.utc_endtime}" 
+                    data-utc_starttime="${utcToLocalTime(st.datum, st.utc_starttime)}" 
+                    data-utc_endtime="${utcToLocalTime(st.datum, st.utc_endtime)}" 
                     data-betrag="${st.betrag}">
                     <th align="center">${datumDeutsch}</td>
                     <td>${st.beschreibung}</td>
@@ -169,20 +181,26 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 const rowStyle = (st.entfallen && toggleAbgesagtBtn.dataset.show === "false") ? "display:none;" : "";
 
                 // Zeitfelder in lokale Zeit umwandeln
-                function utcToLocalTime(utcTime) {
-                    if (!utcTime) return "";
+                 function utcToLocalTime(dateStr, utcTime) {
+                    if (!dateStr || !utcTime) return "";
                     const [h, m, s] = utcTime.split(":");
-                    const date = new Date(Date.UTC(1970, 0, 1, h, m, s || 0));
-                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const date = new Date(Date.UTC(
+                        parseInt(dateStr.slice(0, 4)),
+                        parseInt(dateStr.slice(5, 7)) - 1,
+                        parseInt(dateStr.slice(8, 10)),
+                        h, m, s || 0
+                    ));
+                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 }
-                const localStart = utcToLocalTime(st.utc_starttime);
-                const localEnd = utcToLocalTime(st.utc_endtime);
+
+                const localStart = utcToLocalTime(st.datum, st.utc_starttime);
+                const localEnd = utcToLocalTime(st.datum, st.utc_endtime);
 
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</td>
-                    <td align="center">${localStart}</td>
-                    <td align="center">${localEnd}</td>
+                    <td align="center">${utcToLocalTime(st.datum, st.utc_starttime)}</td>
+                    <td align="center">${utcToLocalTime(st.datum, st.utc_endtime)}</td>
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
                     <td>

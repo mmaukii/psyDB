@@ -283,7 +283,7 @@ let externalVisible = true; // aktuell sichtbar
 async function loadLocalEvents() {
     const res = await fetch('/api/kalender/termine_anzuzeigen');
     const data = await res.json();
-    function utcToLocalISO(dateStr, utcTime) {
+    function utcToLocalTime(dateStr, utcTime) {
         if (!dateStr || !utcTime) return "";
         const [h, m, s] = utcTime.split(":");
         // Erzeuge UTC-Date
@@ -293,15 +293,16 @@ async function loadLocalEvents() {
             parseInt(dateStr.slice(8, 10)),
             h, m, s || 0
         ));
-        console.log("UTC:", utcDate.toISOString(), "→ Lokal:", new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000).toISOString());
         // In lokale Zeit umwandeln und als ISO-String zurückgeben
-        return new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        const localDate = new Date(utcDate.getTime() + (utcDate.getTimezoneOffset() * 60000 * -1));
+        // FullCalendar erwartet ISO-String (ohne Offset)
+        return localDate.toISOString().slice(0, 16);
     }
     return data.map(s => ({
         id: s.id,
         title: s.gruppe_id ? `👥 ${s.gruppen_kuerzel || "Gruppe"}` : (s.kunde_kuerzel || "–"),
-        start: utcToLocalISO(s.datum, s.utc_starttime),
-        end: utcToLocalISO(s.datum, s.utc_endtime),
+        start: utcToLocalTime(s.datum, s.utc_starttime),
+        end: utcToLocalTime(s.datum, s.utc_endtime),
         backgroundColor: s.gruppe_id ? "#4f46e5" : "#16a34a",
         borderColor: s.gruppe_id ? "#4338ca" : "#15803d",
         textColor: "#ffffff",
