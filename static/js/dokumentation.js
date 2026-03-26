@@ -177,6 +177,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
         doku: s.doku,
         pers_doku: s.pers_doku,
         datum: s.datum,
+        utc_starttime: s.utc_starttime,
+        utc_endtime: s.utc_endtime,
         anzeigeName: `${kunde.vorname} ${kunde.nachname}`,
         type: "kunde",
         abgesagt: s.abgesagt || false
@@ -204,6 +206,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
           doku: s.doku,
           pers_doku: s.pers_doku,
           datum: s.datum,
+          utc_starttime: s.utc_starttime,
+          utc_endtime: s.utc_endtime,
           anzeigeName: gruppe.gruppenname,
           type: "gruppe",
           abgesagt: s.abgesagt || false
@@ -222,10 +226,26 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
     }
     console.log("filter",filter);
     // 5️⃣ Rendern
+    console.log("Alle Dokus:", dokuListe);
+
+     function utcToLocalTime(dateStr, utcTime) {
+          if (!dateStr || !utcTime) return "";
+          const [h, m, s] = utcTime.split(":");
+          const date = new Date(Date.UTC(
+              parseInt(dateStr.slice(0, 4)),
+              parseInt(dateStr.slice(5, 7)) - 1,
+              parseInt(dateStr.slice(8, 10)),
+              h, m, s || 0
+          ));
+          return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+    
+
     dokuListe.innerHTML = alleDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">
         <div class="doku-header">
-          <div class="doku-datum">${formatDatum(d.datum)} – ${escapeHtml(d.anzeigeName)}${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''}</div>
+          <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""} ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''}</div>
           <button class="doku-edit-btn" data-id="${d.dokuId}"title="Datensatz editieren">✏️</button>
         </div>
         <div class="doku-text">
