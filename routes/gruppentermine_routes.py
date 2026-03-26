@@ -10,13 +10,13 @@ gruppentermine_bp = Blueprint("gruppentermine", __name__)
 # --- Alle Gruppentermine die nicht nur offline gelöscht wurden ---
 @gruppentermine_bp.get("/gruppentermine")
 def get_all_gruppentermine():
-    gs_list = Gruppentermin.query.filter(Gruppentermin.nur_offline_geloescht == 0).order_by(Gruppentermin.datum, Gruppentermin.startzeit).all()
+    gs_list = Gruppentermin.query.filter(Gruppentermin.nur_offline_geloescht == 0).order_by(Gruppentermin.datum, Gruppentermin.utc_starttime).all()
     return jsonify([{
         "id": gs.id,
         "gruppe_id": gs.gruppe_id,
         "datum": gs.datum,
-        "startzeit": gs.startzeit,
-        "endzeit": gs.endzeit,
+        "utc_starttime": gs.utc_starttime,
+        "utc_endtime": gs.utc_endtime,
         "beschreibung": gs.beschreibung,
         "kommentar": gs.kommentar,
         "betrag": gs.betrag,
@@ -31,15 +31,15 @@ def get_all_gruppentermine():
 def get_termine_fuer_gruppe(gruppe_id):
     termine = Gruppentermin.query.filter_by(gruppe_id=gruppe_id)\
         .filter(Gruppentermin.nur_offline_geloescht == 0)\
-        .order_by(Gruppentermin.datum, Gruppentermin.startzeit)\
+        .order_by(Gruppentermin.datum, Gruppentermin.utc_starttime)\
         .all()
 
     return jsonify([{
         "id": gs.id,
         "gruppe_id": gs.gruppe_id,
         "datum": gs.datum,
-        "startzeit": gs.startzeit,
-        "endzeit": gs.endzeit,
+        "utc_starttime": gs.utc_starttime,
+        "utc_endtime": gs.utc_endtime,
         "beschreibung": gs.beschreibung,
         "kommentar": gs.kommentar,
         "betrag": gs.betrag,
@@ -57,8 +57,8 @@ def get_gruppenstunde(id):
         "id": gs.id,
         "gruppe_id": gs.gruppe_id,
         "datum": gs.datum,
-        "startzeit": gs.startzeit,
-        "endzeit": gs.endzeit,
+        "utc_starttime": gs.utc_starttime,
+        "utc_endtime": gs.utc_endtime,
         "beschreibung": gs.beschreibung,
         "kommentar": gs.kommentar,
         "betrag": gs.betrag,
@@ -108,8 +108,8 @@ def add_gruppenstunde(gruppe_id):
     gs = Gruppentermin(
         gruppe_id=gruppe_id,
         datum=data["datum"],
-        startzeit=data["startzeit"],
-        endzeit=data["endzeit"],
+        utc_starttime=data["utc_starttime"],
+        utc_endtime=data["utc_endtime"],
         beschreibung=data.get("beschreibung"),
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
@@ -126,8 +126,8 @@ def add_gruppenstunde(gruppe_id):
         push_termin({
             "gruppentermin_id": gs.id,
             "datum": gs.datum,
-            "startzeit": gs.startzeit,
-            "endzeit": gs.endzeit,
+            "utc_starttime": gs.utc_starttime,
+            "utc_endtime": gs.utc_endtime,
             "beschreibung": gs.beschreibung,
             "kommentar": gs.kommentar,
             "caldav_uid": None,
@@ -151,7 +151,7 @@ def update_gruppenstunde(id):
     data = request.get_json()
 
     # 1️⃣ Gruppentermin aktualisieren
-    for field in ["datum", "startzeit", "endzeit", "beschreibung", "kommentar", "betrag", "entfallen","doku"]:
+    for field in ["datum", "utc_starttime", "utc_endtime", "beschreibung", "kommentar", "betrag", "entfallen","doku"]:
         if field in data:
             setattr(gs, field, data[field])
     gs.changestamp = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
@@ -163,8 +163,8 @@ def update_gruppenstunde(id):
         push_termin({
             "gruppentermin_id": gs.id,
             "datum": gs.datum,
-            "startzeit": gs.startzeit,
-            "endzeit": gs.endzeit,
+            "utc_starttime": gs.utc_starttime,
+            "utc_endtime": gs.utc_endtime,
             "beschreibung": gs.beschreibung,
             "kommentar": gs.kommentar,
             "caldav_uid": None,
@@ -177,7 +177,7 @@ def update_gruppenstunde(id):
 def get_gruppentermine(gruppe_id):
             termine = Gruppentermin.query.filter_by(gruppe_id=gruppe_id)\
                 .filter(Gruppentermin.nur_offline_geloescht == 0)\
-                .order_by(Gruppentermin.datum, Gruppentermin.startzeit)\
+                .order_by(Gruppentermin.datum, Gruppentermin.utc_starttime)\
                 .all()
 
             result = []
@@ -219,8 +219,8 @@ def get_gruppentermine(gruppe_id):
                     "id": gs.id,
                     "gruppe_id": gs.gruppe_id,
                     "datum": gs.datum,
-                    "startzeit": gs.startzeit,
-                    "endzeit": gs.endzeit,
+                    "utc_starttime": gs.utc_starttime,
+                    "utc_endtime": gs.utc_endtime,
                     "beschreibung": gs.beschreibung,
                     "kommentar": gs.kommentar,
                     "betrag": gs.betrag,

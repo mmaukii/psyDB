@@ -218,8 +218,8 @@ async function reloadTermineFuerKunde(kundeId) {
             return `
                 <tr data-id="${st.id}" class="${st.abgesagt ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</th>
-                    <td align="center">${st.startzeit}</td>
-                    <td align="center">${st.endzeit}</td>
+                    <td align="center">${st.utc_starttime}</td>
+                    <td align="center">${st.utc_endtime}</td>
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
                     <td>${buttons}</td>
@@ -353,8 +353,8 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
             stundensatz: stunde.betrag || "",
             beschreibung: stunde.beschreibung || "",
             datum: stunde.datum || "",
-            startzeit: stunde.startzeit || "",
-            endzeit: stunde.endzeit || "",
+            utc_starttime: stunde.utc_starttime || "",
+            utc_endtime: stunde.utc_endtime || "",
             stundeId: stunde.id || "",
             kundeId: id || "",
             push_termin: 1,  // ✅ Push-Flag für das Backend
@@ -852,8 +852,8 @@ function renderOderUpdateZeile(stunde) {
     const html = `
         <tr data-id="${stunde.id}">
             <td>${stunde.datum || ""}</td>
-            <td>${stunde.startzeit || ""}</td>
-            <td>${stunde.endzeit || ""}</td>
+            <td>${stunde.utc_starttime || ""}</td>
+            <td>${stunde.utc_endtime || ""}</td>
             <td>${stunde.beschreibung || ""}</td>
             <td>${stunde.betrag || ""}</td>
             <td>

@@ -25,8 +25,8 @@ window.openfensterTerminAnpassen = async function ({
     stundensatz = "",
     beschreibung = "",
     datum = "",
-    startzeit = "",
-    endzeit = "",
+    utc_starttime = "",
+    utc_endtime = "",
 }) {
     // console.log("kundeId:", kundeId);
     // console.log("gruppeId:", gruppeId);
@@ -34,8 +34,8 @@ window.openfensterTerminAnpassen = async function ({
     // console.log("stundensatz:", stundensatz);
     // console.log("beschreibung:", beschreibung);
     // console.log("datum:", datum);
-    // console.log("startzeit:", startzeit);
-    // console.log("endzeit:", endzeit);
+    // console.log("utc_starttime:", utc_starttime);
+    // console.log("utc_endtime:", utc_endtime);
 
     terminForm.reset();
     
@@ -50,16 +50,16 @@ window.openfensterTerminAnpassen = async function ({
     }
     document.getElementById("datum").value = datum;
 
-    if (startzeit === "") {
+    if (utc_starttime === "") {
         // ⏰ Startzeit: aktuelle Stunde abgerundet
         const jetzt = new Date();
-        startzeit = `${String(jetzt.getHours()).padStart(2, "0")}:00`;
+        utc_starttime = `${String(jetzt.getHours()).padStart(2, "0")}:00`;
     }
-    document.getElementById("startzeit").value = startzeit;
+    document.getElementById("utc_starttime").value = utc_starttime;
 
     // ⏱ Endzeit berechnen je nach Beschreibung
-    if (endzeit !== "") {
-        document.getElementById("endzeit").value = endzeit;
+    if (utc_endtime !== "") {
+        document.getElementById("utc_endtime").value = utc_endtime;
     } else {
         berechneEndzeit(); // Automatische Berechnung
     }
@@ -110,7 +110,7 @@ window.openfensterTerminAnpassen = async function ({
     
     // 🕐 Listener für automatische Endzeit-Berechnung (nur einmal setzen)
     if (!endzeitListenerInitialized) {
-        const startzeitInput = document.getElementById("startzeit");
+        const startzeitInput = document.getElementById("utc_starttime");
         const beschreibungInput = document.getElementById("beschreibung");
         
         if (startzeitInput) {
@@ -155,13 +155,13 @@ window.closefenstertermineanpassen = function () {
 
 // ⏱️ Endzeit automatisch berechnen
 function berechneEndzeit() {
-    const startzeitInput = document.getElementById("startzeit");
-    const endzeitInput = document.getElementById("endzeit");
+    const startzeitInput = document.getElementById("utc_starttime");
+    const endzeitInput = document.getElementById("utc_endtime");
     const beschreibungInput = document.getElementById("beschreibung");
     
     if (!startzeitInput || !endzeitInput || !startzeitInput.value) return;
     
-    const startzeit = startzeitInput.value;
+    const utc_starttime = startzeitInput.value;
     const beschreibung = beschreibungInput?.value || "";
     
     let dauerMinuten = 50; // Default Einzeltherapie
@@ -178,7 +178,7 @@ function berechneEndzeit() {
         }
     }
     
-    const [stunden, minuten] = startzeit.split(":").map(Number);
+    const [stunden, minuten] = utc_starttime.split(":").map(Number);
     const ende = new Date();
     ende.setHours(stunden);
     ende.setMinutes(minuten + dauerMinuten);

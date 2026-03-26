@@ -130,8 +130,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
 
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}"
-                    data-startzeit="${st.startzeit}" 
-                    data-endzeit="${st.endzeit}" 
+                    data-utc_starttime="${st.utc_starttime}" 
+                    data-utc_endtime="${st.utc_endtime}" 
                     data-betrag="${st.betrag}">
                     <th align="center">${datumDeutsch}</td>
                     <td>${st.beschreibung}</td>
@@ -171,8 +171,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</td>
-                    <td align="center">${st.startzeit}</td>
-                    <td align="center">${st.endzeit}</td>
+                    <td align="center">${st.utc_starttime}</td>
+                    <td align="center">${st.utc_endtime}</td>
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
                     <td>
@@ -304,8 +304,8 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
                 stundensatz: stunde.betrag || "",
                 beschreibung: stunde.beschreibung || "",
                 datum: stunde.datum || "",
-                startzeit: stunde.startzeit || "",
-                endzeit: stunde.endzeit || "",
+                utc_starttime: stunde.utc_starttime || "",
+                utc_endtime: stunde.utc_endtime || "",
                 stundeId: stunde.id || "",
                 gruppeId: stunde.gruppe_id || ""
             });
@@ -428,7 +428,7 @@ async function aktualisiereTermin(button, termineId,datum) {
     console.log("Gruppentermine-ID:", termineId);
     console.log("Ausgewählte Kunden-IDs:", selectedIds);
 
-    const { startzeit, endzeit } = tr.dataset;
+    const { utc_starttime, utc_endtime } = tr.dataset;
 
     try {
         // 1️⃣ vorhandene Termine laden
@@ -462,8 +462,8 @@ async function aktualisiereTermin(button, termineId,datum) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         datum: datum,
-                        startzeit,
-                        endzeit,
+                        utc_starttime,
+                        utc_endtime,
                         betrag,
                         gruppentermin_id: termineId,
                         beschreibung: "Gruppentherapie á " + dauer + " min",

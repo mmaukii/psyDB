@@ -29,8 +29,8 @@ async function ladeTermine() {
             <td>${st.vorname}</td>
             <td>${st.nachname}</td>
             <td>${st.kuerzel}</td>
-            <td align="center">${st.startzeit}</td>
-            <td align="center">${st.endzeit}</td>
+            <td align="center">${st.utc_starttime}</td>
+            <td align="center">${st.utc_endtime}</td>
             <td>${st.beschreibung}</td>
             <td>${st.gruppenkuerzel}</td>
             <td align="right">${betragFormatted}&nbsp;€</td>
@@ -74,8 +74,8 @@ async function ladeTermine() {
                 <td>${st.vorname}</td>
                 <td>${st.nachname}</td>
                 <td>${st.kuerzel}</td>
-                <td align="center">${st.startzeit}</td>
-                <td align="center">${st.endzeit}</td>
+                <td align="center">${st.utc_starttime}</td>
+                <td align="center">${st.utc_endtime}</td>
                 <td>${st.beschreibung}</td>
                 <td>${st.gruppenkuerzel}</td>
                 <td align="right">${betragFormatted}&nbsp;€</td>
@@ -125,8 +125,8 @@ offeneTermineTabelle.addEventListener("click", async (e) => {
                 stundensatz: stunde.betrag || "",
                 beschreibung: stunde.beschreibung || "",
                 datum: stunde.datum || "",
-                startzeit: stunde.startzeit || "",
-                endzeit: stunde.endzeit || "",
+                utc_starttime: stunde.utc_starttime || "",
+                utc_endtime: stunde.utc_endtime || "",
                 stundeId: stunde.id || "",
                 kundeId: stunde.kunde_id || ""
             });

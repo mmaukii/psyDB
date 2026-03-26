@@ -45,8 +45,8 @@ def sync_offline_termine_und_gruppentermine():
             push_termin({
                 "termin_id": t.id,
                 "datum": t.datum,
-                "startzeit": t.startzeit,
-                "endzeit": t.endzeit,
+                "utc_starttime": t.utc_starttime,
+                "utc_endtime": t.utc_endtime,
                 "beschreibung": t.beschreibung,
                 "kommentar": t.kommentar,
                 "abgesagt": t.abgesagt,
@@ -64,8 +64,8 @@ def sync_offline_termine_und_gruppentermine():
             push_termin({
                 "gruppentermin_id": g.id,
                 "datum": g.datum,
-                "startzeit": g.startzeit,
-                "endzeit": g.endzeit,
+                "utc_starttime": g.utc_starttime,
+                "utc_endtime": g.utc_endtime,
                 "beschreibung": g.beschreibung,
                 "kommentar": g.kommentar,
                 "caldav_uid": g.caldav_uid,
@@ -104,8 +104,8 @@ def get_kalender_termine_anzuzueigen():
         db.session.query(
             Termin.id,
             Termin.datum,
-            Termin.startzeit,
-            Termin.endzeit,
+            Termin.utc_starttime,
+            Termin.utc_endtime,
             Termin.betrag,
             Termin.beschreibung,
             Termin.kunde_id,
@@ -122,8 +122,8 @@ def get_kalender_termine_anzuzueigen():
         db.session.query(
             Gruppentermin.id,
             Gruppentermin.datum,
-            Gruppentermin.startzeit,
-            Gruppentermin.endzeit,
+            Gruppentermin.utc_starttime,
+            Gruppentermin.utc_endtime,
             Gruppentermin.betrag,
             Gruppentermin.beschreibung,
             Gruppentermin.gruppe_id,
@@ -139,8 +139,8 @@ def get_kalender_termine_anzuzueigen():
         {
             "id": r.id,
             "datum": r.datum,
-            "startzeit": r.startzeit,
-            "endzeit": r.endzeit,
+            "utc_starttime": r.utc_starttime,
+            "utc_endtime": r.utc_endtime,
             "betrag": r.betrag,
             "kunde_id": getattr(r, "kunde_id", None),
             "kunde_kuerzel": getattr(r, "kunde_kuerzel", None),
@@ -368,25 +368,25 @@ def push_termin(termin: dict, delete_from_db=False):
             return  # Fertig, kein weiteres Update nötig
 
         # Wenn nicht abgesagt → normales Push/Update
-        dtstart = datetime.fromisoformat(f"{termin['datum']}T{termin.get('startzeit') or '00:00'}")
-        dtend   = datetime.fromisoformat(f"{termin['datum']}T{termin.get('endzeit') or '00:00'}")
+        dtstart = datetime.fromisoformat(f"{termin['datum']}T{termin.get('utc_starttime') or '00:00'}")
+        dtend   = datetime.fromisoformat(f"{termin['datum']}T{termin.get('utc_endtime') or '00:00'}")
         terminkalender_var = Programmvariable.query.filter_by(name='termine_kalender').first()
         terminkalender_name =terminkalender_var.wert
         vevent = f"""BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//{terminkalender_name}//termine Sync//DE
-CALSCALE:GREGORIAN
-BEGIN:VEVENT
-UID:{uid}
-DTSTAMP:{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}
-DTSTART:{dtstart.strftime('%Y%m%dT%H%M%S')}
-DTEND:{dtend.strftime('%Y%m%dT%H%M%S')}
-SUMMARY:{title}
-DESCRIPTION:{termin.get('beschreibung') or ''}
-LAST-MODIFIED:{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}
-END:VEVENT
-END:VCALENDAR
-"""
+            VERSION:2.0
+            PRODID:-//{terminkalender_name}//termine Sync//DE
+            CALSCALE:GREGORIAN
+            BEGIN:VEVENT
+            UID:{uid}
+            DTSTAMP:{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}
+            DTSTART:{dtstart.strftime('%Y%m%dT%H%M%S')}
+            DTEND:{dtend.strftime('%Y%m%dT%H%M%S')}
+            SUMMARY:{title}
+            DESCRIPTION:{termin.get('beschreibung') or ''}
+            LAST-MODIFIED:{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}
+            END:VEVENT
+            END:VCALENDAR
+            """
         if termin.get("caldav_uid"):
             # Update
             event = cal.event_by_uid(uid)
@@ -621,8 +621,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                 neu = Termin(
                     kunde_id=kunde.id,
                     datum=start.date().isoformat(),
-                    startzeit=start.time().strftime("%H:%M"),
-                    endzeit=end.time().strftime("%H:%M") if end else None,
+                    utc_starttime=start.time().strftime("%H:%M"),
+                    utc_endtime=end.time().strftime("%H:%M") if end else None,
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(kunde.stundensatz) if kunde.stundensatz is not None else 0,
@@ -640,8 +640,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                         "termin_id": neu.id,
                         "kuerzel": kunde.kuerzel,
                         "datum": neu.datum,
-                        "startzeit": neu.startzeit,
-                        "endzeit": neu.endzeit,
+                        "utc_starttime": neu.utc_starttime,
+                        "utc_endtime": neu.utc_endtime,
                         "beschreibung": neu.beschreibung,
                         "caldav_uid": neu.caldav_uid,
                         "caldav_etag": neu.caldav_etag,
@@ -655,8 +655,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                 neu = Gruppentermin(
                     gruppe_id=gruppe.id,
                     datum=start.date().isoformat(),
-                    startzeit=start.time().strftime("%H:%M"),
-                    endzeit=end.time().strftime("%H:%M") if end else None,
+                    utc_starttime=start.time().strftime("%H:%M"),
+                    utc_endtime=end.time().strftime("%H:%M") if end else None,
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(gruppe.standardbetrag) if gruppe.standardbetrag is not None else 0,
@@ -674,8 +674,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                         "gruppentermin_id": neu.id,
                         "kuerzel": gruppe.gruppenkuerzel,
                         "datum": neu.datum,
-                        "startzeit": neu.startzeit,
-                        "endzeit": neu.endzeit,
+                        "utc_starttime": neu.utc_starttime,
+                        "utc_endtime": neu.utc_endtime,
                         "beschreibung": neu.beschreibung,
                         "caldav_uid": neu.caldav_uid,
                         "caldav_etag": neu.caldav_etag,
@@ -696,8 +696,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
         # 🔁 Bestehendes Event aktualisieren (auch wenn ETag fehlt)
         # Debug-Ausgabe: Online-Event vs. DB-Event
         log_msg(f"[VERGLEICH] UID={uid}")
-        log_msg(f"  Online: datum={start.date().isoformat()}, startzeit={start.time().strftime('%H:%M')}, endzeit={(end.time().strftime('%H:%M') if end else None)}, beschreibung={summary}, kommentar={str(getattr(ve, 'description', '')) if hasattr(ve, 'description') else ''}")
-        log_msg(f"  DB: datum={termin.datum}, startzeit={termin.startzeit}, endzeit={termin.endzeit}, beschreibung={termin.beschreibung}, kommentar={termin.kommentar}")
+        log_msg(f"  Online: datum={start.date().isoformat()}, utc_starttime={start.time().strftime('%H:%M')}, utc_endtime={(end.time().strftime('%H:%M') if end else None)}, beschreibung={summary}, kommentar={str(getattr(ve, 'description', '')) if hasattr(ve, 'description') else ''}")
+        log_msg(f"  DB: datum={termin.datum}, utc_starttime={termin.utc_starttime}, utc_endtime={termin.utc_endtime}, beschreibung={termin.beschreibung}, kommentar={termin.kommentar}")
         try:
             log_msg(f"[DEBUG] Werte vor Assignment: start={start}, end={end}, summary={summary}, ve={ve}")
             new_datum = start.date().isoformat()
@@ -714,8 +714,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
 
         fields_changed = (
             termin.datum != new_datum
-            or termin.startzeit != new_startzeit
-            or termin.endzeit != new_endzeit
+            or termin.utc_starttime != new_startzeit
+            or termin.utc_endtime != new_endzeit
             #or termin.beschreibung != new_beschreibung
             #or (termin.kommentar or "") != new_kommentar
         )
@@ -723,8 +723,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
         #log_msg(f"etag_changed: {etag_changed}, fields_changed: {fields_changed}, etag in DB: {termin.caldav_etag}, etag online: {etag}")   
         if etag_changed or fields_changed or not etag:
             termin.datum = new_datum
-            termin.startzeit = new_startzeit
-            termin.endzeit = new_endzeit
+            termin.utc_starttime = new_startzeit
+            termin.utc_endtime = new_endzeit
             #termin.beschreibung = new_beschreibung
             #termin.kommentar = new_kommentar
             termin.caldav_etag = etag or termin.caldav_etag
