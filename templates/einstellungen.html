@@ -110,22 +110,36 @@
 	<button id="saveWebdavPasswordBtn">Passwort speichern</button>
 </div>
 <br><br>
+
 <!-- Datenbank Passwort ändern -->
 <div style="margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
-	<label for="dbPassphraseCurrent"><strong>Datenbank Passwort ändern</strong></label>
-	<div style="display: flex; gap: 10px; align-items: center; margin-top: 5px; flex-wrap: wrap;">
-		<input type="password" id="dbPassphraseCurrent" placeholder="Aktuelles Passwort">
-		<input type="password" id="dbPassphraseNew" placeholder="Neues Passwort">
-		<input type="password" id="dbPassphraseNewConfirm" placeholder="Neues Passwort bestätigen">
-		<button id="changeDbPassphraseBtn">Passwort ändern</button>
-	</div>
-	<small style="color: #666; display: block; margin-top: 5px;">
-		ℹ️ Für Änderungen wird das aktuelle Passwort benötigt.
-	</small>
+   <label for="dbPassphraseCurrent"><strong>Datenbank Passwort ändern</strong></label>
+   <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px; flex-wrap: wrap;">
+	   <input type="password" id="dbPassphraseCurrent" placeholder="Aktuelles Passwort">
+	   <input type="password" id="dbPassphraseNew" placeholder="Neues Passwort">
+	   <input type="password" id="dbPassphraseNewConfirm" placeholder="Neues Passwort bestätigen">
+	   <button id="changeDbPassphraseBtn">Passwort ändern</button>
+   </div>
+   <small style="color: #666; display: block; margin-top: 5px;">
+	   ℹ️ Für Änderungen wird das aktuelle Passwort benötigt.
+   </small>
+</div>
+
+<h2 style="margin-bottom: 0;">Erweiterte Funktionen</h2>
+
+<span style="font-size: 0.95em; color: #666; font-weight: normal;">Über den folgenden Button, werden alle Kalenderevents - Termine und Gruppentermine - in den Kalender geschriben.
+	Dies dient einer zur Neuübertragung beispielsweise bei Kalenderwechsel.
+</span>
+
+<!-- Button: Kalender neu schreiben -->
+<div style="margin-top: 05px; margin-bottom: 40px; text-align: left;">
+	<button id="rewriteCalendarBtn">Alle Termine & Gruppentermine in Kalender neu schreiben</button>
+	<span id="rewriteCalendarStatus" style="margin-left: 20px; color: #333;"></span>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/einstellungen.js') }}"></script>
+
 {% endblock %}

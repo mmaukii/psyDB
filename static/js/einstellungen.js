@@ -381,4 +381,29 @@ document.getElementById("saveStandardtexteBtn").addEventListener("click", () => 
     });
 });
 
-// ...existing code...
+// Button-Handler für Kalender-Neuschreiben
+document.addEventListener('DOMContentLoaded', function() {
+	const btn = document.getElementById('rewriteCalendarBtn');
+	const status = document.getElementById('rewriteCalendarStatus');
+	if (btn) {
+		btn.addEventListener('click', function() {
+			btn.disabled = true;
+			status.textContent = 'Bitte warten...';
+			fetch('api/kalender/force_rewrite_all', {method: 'POST'})
+				.then(r => r.json())
+				.then(data => {
+					if (data.success) {
+						status.textContent = 'Fertig! ' + (data.logs ? data.logs.join(' | ') : '');
+					} else {
+						status.textContent = 'Fehler: ' + (data.error || 'Unbekannt');
+					}
+				})
+				.catch(e => {
+					status.textContent = 'Fehler beim Senden: ' + e;
+				})
+				.finally(() => {
+					btn.disabled = false;
+				});
+		});
+	}
+});

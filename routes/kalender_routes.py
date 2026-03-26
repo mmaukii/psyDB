@@ -92,7 +92,51 @@ from sqlalchemy import text
 
 
 
+
 kalender_bp = Blueprint("kalender", __name__)
+
+# Route: Schreibe alle Termine und Gruppentermine neu in den Kalender (ohne Prüfung)
+@kalender_bp.post("/kalender/force_rewrite_all")
+def force_rewrite_all_termine():
+    from models import Termin, Gruppentermin
+    from routes.kalender_routes import push_termin
+    logs = []
+    # Einzeltermine
+    termine = Termin.query.filter((Termin.abgesagt == None) | (Termin.abgesagt == 0)).all()
+    for t in termine:
+        try:
+            push_termin({
+                "termin_id": t.id,
+                "datum": t.datum,
+                "utc_starttime": t.utc_starttime,
+                "utc_endtime": t.utc_endtime,
+                "beschreibung": t.beschreibung,
+                "kommentar": t.kommentar,
+                "abgesagt": t.abgesagt,
+                "caldav_uid": "",  # Erzwinge Neuanlage im Kalender
+                "kuerzel": t.kunde.kuerzel if t.kunde else None
+            })
+            logs.append(f"Termin ID {t.id} geschrieben.")
+        except Exception as e:
+            logs.append(f"Fehler bei Termin ID {t.id}: {e}")
+    # Gruppentermine
+    gruppentermine = Gruppentermin.query.filter((Gruppentermin.entfallen == None) | (Gruppentermin.entfallen == 0)).all()
+    for g in gruppentermine:
+        try:
+            push_termin({
+                "gruppentermin_id": g.id,
+                "datum": g.datum,
+                "utc_starttime": g.utc_starttime,
+                "utc_endtime": g.utc_endtime,
+                "beschreibung": g.beschreibung,
+                "kommentar": g.kommentar,
+                "caldav_uid": "",  # Erzwinge Neuanlage im Kalender
+                "kuerzel": g.gruppe.gruppenkuerzel if g.gruppe else None
+            })
+            logs.append(f"Gruppentermin ID {g.id} geschrieben.")
+        except Exception as e:
+            logs.append(f"Fehler bei Gruppentermin ID {g.id}: {e}")
+    return jsonify({"success": True, "logs": logs})
 
 # --- termine mit aktivem Kunden, nicht abgesagt und nicht in Rechnung ---
 @kalender_bp.get("/kalender/termine_anzuzeigen")
@@ -400,6 +444,7 @@ END:VCALENDAR
 """
         if termin.get("caldav_uid"):
             # Update
+            print("Event wird aktualisiert")
             event = cal.event_by_uid(uid)
             event.data = vevent
             event.save()
@@ -411,6 +456,7 @@ END:VCALENDAR
             db.session.commit()
         else:
             # Neues Event anlegen
+            print("neuen EEvent anlegen")
             event = cal.add_event(vevent, content_type="text/calendar; charset=utf-8")
             event.load()
             uid = event.vobject_instance.vevent.uid.value
