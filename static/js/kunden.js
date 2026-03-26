@@ -202,6 +202,21 @@ async function reloadTermineFuerKunde(kundeId) {
             let betragNum = parseFloat(st.betrag);
             let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
 
+            // Zeitfelder in lokale Zeit umwandeln (Datum für Zeitzonen-Korrektheit berücksichtigen)
+            function utcToLocalTime(dateStr, utcTime) {
+                if (!dateStr || !utcTime) return "";
+                const [h, m, s] = utcTime.split(":");
+                const date = new Date(Date.UTC(
+                    parseInt(dateStr.slice(0, 4)),
+                    parseInt(dateStr.slice(5, 7)) - 1,
+                    parseInt(dateStr.slice(8, 10)),
+                    h, m, s || 0
+                ));
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            const localStart = utcToLocalTime(st.datum, st.utc_starttime);
+            const localEnd = utcToLocalTime(st.datum, st.utc_endtime);
+
             // Buttons: nur Doku wenn Rechnungsnr vorhanden
             const buttons = st.rechnungsnr
                 ? `<button class="dokuBtntermineproKunde" data-id="${st.id}"title="Doku Eintrag erstellen/bearbeiten">📝</button>`
@@ -218,8 +233,8 @@ async function reloadTermineFuerKunde(kundeId) {
             return `
                 <tr data-id="${st.id}" class="${st.abgesagt ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</th>
-                    <td align="center">${st.utc_starttime}</td>
-                    <td align="center">${st.utc_endtime}</td>
+                    <td align="center">${localStart}</td>
+                    <td align="center">${localEnd}</td>
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
                     <td>${buttons}</td>

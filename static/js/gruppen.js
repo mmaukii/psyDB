@@ -165,14 +165,24 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
                 let betragNum = parseFloat(st.betrag);
                 let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
-                 // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
+                // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
                 const rowStyle = (st.entfallen && toggleAbgesagtBtn.dataset.show === "false") ? "display:none;" : "";
+
+                // Zeitfelder in lokale Zeit umwandeln
+                function utcToLocalTime(utcTime) {
+                    if (!utcTime) return "";
+                    const [h, m, s] = utcTime.split(":");
+                    const date = new Date(Date.UTC(1970, 0, 1, h, m, s || 0));
+                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                }
+                const localStart = utcToLocalTime(st.utc_starttime);
+                const localEnd = utcToLocalTime(st.utc_endtime);
 
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</td>
-                    <td align="center">${st.utc_starttime}</td>
-                    <td align="center">${st.utc_endtime}</td>
+                    <td align="center">${localStart}</td>
+                    <td align="center">${localEnd}</td>
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
                     <td>

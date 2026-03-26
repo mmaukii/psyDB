@@ -28,14 +28,7 @@ window.openfensterTerminAnpassen = async function ({
     utc_starttime = "",
     utc_endtime = "",
 }) {
-    // console.log("kundeId:", kundeId);
-    // console.log("gruppeId:", gruppeId);
-    // console.log("termineId:", stundeId);
-    // console.log("stundensatz:", stundensatz);
-    // console.log("beschreibung:", beschreibung);
-    // console.log("datum:", datum);
-    // console.log("utc_starttime:", utc_starttime);
-    // console.log("utc_endtime:", utc_endtime);
+
 
     terminForm.reset();
     
@@ -50,16 +43,27 @@ window.openfensterTerminAnpassen = async function ({
     }
     document.getElementById("datum").value = datum;
 
+    // --- Zeitfelder: UTC aus DB -> lokale Zeit für Anzeige ---
+    function utcToLocalInputTime(utcTime) {
+        if (!utcTime) return "";
+        // utcTime: "HH:MM" oder "HH:MM:SS"
+        const [h, m, s] = utcTime.split(":");
+        // Datum für den Tag, Zeit als UTC
+        const d = new Date(Date.UTC(1970, 0, 1, h, m, s || 0));
+        // Lokale Zeit extrahieren
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+
     if (utc_starttime === "") {
         // ⏰ Startzeit: aktuelle Stunde abgerundet
         const jetzt = new Date();
-        utc_starttime = `${String(jetzt.getHours()).padStart(2, "0")}:00`;
+        document.getElementById("utc_starttime").value = `${String(jetzt.getHours()).padStart(2, "0")}:00`;
+    } else {
+        document.getElementById("utc_starttime").value = utcToLocalInputTime(utc_starttime);
     }
-    document.getElementById("utc_starttime").value = utc_starttime;
 
-    // ⏱ Endzeit berechnen je nach Beschreibung
     if (utc_endtime !== "") {
-        document.getElementById("utc_endtime").value = utc_endtime;
+        document.getElementById("utc_endtime").value = utcToLocalInputTime(utc_endtime);
     } else {
         berechneEndzeit(); // Automatische Berechnung
     }
@@ -479,61 +483,59 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+
     terminForm.addEventListener("submit", async e => {
-            e.preventDefault();
+        e.preventDefault();
 
         const formData = new FormData(terminForm);
-        // Normalize to camelCase only; avoid ..._id in payload
-       
-        
-
         const data = Object.fromEntries(formData);
-        //damit keine probleme beim spiechern wenn nur Änderung. schlampig programmiert, da unklar was das passiet
+
+        // Zeitfelder: lokale Zeit -> UTC für Speicherung
+        function localInputTimeToUTCStr(localTime) {
+            if (!localTime) return "";
+            // localTime: "HH:MM" oder "HH:MM:SS"
+            const [h, m, s] = localTime.split(":");
+            const now = new Date();
+            // Erzeuge lokale Zeit
+            const localDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s || 0);
+            // UTC-Anteile extrahieren
+            const utcH = String(localDate.getUTCHours()).padStart(2, "0");
+            const utcM = String(localDate.getUTCMinutes()).padStart(2, "0");
+            return `${utcH}:${utcM}`;
+        }
+        data.utc_starttime = localInputTimeToUTCStr(data.utc_starttime);
+        data.utc_endtime = localInputTimeToUTCStr(data.utc_endtime);
+
         if (data.kunde_id==""){
             delete data.kunde_id;       
         }
         if (data.gruppe_id==""){
             delete data.gruppe_id;       
         }
-        
-      
 
-        console.log("Formulardaten vor Verarbeitung:", data);
-        data.push_termin = 1 //um Kalender zu aktualisieren
-
-        data.betrag = parseFloat(data.betrag.replace(/\./g, "").replace(",", "."));//deutsches format rückstellen
-        // console.log("Zu speichernde Termindaten:", data);
+        data.push_termin = 1;
+        data.betrag = parseFloat(data.betrag.replace(/\./g, "").replace(",", "."));
 
         // 🔄 Serientermine verarbeiten
         const istSerie = document.getElementById("istSerie").checked;
-        let termineDaten = [data]; // Standard: ein Termin
-
+        let termineDaten = [data];
         if (istSerie) {
             const intervall = parseInt(document.getElementById("serieIntervall").value) || 1;
             const anzahl = parseInt(document.getElementById("serieAnzahl").value) || 1;
             const startDatum = new Date(data.datum);
-
             termineDaten = [];
             for (let i = 0; i < anzahl; i++) {
                 const terminDatum = new Date(startDatum);
                 terminDatum.setDate(terminDatum.getDate() + (i * intervall * 7));
-                
                 const neuerTermin = { ...data };
                 neuerTermin.datum = terminDatum.toISOString().split("T")[0];
                 termineDaten.push(neuerTermin);
-                
-                // console.log(`📅 Serientermin ${i + 1}: ${neuerTermin.datum}`);
             }
-            // console.log(`🔄 Erstelle ${anzahl} Termine im Abstand von ${intervall} Wochen`);
         }
 
         let url, method;
-        
-        const kundeId  = data.kundeId || data.kunde_id || null; //id aus Auswahlfeld auch übernehmen
+        const kundeId  = data.kundeId || data.kunde_id || null;
         const gruppeId = data.gruppeId || data.gruppe_id || null;
-        // console.log(data)
-        // console.log("grup ", gruppeId)
-        console.log("kunde ", kundeId)
 
         if (data.terminId && data.kundeId) { //wenn termine und kunde vorhanden
             // console.log("🔄 Update Termin ID:", data.terminId);
