@@ -245,7 +245,7 @@ async function ladeRechnungen() {
     
   });
 
-  // 🔹 Löschen-Button (SEPARAT & STABIL)
+ // 🔹 Löschen-Button (SEPARAT & STABIL)
   document.querySelectorAll('.delete-btn').forEach(button => {
     button.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -256,8 +256,24 @@ async function ladeRechnungen() {
         return;
       }
 
-      if (!confirm("Diese Rechnung wirklich löschen?")) return;
+      if (!confirm("Diese Rechnung und zugehörige Mahnungen wirklich löschen?")) return;
 
+      // 1. Alle Mahnungen zu dieser Rechnung suchen und löschen
+      try {
+        const mahnungenRes = await fetch(`/api/rechnungen/${id}/mahnungen`);
+        if (mahnungenRes.ok) {
+          const mahnungen = await mahnungenRes.json();
+          for (const m of mahnungen) {
+            await fetch(`/api/mahnungen/${m.id}`, { method: "DELETE" });
+          }
+        }
+      } catch (err) {
+        console.error("Fehler beim Löschen der Mahnungen", err);
+        alert("Fehler beim Löschen der zugehörigen Mahnungen!");
+        return;
+      }
+
+      // 2. Rechnung löschen
       const response = await fetch(`/api/rechnungen/${id}`, {
         method: "DELETE"
       });
