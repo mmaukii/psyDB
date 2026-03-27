@@ -380,6 +380,7 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
 
 
     if (e.target.classList.contains("absageBtntermineproKunde")) {
+        if (!confirm("Soll dieser Termin abgesagt werden?")) return;
         const stundeId = e.target.dataset.id;
         const row = e.target.closest("tr");
         const btn = e.target;
