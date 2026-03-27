@@ -388,6 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteBtn = document.getElementById("deleteTerminBtn");
     if (deleteBtn) {
         deleteBtn.addEventListener("click", async () => {
+            showToast("Termin in Bearbeitung", null);
             const terminId = document.getElementById("terminId").value;
             const kundeId  = document.getElementById("kundeId").value;
             const gruppeId = document.getElementById("gruppeId").value;
@@ -422,7 +423,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         detail: { terminId }
                     })
                 );
-                calendar.refetchEvents();
+                if (typeof calendar !== "undefined" && calendar && typeof calendar.refetchEvents === "function") {
+                    calendar.refetchEvents(); // neu zeichnen
+                }
                 alert("✅ Termin wurde gelöscht");
             } catch (err) {
                 console.error("🗑️ Fehler beim Löschen:", err);
@@ -435,6 +438,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const absageBtn = document.getElementById("absageTerminBtn");
     if (absageBtn) {
         absageBtn.addEventListener("click", async () => {
+            console.log("Absage/Entfallen Button geklickt");
+            showToast("Termin in Bearbeitung", null);
             const terminId = document.getElementById("terminId").value;
             const kundeId  = document.getElementById("kundeId").value;
             const gruppeId = document.getElementById("gruppeId").value;
@@ -484,10 +489,13 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("❌ terminForm nicht gefunden");
         return;
     }
-
+    
 
     terminForm.addEventListener("submit", async e => {
         e.preventDefault();
+
+        showToast("Termin in Bearbeitung", null);
+        console.log("Formular abgesendet, Daten werden verarbeitet...");
 
         const formData = new FormData(terminForm);
         const data = Object.fromEntries(formData);
@@ -530,6 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const startDatum = new Date(data.datum);
             termineDaten = [];
             for (let i = 0; i < anzahl; i++) {
+                showToast("Termin in Bearbeitung", null);
                 const terminDatum = new Date(startDatum);
                 terminDatum.setDate(terminDatum.getDate() + (i * intervall * 7));
                 const neuerTermin = { ...data };
@@ -544,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let url, method;
         const kundeId  = data.kundeId || data.kunde_id || null;
         const gruppeId = data.gruppeId || data.gruppe_id || null;
-
+        showToast("Termin in Bearbeitung", null);
         if (data.terminId && data.kundeId) { //wenn termine und kunde vorhanden
             // console.log("🔄 Update Termin ID:", data.terminId);
             url = `/api/termine/${data.terminId}`;
