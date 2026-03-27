@@ -48,8 +48,7 @@ def auswertung_jahrestabelle():
         def calc_min(start, end):
             try:
                 if start and end and isinstance(start, str) and isinstance(end, str):
-                    # Versuche verschiedene Formate (mit/ohne Sekunden, mit/ohne Z)
-                    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"):
+                    for fmt in ("%Y-%m-%dT%H:%M:%S", "%H:%M", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"):
                         try:
                             s = datetime.strptime(start, fmt)
                             e = datetime.strptime(end, fmt)
@@ -104,12 +103,12 @@ def auswertung_kunden():
         def calc_min(start, end):
             try:
                 if start and end and isinstance(start, str) and isinstance(end, str):
-                    print(f"Berechnung Minuten: Start {start} - End {end}")
+                    #print(f"Berechnung Minuten: Start {start} - End {end}")
                     for fmt in ("%Y-%m-%dT%H:%M:%S",  "%H:%M","%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"):
                         try:
                             s = datetime.strptime(start, fmt)
                             e = datetime.strptime(end, fmt)
-                            print(f"Berechnung11 Minuten: Start {s} - End {e} => {(e-s).total_seconds()//60} Minuten")
+                            #print(f"Berechnung11 Minuten: Start {s} - End {e} => {(e-s).total_seconds()//60} Minuten")
                             return int((e-s).total_seconds()//60)
                         except Exception:
                             continue
@@ -123,7 +122,7 @@ def auswertung_kunden():
         termine = list(termine)
         abgehalten = len([t for t in termine if not t.abgesagt])
         abgesagt = len([t for t in termine if t.abgesagt])
-        print("Zeiten Kunde", k.kuerzel, [(t.utc_starttime, t.utc_endtime) for t in termine])
+        #print("Zeiten Kunde", k.kuerzel, [(t.utc_starttime, t.utc_endtime) for t in termine])
         minuten = sum([calc_min(t.utc_starttime, t.utc_endtime) for t in termine if not t.abgesagt])
         stunden = minuten / 60
         if einnahmen_gesamt > 0:
@@ -144,20 +143,7 @@ def auswertung_gruppen():
     gruppen = Gruppe.query.all()
     result = []
     for g in gruppen:
-        # Einnahmen für diese Gruppe im Jahr: alle Rechnungen, die über einen Termin mit einem Gruppentermin dieser Gruppe verknüpft sind
-        rechnungen = []
-        for r in Rechnung.query.all():
-            for tr in r.termine_rechnungen:
-                if tr.termin and tr.termin.gruppentermin_id:
-                    gruppentermin = Gruppentermin.query.get(tr.termin.gruppentermin_id)
-                    if gruppentermin and gruppentermin.gruppe_id == g.id:
-                        if not jahr or (r.datum and r.datum.startswith(str(jahr))):
-                            rechnungen.append(r)
-                            break
-        einnahmen_gesamt = sum([r.betrag for r in rechnungen])
-        # USt-pflichtig: analog zu Kunden, aber auf Gruppenebene meist nicht relevant, daher 0
-        einnahmen_umsatz = 0
-        einnahmen_nicht_umsatz = einnahmen_gesamt
+        # Einnahmen für diese Gruppe: alle Termine mit gruppentermin_id, die zu dieser Gruppe gehören und in einer Rechnung vorkommen
         from datetime import datetime
         def calc_min(start, end):
             try:
@@ -173,13 +159,33 @@ def auswertung_gruppen():
                 print(f"Fehler bei Zeitberechnung: {start} - {end}: {ex}")
             return 0
 
-        termine = Gruppentermin.query.filter(Gruppentermin.gruppe_id == g.id)
+        # Alle Gruppentermine dieser Gruppe im Jahr
+        gruppentermine = Gruppentermin.query.filter(Gruppentermin.gruppe_id == g.id)
         if jahr:
-            termine = termine.filter(extract('year', Gruppentermin.datum) == jahr)
-        termine = list(termine)
-        abgehalten = len([t for t in termine if not t.entfallen])
-        abgesagt = len([t for t in termine if t.entfallen])
-        minuten = sum([calc_min(t.utc_starttime, t.utc_endtime) for t in termine if not t.entfallen])
+            gruppentermine = gruppentermine.filter(extract('year', Gruppentermin.datum) == jahr)
+        gruppentermine = list(gruppentermine)
+        gruppentermin_ids = [gt.id for gt in gruppentermine]
+
+        # Alle Termine mit gruppentermin_id dieser Gruppe
+        termine = Termin.query.filter(Termin.gruppentermin_id.in_(gruppentermin_ids)).all() if gruppentermin_ids else []
+
+        # Einnahmen: nur Termine, die in einer Rechnung vorkommen
+        termin_ids = [t.id for t in termine]
+        rechnungs_betraege = 0
+        if termin_ids:
+            for r in Rechnung.query.all():
+                for tr in r.termine_rechnungen:
+                    if tr.termin_id in termin_ids:
+                        if not jahr or (r.datum and r.datum.startswith(str(jahr))):
+                            rechnungs_betraege += r.betrag
+                            break
+        einnahmen_gesamt = rechnungs_betraege
+        einnahmen_umsatz = 0
+        einnahmen_nicht_umsatz = einnahmen_gesamt
+
+        abgehalten = len([gt for gt in gruppentermine if not gt.entfallen])
+        abgesagt = len([gt for gt in gruppentermine if gt.entfallen])
+        minuten = sum([calc_min(gt.utc_starttime, gt.utc_endtime) for gt in gruppentermine if not gt.entfallen])
         if einnahmen_gesamt > 0 or abgehalten > 0 or abgesagt > 0:
             result.append({
                 'kuerzel': g.gruppenkuerzel,
