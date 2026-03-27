@@ -159,6 +159,7 @@ def get_kalender_termine_anzuzueigen():
             Termin.beschreibung,
             Termin.kunde_id,
             Termin.gruppentermin_id,
+            Termin.caldav_uid,
             Kunde.kuerzel.label("kunde_kuerzel")
         )
         .join(Kunde, Termin.kunde_id == Kunde.id)
@@ -176,6 +177,7 @@ def get_kalender_termine_anzuzueigen():
             Gruppentermin.betrag,
             Gruppentermin.beschreibung,
             Gruppentermin.gruppe_id,
+            Gruppentermin.caldav_uid,
             Gruppe.gruppenkuerzel
         )
         .join(Gruppe, Gruppentermin.gruppe_id == Gruppe.id)
@@ -194,7 +196,8 @@ def get_kalender_termine_anzuzueigen():
             "kunde_id": getattr(r, "kunde_id", None),
             "kunde_kuerzel": getattr(r, "kunde_kuerzel", None),
             "gruppe_id": getattr(r, "gruppe_id", None),
-            "gruppen_kuerzel": getattr(r, "gruppenkuerzel", None)
+            "gruppen_kuerzel": getattr(r, "gruppenkuerzel", None),
+            "caldav_uid": getattr(r, "caldav_uid", None) if hasattr(r, "caldav_uid") else None
         }
         for r in termine + gruppen
     ]

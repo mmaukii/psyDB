@@ -259,6 +259,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const utcMinutes = String(date.getUTCMinutes()).padStart(2, "0");
                 return `${utcHours}:${utcMinutes}`;
             }
+            console.log("aktualisiere Termin ID", event.id);
 
             fetch('/api/termine/' + event.id, {
                 method: 'PUT',
@@ -269,7 +270,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     utc_endtime: toUtcTimeString(event.end),
                     beschreibung: event.summary,
                     betrag: event.extendedProps?.betrag ?? null,
-                    push_termin : 1 //um Kalender zu aktualisieren
+                    push_termin : 1, //um Kalender zu aktualisieren
+                    caldav_uid: event.extendedProps?.caldav_uid ?? null
                 })
             })
             .then(res => {
@@ -279,6 +281,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             .then(() => calendar.refetchEvents())
             .catch(err => console.error(err));  
         } else if (event._def.extendedProps.gruppe_id) {
+            console.log("aktualisiere Gruppentermin ID", event.id);
             fetch('/api/gruppentermine/' + event.id, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -308,6 +311,7 @@ let externalVisible = true; // aktuell sichtbar
 async function loadLocalEvents() {
     const res = await fetch('/api/kalender/termine_anzuzeigen');
     const data = await res.json();
+    console.log("Lokale Termine geladen:", data);
     function utcToLocalTime(dateStr, utcTime) {
         if (!dateStr || !utcTime) return "";
         const [h, m, s] = utcTime.split(":");
@@ -323,20 +327,25 @@ async function loadLocalEvents() {
         // FullCalendar erwartet ISO-String (ohne Offset)
         return localDate.toISOString().slice(0, 16);
     }
-    return data.map(s => ({
-        id: s.id,
-        title: s.gruppe_id ? `👥 ${s.gruppen_kuerzel || "Gruppe"}` : (s.kunde_kuerzel || "–"),
-        start: utcToLocalTime(s.datum, s.utc_starttime),
-        end: utcToLocalTime(s.datum, s.utc_endtime),
-        backgroundColor: s.gruppe_id ? "#4f46e5" : "#16a34a",
-        borderColor: s.gruppe_id ? "#4338ca" : "#15803d",
-        textColor: "#ffffff",
-        editable: true,
-        extendedProps: {
-            ...s,                // komplette DB-Zeile
-            source: "termine"    // 🔑 wichtig für Sync
-        }
-    }));
+    return data.map(s => {
+        // caldav_uid ggf. aus s holen, falls vorhanden
+        const caldav_uid = s.caldav_uid || null;
+        return {
+            id: s.id,
+            title: s.gruppe_id ? `👥 ${s.gruppen_kuerzel || "Gruppe"}` : (s.kunde_kuerzel || "–"),
+            start: utcToLocalTime(s.datum, s.utc_starttime),
+            end: utcToLocalTime(s.datum, s.utc_endtime),
+            backgroundColor: s.gruppe_id ? "#4f46e5" : "#16a34a",
+            borderColor: s.gruppe_id ? "#4338ca" : "#15803d",
+            textColor: "#ffffff",
+            editable: true,
+            extendedProps: {
+                ...s,                // komplette DB-Zeile
+                source: "termine",  // 🔑 wichtig für Sync
+                caldav_uid           // explizit hinzufügen
+            }
+        };
+    });
 
     
 }

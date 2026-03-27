@@ -182,7 +182,7 @@ def update_stunde(id):
     print(f"Received data for updating Termin ID {id}: {data}")
     for field in [
         "kunde_id", "datum", "utc_starttime", "utc_endtime",
-        "beschreibung", "kommentar", "betrag",
+        "beschreibung", "kommentar", "betrag", "caldav_uid", 
         "abgesagt", "timestamp", "changestamp", "gruppentermin_id","doku","pers_doku"
     ]:
         if field in data:
@@ -210,7 +210,7 @@ def update_stunde(id):
             "beschreibung": s.beschreibung,
             "kommentar": s.kommentar,
             "abgesagt": s.abgesagt,
-            "caldav_uid": None,
+            "caldav_uid": s.caldav_uid,
             "kuerzel":s.kunde.kuerzel
         })
 
