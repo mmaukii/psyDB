@@ -72,13 +72,17 @@ def auswertung_kunden():
     kunden = Kunde.query.all()
     result = []
     for k in kunden:
-        # Einnahmen für diesen Kunden im Jahr
-        rechnungen = Rechnung.query.filter(Rechnung.kunde_id == k.id)
-        if jahr:
-            rechnungen = rechnungen.filter(extract('year', Rechnung.datum) == jahr)
+        # Einnahmen für diesen Kunden im Jahr: alle Rechnungen, die über einen Termin mit diesem Kunden verknüpft sind
+        rechnungen = []
+        for r in Rechnung.query.all():
+            for tr in r.termine_rechnungen:
+                if tr.termin and tr.termin.kunde_id == k.id:
+                    if not jahr or (r.datum and r.datum.startswith(str(jahr))):
+                        rechnungen.append(r)
+                        break
         einnahmen_gesamt = sum([r.betrag for r in rechnungen])
-        einnahmen_umsatz = sum([r.betrag for r in rechnungen if r.umsatzsteuerpflichtig])
-        einnahmen_nicht_umsatz = sum([r.betrag for r in rechnungen if not r.umsatzsteuerpflichtig])
+        einnahmen_umsatz = sum([r.betrag for r in rechnungen if k.ust == 1])
+        einnahmen_nicht_umsatz = sum([r.betrag for r in rechnungen if k.ust != 1])
         termine = Termin.query.filter(Termin.kunde_id == k.id)
         if jahr:
             termine = termine.filter(extract('year', Termin.datum) == jahr)
@@ -86,13 +90,14 @@ def auswertung_kunden():
         abgehalten = len([t for t in termine if not t.abgesagt])
         abgesagt = len([t for t in termine if t.abgesagt])
         minuten = sum([int(t.dauer_min) if hasattr(t, 'dauer_min') and t.dauer_min else 0 for t in termine if not t.abgesagt])
-        result.append({
-            'kuerzel': k.kuerzel,
-            'einnahmen_gesamt': float(einnahmen_gesamt),
-            'einnahmen_umsatzsteuerpflichtig': float(einnahmen_umsatz),
-            'einnahmen_nicht_umsatzsteuerpflichtig': float(einnahmen_nicht_umsatz),
-            'abgehaltene_termine': abgehalten,
-            'abgehaltene_termine_min': minuten,
-            'abgesagte_termine': abgesagt
-        })
+        if einnahmen_gesamt > 0:
+            result.append({
+                'kuerzel': k.kuerzel,
+                'einnahmen_gesamt': float(einnahmen_gesamt),
+                'einnahmen_umsatzsteuerpflichtig': float(einnahmen_umsatz),
+                'einnahmen_nicht_umsatzsteuerpflichtig': float(einnahmen_nicht_umsatz),
+                'abgehaltene_termine': abgehalten,
+                'abgehaltene_termine_min': minuten,
+                'abgesagte_termine': abgesagt
+            })
     return jsonify(result)

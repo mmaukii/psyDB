@@ -25,6 +25,18 @@ document.addEventListener('DOMContentLoaded', function() {
             <th>abgehaltene Termine</th><th>Minuten</th><th>abgesagte Termine</th>
             <th>abgehaltene Gruppen</th><th>Gruppen-Minuten</th><th>abgesagte Gruppen</th>
         </tr></thead><tbody>`;
+
+        // Summen-Variablen initialisieren
+        let sum_einnahmen_gesamt = 0;
+        let sum_einnahmen_umsatzsteuerpflichtig = 0;
+        let sum_einnahmen_nicht_umsatzsteuerpflichtig = 0;
+        let sum_abgehaltene_termine = 0;
+        let sum_abgehaltene_termine_min = 0;
+        let sum_abgesagte_termine = 0;
+        let sum_abgehaltene_gruppentermine = 0;
+        let sum_abgehaltene_gruppentermine_min = 0;
+        let sum_abgesagte_gruppentermine = 0;
+
         for (const row of data) {
             html += `<tr>
                 <td>${row.jahr}</td>
@@ -38,7 +50,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${row.abgehaltene_gruppentermine_min}</td>
                 <td>${row.abgesagte_gruppentermine}</td>
             </tr>`;
+            sum_einnahmen_gesamt += row.einnahmen_gesamt;
+            sum_einnahmen_umsatzsteuerpflichtig += row.einnahmen_umsatzsteuerpflichtig;
+            sum_einnahmen_nicht_umsatzsteuerpflichtig += row.einnahmen_nicht_umsatzsteuerpflichtig;
+            sum_abgehaltene_termine += row.abgehaltene_termine;
+            sum_abgehaltene_termine_min += row.abgehaltene_termine_min;
+            sum_abgesagte_termine += row.abgesagte_termine;
+            sum_abgehaltene_gruppentermine += row.abgehaltene_gruppentermine;
+            sum_abgehaltene_gruppentermine_min += row.abgehaltene_gruppentermine_min;
+            sum_abgesagte_gruppentermine += row.abgesagte_gruppentermine;
         }
+
+        // Summenzeile hinzufügen
+        html += `<tr style="font-weight:bold;background:#f0f0f0;">
+            <td>Summe</td>
+            <td>${sum_einnahmen_gesamt.toFixed(2)} €</td>
+            <td>${sum_einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
+            <td>${sum_einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
+            <td>${sum_abgehaltene_termine}</td>
+            <td>${sum_abgehaltene_termine_min}</td>
+            <td>${sum_abgesagte_termine}</td>
+            <td>${sum_abgehaltene_gruppentermine}</td>
+            <td>${sum_abgehaltene_gruppentermine_min}</td>
+            <td>${sum_abgesagte_gruppentermine}</td>
+        </tr>`;
+
         html += '</tbody></table>';
         document.getElementById('auswertung-jahrestabelle').innerHTML = html;
     }
@@ -66,6 +102,15 @@ document.addEventListener('DOMContentLoaded', function() {
             <th>Kürzel</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
             <th>abgehaltene Termine</th><th>Minuten</th><th>abgesagte Termine</th>
         </tr></thead><tbody>`;
+
+        // Summen-Variablen initialisieren
+        let sum_einnahmen_gesamt = 0;
+        let sum_einnahmen_umsatzsteuerpflichtig = 0;
+        let sum_einnahmen_nicht_umsatzsteuerpflichtig = 0;
+        let sum_abgehaltene_termine = 0;
+        let sum_abgehaltene_termine_min = 0;
+        let sum_abgesagte_termine = 0;
+
         for (const row of data) {
             html += `<tr>
                 <td>${row.kuerzel}</td>
@@ -76,7 +121,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${row.abgehaltene_termine_min}</td>
                 <td>${row.abgesagte_termine}</td>
             </tr>`;
+            sum_einnahmen_gesamt += row.einnahmen_gesamt;
+            sum_einnahmen_umsatzsteuerpflichtig += row.einnahmen_umsatzsteuerpflichtig;
+            sum_einnahmen_nicht_umsatzsteuerpflichtig += row.einnahmen_nicht_umsatzsteuerpflichtig;
+            sum_abgehaltene_termine += row.abgehaltene_termine;
+            sum_abgehaltene_termine_min += row.abgehaltene_termine_min;
+            sum_abgesagte_termine += row.abgesagte_termine;
         }
+
+        // Summenzeile hinzufügen
+        html += `<tr style="font-weight:bold;background:#f0f0f0;">
+            <td>Summe</td>
+            <td>${sum_einnahmen_gesamt.toFixed(2)} €</td>
+            <td>${sum_einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
+            <td>${sum_einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
+            <td>${sum_abgehaltene_termine}</td>
+            <td>${sum_abgehaltene_termine_min}</td>
+            <td>${sum_abgesagte_termine}</td>
+        </tr>`;
+
         html += '</tbody></table>';
         document.getElementById('auswertung-kundentabelle').innerHTML = html;
     }
