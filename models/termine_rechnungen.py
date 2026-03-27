@@ -5,6 +5,7 @@ class TermineRechnung(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     rechnung_id = db.Column(db.Integer, db.ForeignKey("rechnungen.id"), nullable=False)
-    termin_id = db.Column(db.Integer, db.ForeignKey("termine.id"), nullable=False)  # <-- korrekt
+    termin_id = db.Column(db.Integer, db.ForeignKey("termine.id"), nullable=False)
+    termin = db.relationship("Termin", backref="termine_rechnungen", uselist=False)
     timestamp = db.Column(db.String)
     changestamp = db.Column(db.String)
