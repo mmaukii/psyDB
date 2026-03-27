@@ -490,7 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
     
-
+    showToast("Termin in Bearbeitung", null);
     terminForm.addEventListener("submit", async e => {
         e.preventDefault();
 
@@ -533,12 +533,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const istSerie = document.getElementById("istSerie").checked;
         let termineDaten = [data];
         if (istSerie) {
+            showToast("Termin in Bearbeitung", null);
             const intervall = parseInt(document.getElementById("serieIntervall").value) || 1;
             const anzahl = parseInt(document.getElementById("serieAnzahl").value) || 1;
             const startDatum = new Date(data.datum);
             termineDaten = [];
             for (let i = 0; i < anzahl; i++) {
-                showToast("Termin in Bearbeitung", null);
                 const terminDatum = new Date(startDatum);
                 terminDatum.setDate(terminDatum.getDate() + (i * intervall * 7));
                 const neuerTermin = { ...data };

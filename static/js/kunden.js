@@ -316,8 +316,70 @@ document.getElementById("neuBtn").addEventListener("click", () => {
 document.getElementById("loeschenBtn").addEventListener("click", async () => {
     const id = form.id.value;
     if (!id) return alert("Kein Kunde ausgewählt.");
-    if (!confirm("Diesen Kunden wirklich löschen?")) return;
 
+    // Auswahl-Dialog: Nur Kunde löschen oder auch alle Termine?
+    // Dialog mit Buttons statt prompt
+    const dialog = document.createElement("div");
+    dialog.style.position = "fixed";
+    dialog.style.left = "0";
+    dialog.style.top = "0";
+    dialog.style.width = "100vw";
+    dialog.style.height = "100vh";
+    dialog.style.background = "rgba(0,0,0,0.3)";
+    dialog.style.display = "flex";
+    dialog.style.alignItems = "center";
+    dialog.style.justifyContent = "center";
+    dialog.style.zIndex = 9999;
+
+    dialog.innerHTML = `
+        <div style="background:#fff;padding:2em;border-radius:8px;box-shadow:0 2px 12px #0002;max-width:90vw;">
+            <div style="margin-bottom:1em;">
+                <b>Wie möchten Sie fortfahren?</b><br>
+                <small>Termine mitlöschen um auch Doku mitzulöschen. Wählen Sie eine Option</small>
+            </div>
+            <button id="kundeNurLoeschenBtn" style="margin-right:1em;">Nur Kunde löschen</button>
+            <button id="kundeUndTermineLoeschenBtn" style="margin-right:1em;">Kunde und ALLE Termine löschen</button>
+            <button id="abbrechenBtn">Abbrechen</button>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+
+    // Promise für Auswahl
+    const auswahl = await new Promise(resolve => {
+        dialog.querySelector("#kundeNurLoeschenBtn").onclick = () => resolve("1");
+        dialog.querySelector("#kundeUndTermineLoeschenBtn").onclick = () => resolve("2");
+        dialog.querySelector("#abbrechenBtn").onclick = () => resolve(null);
+    });
+
+    dialog.remove();
+
+    if (!auswahl) return; // Abbruch
+    if (auswahl !== "1" && auswahl !== "2") {
+        alert("Ungültige Eingabe. Vorgang abgebrochen.");
+        return;
+    }
+
+    if (auswahl === "2") {
+        // Alle Termine des Kunden löschen
+        try {
+            // Hole alle Termine für den Kunden
+            const termineRes = await fetch(`/api/termine/kunde_rnr/${id}`);
+            if (!termineRes.ok) throw new Error("Fehler beim Laden der Termine");
+            const termine = await termineRes.json();
+            showToast("Termin wird gelöscht", null );
+            for (const termin of termine) {
+                // Einzelnen Termin löschen
+                
+                await fetch(`/api/termine/${termin.id}`, { method: "DELETE" });
+            }
+        } catch (err) {
+            alert("Fehler beim Löschen der Termine: " + err.message);
+            return;
+        }
+    }
+
+    
+    showToast("Klient wird gelöscht", null );
     const response = await fetch(`/api/kunden/${id}`, { method: "DELETE" });
 
     if (!response.ok) {
