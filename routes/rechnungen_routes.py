@@ -603,7 +603,8 @@ def create_rechnungen_aus_termine():
             erstellte_rechnungen.append({
                 "kunde_id": kunde_id,
                 "rechnung_id": rechnung.id,
-                "termine": [s.id for s in kunden_termine]
+                "termine": [s.id for s in kunden_termine],
+                "rechnungsnr": rechnung.rechnungsnr
             })
 
         db.session.commit()

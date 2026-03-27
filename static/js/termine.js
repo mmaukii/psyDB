@@ -398,10 +398,11 @@ document.getElementById('getSelectedButton').addEventListener('click', () => {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // IDs aus data.rechnungen extrahieren
+            // Rechnungsnummern und IDs extrahieren
+            const rechnungsNrs = data.rechnungen.map(r => r.rechnungsnr);
             const rechnungsIds = data.rechnungen.map(r => r.rechnung_id);
-            console.log("Neue Rechnungs-IDs vom Server:", rechnungsIds);
-            alert(`Neue Rechnungen erstellt! IDs: ${rechnungsIds.join(", ")}`);
+            console.log("Neue Rechnungsnummern vom Server:", rechnungsNrs);
+            alert(`Neue Rechnungen erstellt! Nummern: ${rechnungsNrs.join(", ")}`);
 
             // Offene Termine aktualisieren und Auswahl zurücksetzen
             ladeTermine();
