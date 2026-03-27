@@ -106,8 +106,16 @@ window.openfensterTerminAnpassen = async function ({
     document.getElementById("gruppeId").value = gruppeId || "";
 
     // 🔓 Modal öffnen
-   
     fenstertermineanpassen.style.display = "block";
+
+    // Serientermin-Ebene immer ausblenden beim Öffnen
+    const serieOptions = document.getElementById("serieOptions");
+    if (serieOptions) {
+        serieOptions.style.display = "none";
+        // Optional: Checkbox zurücksetzen
+        const istSerieCheckbox = document.getElementById("istSerie");
+        if (istSerieCheckbox) istSerieCheckbox.checked = false;
+    }
 
     //listener zum ausfüllen wenn kunde gewechselt wird
     setupKundenListener()
