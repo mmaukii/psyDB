@@ -40,15 +40,15 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const row of data) {
             html += `<tr>
                 <td>${row.jahr}</td>
-                <td>${row.einnahmen_gesamt.toFixed(2)} €</td>
-                <td>${row.einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
-                <td>${row.einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
-                <td>${row.abgehaltene_termine}</td>
-                <td>${(row.abgehaltene_termine_min/60).toFixed(1)}</td>
-                <td>${row.abgesagte_termine}</td>
-                <td>${row.abgehaltene_gruppentermine}</td>
-                <td>${(row.abgehaltene_gruppentermine_min/60).toFixed(1)}</td>
-                <td>${row.abgesagte_gruppentermine}</td>
+                <td style="text-align:right;">${row.einnahmen_gesamt.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.einnahmen_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.einnahmen_nicht_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.abgehaltene_termine}</td>
+                <td style="text-align:right;">${(row.abgehaltene_termine_min/60).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                <td style="text-align:right;">${row.abgesagte_termine}</td>
+                <td style="text-align:right;">${row.abgehaltene_gruppentermine}</td>
+                <td style="text-align:right;">${(row.abgehaltene_gruppentermine_min/60).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                <td style="text-align:right;">${row.abgesagte_gruppentermine}</td>
             </tr>`;
             sum_einnahmen_gesamt += row.einnahmen_gesamt;
             sum_einnahmen_umsatzsteuerpflichtig += row.einnahmen_umsatzsteuerpflichtig;
@@ -64,15 +64,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Summenzeile hinzufügen
         html += `<tr style="font-weight:bold;background:#f0f0f0;">
             <td>Summe</td>
-            <td>${sum_einnahmen_gesamt.toFixed(2)} €</td>
-            <td>${sum_einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
-            <td>${sum_einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
-            <td>${sum_abgehaltene_termine}</td>
-            <td>${(sum_abgehaltene_termine_min/60).toFixed(1)}</td>
-            <td>${sum_abgesagte_termine}</td>
-            <td>${sum_abgehaltene_gruppentermine}</td>
-            <td>${(sum_abgehaltene_gruppentermine_min/60).toFixed(1)}</td>
-            <td>${sum_abgesagte_gruppentermine}</td>
+            <td style="text-align:right;">${sum_einnahmen_gesamt.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+            <td style="text-align:right;">${sum_einnahmen_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+            <td style="text-align:right;">${sum_einnahmen_nicht_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+            <td style="text-align:right;">${sum_abgehaltene_termine}</td>
+            <td style="text-align:right;">${(sum_abgehaltene_termine_min/60).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+            <td style="text-align:right;">${sum_abgesagte_termine}</td>
+            <td style="text-align:right;">${sum_abgehaltene_gruppentermine}</td>
+            <td style="text-align:right;">${(sum_abgehaltene_gruppentermine_min/60).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+            <td style="text-align:right;">${sum_abgesagte_gruppentermine}</td>
         </tr>`;
 
         html += '</tbody></table>';
@@ -113,13 +113,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         for (const row of data) {
             html += `<tr>
-                <td>${row.kuerzel}</td>
-                <td>${row.einnahmen_gesamt.toFixed(2)} €</td>
-                <td>${row.einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
-                <td>${row.einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
-                <td>${row.abgehaltene_termine}</td>
-                <td>${(row.abgehaltene_termine_min/60).toFixed(1)}</td>
-                <td>${row.abgesagte_termine}</td>
+                <td >${row.kuerzel}</td>
+                <td style="text-align:right;">${row.einnahmen_gesamt.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.einnahmen_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.einnahmen_nicht_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.abgehaltene_termine}</td>
+                <td style="text-align:right;">${(row.abgehaltene_termine_min/60).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                <td style="text-align:right;">${row.abgesagte_termine}</td>
             </tr>`;
             sum_einnahmen_gesamt += row.einnahmen_gesamt;
             sum_einnahmen_umsatzsteuerpflichtig += row.einnahmen_umsatzsteuerpflichtig;
@@ -132,12 +132,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Summenzeile hinzufügen
         html += `<tr style="font-weight:bold;background:#f0f0f0;">
             <td>Summe</td>
-            <td>${sum_einnahmen_gesamt.toFixed(2)} €</td>
-            <td>${sum_einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
-            <td>${sum_einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
-            <td>${sum_abgehaltene_termine}</td>
-            <td>${(sum_abgehaltene_termine_min/60).toFixed(1)}</td>
-            <td>${sum_abgesagte_termine}</td>
+            <td style="text-align:right;">${sum_einnahmen_gesamt.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+            <td style="text-align:right;">${sum_einnahmen_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+            <td style="text-align:right;">${sum_einnahmen_nicht_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+            <td style="text-align:right;">${sum_abgehaltene_termine}</td>
+            <td style="text-align:right;">${(sum_abgehaltene_termine_min/60).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+            <td style="text-align:right;">${sum_abgesagte_termine}</td>
         </tr>`;
 
         html += '</tbody></table>';
