@@ -99,6 +99,7 @@ function activateRowEvents() {
 async function reloadGruppentermineAnwesenheit(gruppeId) {
     // Termine laden
     try {
+        console.log("Lade Gruppentermine für Gruppe ID:", gruppeId);
         // 1️⃣ Fetch für Gruppentermine mit Teilnehmern
         const response = await fetch(`api/gruppentermine/${gruppeId}/termine`);
         if (!response.ok) throw new Error("Fehler beim Laden der Gruppentermine");
@@ -106,6 +107,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
         console.log("gruppentermine", gruppentermine)
 
         // 2️⃣ Fetch für alle bestehenden Termine
+        console.log("Lade alle Termine für Anwesenheitsabgleich");
         const termineResponse = await fetch("api/termine");
         if (!termineResponse.ok) throw new Error("Fehler beim Laden aller Termine");
         const alleTermine = await termineResponse.json(); // enthält gruppe_id + kunde_id
@@ -123,6 +125,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
 
             termineProGruppeAnwesenheitsListe.innerHTML = gruppentermine.map(st => {
                 // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
+                console.log("Stundendaten für Anwesenheitstabelle:", st);
                 const datumParts = st.datum.split("-");
                 const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
                 // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
@@ -895,7 +898,10 @@ document.addEventListener("DOMContentLoaded", () => {
             contents.forEach(c => c.classList.remove("active"));
 
             tab.classList.add("active");
-            document.getElementById(tab.dataset.tab).classList.add("active");
+            const content = document.getElementById(tab.dataset.tab);
+            if (content) {
+                content.classList.add("active");
+            }
         });
     });
 });

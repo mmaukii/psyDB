@@ -21,7 +21,10 @@ tabs.forEach(tab => {
         tab.classList.add("active");
 
         contents.forEach(c => c.classList.remove("active"));
-        document.getElementById(tab.dataset.tab).classList.add("active");
+        const content = document.getElementById(tab.dataset.tab);
+        if (content) {
+            content.classList.add("active");
+        }
     });
 });
 
