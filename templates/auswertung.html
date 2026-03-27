@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block page %}
+<div class="dashboard-wrapper">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <h1>Auswertungen</h1>
+        </div>
+    </div>
+    <div id="auswertung-jahrestabelle"></div>
+    <div id="auswertung-jahresauswahl"></div>
+    <div id="auswertung-kundentabelle"></div>
+</div>
+
+<style>
+.dashboard-wrapper {
+    padding: 20px;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auswertung.js') }}"></script>
+{% endblock %}
