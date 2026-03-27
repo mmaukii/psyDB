@@ -316,20 +316,46 @@ def kalender_extern():
                 except Exception as rrule_error:
                     print(f"⚠ Fehler beim Expandieren der RRULE: {rrule_error}")
                     # Fallback: als Einzeltermin hinzufügen
+                    # Start/Ende in UTC umwandeln
+                    if dtstart.tzinfo is None:
+                        dtstart_utc = dtstart.replace(tzinfo=UTC)
+                    else:
+                        dtstart_utc = dtstart.astimezone(UTC)
+                    if dtend:
+                        if dtend.tzinfo is None:
+                            dtend_utc = dtend.replace(tzinfo=UTC)
+                        else:
+                            dtend_utc = dtend.astimezone(UTC)
+                    else:
+                        dtend_utc = None
+
                     kalender_events.append({
                         "uid": uid,
                         "title": title,
-                        "start": dtstart.isoformat(),
-                        "end": dtend.isoformat() if dtend else None,
+                        "start": dtstart_utc.isoformat(),
+                        "end": dtend_utc.isoformat() if dtend_utc else None,
                         "calendar": cal_name
                     })
             else:
                 # Einzeltermin
+                # Start/Ende in UTC umwandeln
+                if dtstart.tzinfo is None:
+                    dtstart_utc = dtstart.replace(tzinfo=timezone.utc)
+                else:
+                    dtstart_utc = dtstart.astimezone(timezone.utc)
+                if dtend:
+                    if dtend.tzinfo is None:
+                        dtend_utc = dtend.replace(tzinfo=timezone.utc)
+                    else:
+                        dtend_utc = dtend.astimezone(timezone.utc)
+                else:
+                    dtend_utc = None
+
                 kalender_events.append({
                     "uid": uid,
                     "title": title,
-                    "start": dtstart.isoformat(),
-                    "end": dtend.isoformat() if dtend else None,
+                    "start": dtstart_utc.isoformat(),
+                    "end": dtend_utc.isoformat() if dtend_utc else None,
                     "calendar": cal_name
                 })
 
@@ -744,10 +770,23 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
             # Neues Online-Event mit gültigem Kürzel → minimal in DB anlegen
             #print(f"Neues Event UID={uid}, Summary='{summary}'")
             start = ve.dtstart.value
-            #print("start:", start)
             if not hasattr(start, "hour"):
                 start = datetime.combine(start, datetime.min.time())
+            # Stelle sicher, dass start ein UTC-Datetime ist
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+            else:
+                start = start.astimezone(timezone.utc)
+
             end = getattr(ve, "dtend", None)
+            end = end.value if end and hasattr(end, "value") else end
+            if end and not hasattr(end, "hour"):
+                end = datetime.combine(end, datetime.min.time())
+            if end:
+                if end.tzinfo is None:
+                    end = end.replace(tzinfo=timezone.utc)
+                else:
+                    end = end.astimezone(timezone.utc)
             end = end.value if end and hasattr(end, "value") else end
             if end and not hasattr(end, "hour"):
                 end = datetime.combine(end, datetime.min.time())
@@ -891,7 +930,6 @@ def get_event_etag(event):
 
 @kalender_bp.post("/calendar/sync")
 def sync_calendar():
-    from datetime import datetime
     logs = []
     print("🔄 Termin-Kalender-Synchronisation gestartet backend")
     try:
