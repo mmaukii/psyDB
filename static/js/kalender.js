@@ -121,12 +121,20 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return; // Fenster nicht öffnen
             }
 
+            function toUtcTimeString(date) {
+                if (!date) return "00:00";
+                const utcHours = String(date.getUTCHours()).padStart(2, "0");
+                const utcMinutes = String(date.getUTCMinutes()).padStart(2, "0");
+                return `${utcHours}:${utcMinutes}`;
+            }
+            
+
             openfensterTerminAnpassen({
                 stundensatz: selectedEvent.extendedProps?.betrag || "",
                 beschreibung: selectedEvent.extendedProps?.beschreibung || "",
                 datum: selectedEvent.startStr.split("T")[0],
-                utc_starttime: formatTimeForInput(selectedEvent.start),
-                utc_endtime: formatTimeForInput(selectedEvent.end),
+                utc_starttime: toUtcTimeString(selectedEvent.start),
+                utc_endtime: toUtcTimeString(selectedEvent.end),
                 stundeId: selectedEvent.id || "",
                 kundeId: selectedEvent.extendedProps?.kunde_id || "",
                 gruppeId: selectedEvent.extendedProps?.gruppe_id || ""
@@ -244,14 +252,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     function updateEvent(event) {
         console.log(event);
         if (event._def.extendedProps.kunde_id) {
+            // Zeit in UTC umrechnen
+            function toUtcTimeString(date) {
+                if (!date) return "00:00";
+                const utcHours = String(date.getUTCHours()).padStart(2, "0");
+                const utcMinutes = String(date.getUTCMinutes()).padStart(2, "0");
+                return `${utcHours}:${utcMinutes}`;
+            }
+
             fetch('/api/termine/' + event.id, {
-                  
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     datum: event.startStr.split("T")[0],
-                    utc_starttime: formatTimeForInput(event.start),
-                    utc_endtime: formatTimeForInput(event.end),
+                    utc_starttime: toUtcTimeString(event.start),
+                    utc_endtime: toUtcTimeString(event.end),
                     beschreibung: event.summary,
                     betrag: event.extendedProps?.betrag ?? null,
                     push_termin : 1 //um Kalender zu aktualisieren
@@ -269,8 +284,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     datum: event.startStr.split("T")[0],
-                    utc_starttime: formatTimeForInput(event.start),
-                    utc_endtime: formatTimeForInput(event.end),
+                    utc_starttime: toUtcTimeString(event.start),
+                    utc_endtime: toUtcTimeString(event.end),
                     beschreibung: event.title,
                     betrag: event.extendedProps?.betrag ?? null,
                     push_termin: 1 // Damit der Push an CalDAV erfolgt

@@ -1,4 +1,14 @@
 from datetime import datetime, timezone
+from flask import Blueprint, request, jsonify
+from database import db
+from models import Termin, Gruppentermin, Kunde, Gruppe,Programmvariable
+from sqlalchemy import union_all, literal
+from caldav import DAVClient
+from caldav.elements import dav
+from datetime import datetime, timedelta
+import time
+from config import get_webdav_config
+from sqlalchemy import text
 
 def cleanup_offline_deleted_termine():
     """
@@ -81,16 +91,7 @@ def sync_offline_termine_und_gruppentermine():
         except Exception as e:
             print(f"❗️Push Gruppentermin ID {g.id} fehlgeschlagen: {e}")
     print(f"🔄 {synced} offline-Termine/Gruppentermine synchronisiert.")
-from flask import Blueprint, request, jsonify
-from database import db
-from models import Termin, Gruppentermin, Kunde, Gruppe,Programmvariable
-from sqlalchemy import union_all, literal
-from caldav import DAVClient
-from caldav.elements import dav
-from datetime import datetime, timedelta
-import time
-from config import get_webdav_config
-from sqlalchemy import text
+
 
 
 
