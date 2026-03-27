@@ -230,7 +230,9 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
 
             BetragTeilnehmerListe.innerHTML = alleKunden.map(k => {
                 let betragNum = parseFloat(k.betrag);
-                let betragFormatted = isNaN(betragNum) ? rawBetrag : betragNum.toFixed(2);
+                let betragFormatted = isNaN(betragNum)
+                    ? rawBetrag
+                    : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
 
                 return `
                     <tr data-id="${k.id}" data-gruppe-id="${gruppeId}">
@@ -252,7 +254,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 const saveBetrag = async () => {
                     const neuerBetrag = parseFloat(cell.innerText.replace(",", "."));
                     if (isNaN(neuerBetrag)) return;
-
+                    console.log(`Neuer Betrag für Kunde ${kundeId} in Gruppe ${gruppeId}: ${neuerBetrag} €`);
+                    
                     try {
                         await fetch(`/api/gruppen/${gruppeId}/kunden/${kundeId}`, {
                             method: "PUT",
@@ -264,6 +267,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                         console.error("Fehler beim Speichern:", err);
                         alert(`Fehler beim Speichern des Betrags für Kunde ${kundeId}`);
                     }
+                    showToast("Neuer Betrag gespeichert", 1500);
                 };
 
                 // Speichern bei Blur

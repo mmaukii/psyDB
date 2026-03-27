@@ -5,6 +5,7 @@ function showToast(text = "Gespeichert!", durationMs = 2000) {
     toast.textContent = text;
     toast.classList.add("show");
 
+
     if (durationMs !== null) {
         setTimeout(() => {
             toast.classList.remove("show");

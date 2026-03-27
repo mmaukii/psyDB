@@ -175,6 +175,7 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
         termineId: s.id,
         gruppentermineId: "",
         doku: s.doku,
+        beschreibung: s.beschreibung,
         pers_doku: s.pers_doku,
         datum: s.datum,
         utc_starttime: s.utc_starttime,
@@ -204,6 +205,7 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
           termineId: "",
           gruppentermineId: s.id,
           doku: s.doku,
+          beschreibung: s.beschreibung,
           pers_doku: s.pers_doku,
           datum: s.datum,
           utc_starttime: s.utc_starttime,
@@ -242,29 +244,33 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
 
     
 
+    function formatTextWithLineBreaks(text) {
+      return escapeHtml(text || "").replace(/\n/g, "<br>");
+    }
+
     dokuListe.innerHTML = alleDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">
-        <div class="doku-header">
-          <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""} ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''}</div>
-          <button class="doku-edit-btn" data-id="${d.dokuId}"title="Datensatz editieren">✏️</button>
-        </div>
-        <div class="doku-text">
-          ${
-            filter === "allg"
-              ? escapeHtml(d.doku || "")
+      <div class="doku-header">
+        <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""} ${d.beschreibung ? ` , ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''}</div>
+        <button class="doku-edit-btn" data-id="${d.dokuId}" title="Datensatz editieren">✏️</button>
+      </div>
+      <div class="doku-text">
+        ${
+        filter === "allg"
+          ? formatTextWithLineBreaks(d.doku)
 
-              : filter === "pers"
-                ? escapeHtml(d.pers_doku || "")
+          : filter === "pers"
+          ? formatTextWithLineBreaks(d.pers_doku)
 
-                : `
-                    ${escapeHtml(d.doku || "")}
-                    <br><br>
-                    <span class="doku-trenner">*****</span>
-                    <br><br>
-                    ${escapeHtml(d.pers_doku || "")}
-                  `
-          }
-        </div>
+          : `
+            ${formatTextWithLineBreaks(d.doku)}
+            <br><br>
+            <span class="doku-trenner">*****</span>
+            <br><br>
+            ${formatTextWithLineBreaks(d.pers_doku)}
+            `
+        }
+      </div>
       </div>
     `).join("");
 
