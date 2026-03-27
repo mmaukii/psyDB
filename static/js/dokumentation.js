@@ -27,6 +27,13 @@ const dokuText = document.getElementById("dokuText");
 
 document.addEventListener("DOMContentLoaded", () => {
   ladeAuswahl();
+  // Aktiv/Inaktiv Filter Listener
+  const aktivFilter = document.getElementById("DokuAktivFilter");
+  if (aktivFilter) {
+    aktivFilter.addEventListener("change", () => {
+      ladeAuswahl();
+    });
+  }
 });
 
 // ===============================
@@ -35,9 +42,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function ladeAuswahl() {
   try {
+    const aktivFilter = document.getElementById("DokuAktivFilter");
+    let kundenUrl = "/api/kunden";
+    let gruppenUrl = "/api/gruppen";
+    if (aktivFilter) {
+      if (aktivFilter.value === "aktiv") {
+        kundenUrl = "/api/kunden/aktiv";
+        gruppenUrl = "/api/gruppen/aktiv";
+      } else if (aktivFilter.value === "inaktiv") {
+        kundenUrl = "/api/kunden/inaktiv";
+        gruppenUrl = "/api/gruppen/inaktiv";
+      }
+    }
     const [kundenRes, gruppenRes] = await Promise.all([
-      fetch("/api/kunden"),
-      fetch("/api/gruppen")
+      fetch(kundenUrl),
+      fetch(gruppenUrl)
     ]);
 
     const kunden = await kundenRes.json();
@@ -59,8 +78,6 @@ async function ladeAuswahl() {
     sortiereAuswahl(auswahlDaten);
     renderAuswahl(auswahlDaten);
     autoSelectKundeAusLocalStorage();
-
-
   } catch (err) {
     console.error("Fehler beim Laden der Auswahl:", err);
   }

@@ -6,11 +6,18 @@
 
   <!-- LINKE SEITE -->
   <div id="left">
+
+    <select id="DokuAktivFilter" style="margin-bottom: 8px;">
+      <option value="aktiv" selected>Aktiv</option>
+      <option value="inaktiv">Inaktiv</option>
+      <option value="alle">Alle</option>
+    </select>
+
     <select id="DokuFilter">
-				<option value="pers">Nur persönliche Dokumentation</option>
-				<option value="allg" selected>Nur allgemeine Dokumentation</option>
-				<option value="ges">Gesamte Dokumentationen</option>
-		</select>
+        <option value="pers">Nur persönliche Dokumentation</option>
+        <option value="allg" selected>Nur allgemeine Dokumentation</option>
+        <option value="ges">Gesamte Dokumentationen</option>
+    </select>
 
     <input type="text" id="search" placeholder="Filter..." 
 				style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #fff;">
