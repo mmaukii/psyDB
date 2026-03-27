@@ -441,6 +441,7 @@ toggleAbgesagtBtn.addEventListener("click", () => {
 // Funktion: Termin aktualisieren basierend auf ausgewählten Teilnehmern
 async function aktualisiereTermin(button, termineId,datum) {
     const tr = button.closest("tr");
+    showToast("Wird akualisiert …", null);
     if (!tr) {
         console.error("Keine Tabellenzeile gefunden");
         return;
@@ -907,6 +908,7 @@ if (gruppenDokuSaveBtn) {
             alert("Bitte zuerst eine Gruppe auswählen!");
             return;
         }
+        showToast("Wird übertragen...", null);
         const doku = gruppenDokuText ? gruppenDokuText.value : "";
 
         try {

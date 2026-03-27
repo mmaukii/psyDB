@@ -60,14 +60,22 @@ def auswertung_jahrestabelle():
             return 0
 
         termine = Termin.query.filter(extract('year', Termin.datum) == jahr).all()
-        abgehalten = len([t for t in termine if not t.abgesagt])
+        # Nur Termine, die einer Rechnung und termine_rechnungen zugeordnet sind
+        termine_ids_mit_rechnung = set()
+        for r in rechnungen:
+            for tr in r.termine_rechnungen:
+                if tr.termin_id:
+                    termine_ids_mit_rechnung.add(tr.termin_id)
+        abgehalten = len([t for t in termine if not t.abgesagt and t.id in termine_ids_mit_rechnung])
         abgesagt = len([t for t in termine if t.abgesagt])
-        minuten = sum([calc_min(t.utc_starttime, t.utc_endtime) for t in termine if not t.abgesagt])
+        minuten = sum([calc_min(t.utc_starttime, t.utc_endtime) for t in termine if not t.abgesagt and t.id in termine_ids_mit_rechnung])
         # Gruppentermine
         gruppentermine = Gruppentermin.query.filter(extract('year', Gruppentermin.datum) == jahr).all()
-        gruppen_abgehalten = len([g for g in gruppentermine if not g.entfallen])
+        # Nur Gruppentermine, die in mindestens einem Termin als gruppentermin_id referenziert werden
+        gruppentermin_ids_in_termine = set([t.gruppentermin_id for t in Termin.query.filter(Termin.gruppentermin_id.isnot(None)).all()])
+        gruppen_abgehalten = len([g for g in gruppentermine if not g.entfallen and g.id in gruppentermin_ids_in_termine])
         gruppen_abgesagt = len([g for g in gruppentermine if g.entfallen])
-        gruppen_minuten = sum([calc_min(g.utc_starttime, g.utc_endtime) for g in gruppentermine if not g.entfallen])
+        gruppen_minuten = sum([calc_min(g.utc_starttime, g.utc_endtime) for g in gruppentermine if not g.entfallen and g.id in gruppentermin_ids_in_termine])
         result.append({
             'jahr': jahr,
             'einnahmen_gesamt': float(einnahmen_gesamt),
