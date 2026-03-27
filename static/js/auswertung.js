@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderJahresDropdown(jahre);
             if (jahre.length > 0) {
                 loadKundenTabelle(jahre[jahre.length-1]); // Standard: letztes Jahr
+                loadGruppenTabelle(jahre[jahre.length-1]);
             }
         });
 
@@ -88,7 +89,33 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('auswertung-jahresauswahl').innerHTML = html;
         document.getElementById('auswertung-jahr-select').addEventListener('change', function() {
             loadKundenTabelle(this.value);
+            loadGruppenTabelle(this.value);
         });
+    }
+    function loadGruppenTabelle(jahr) {
+        fetch(`/api/auswertung/gruppen?jahr=${jahr}`)
+            .then(res => res.json())
+            .then(data => renderGruppenTabelle(data, jahr));
+    }
+
+    function renderGruppenTabelle(data, jahr) {
+        let html = `<h3>Gruppen-Auswertung für ${jahr}</h3><table class="auswertung-table"><thead><tr>
+            <th>Kürzel</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
+            <th>abgehaltene Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+        </tr></thead><tbody>`;
+        for (const row of data) {
+            html += `<tr>
+                <td>${row.kuerzel}</td>
+                <td style="text-align:right;">${row.einnahmen_gesamt.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.einnahmen_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.einnahmen_nicht_umsatzsteuerpflichtig.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td>
+                <td style="text-align:right;">${row.abgehaltene_termine}</td>
+                <td style="text-align:right;">${(row.abgehaltene_termine_min/60).toLocaleString('de-DE', {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                <td style="text-align:right;">${row.abgesagte_termine}</td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+        document.getElementById('auswertung-gruppentabelle').innerHTML = html;
     }
 
     function loadKundenTabelle(jahr) {
