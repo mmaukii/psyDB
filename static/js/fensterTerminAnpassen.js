@@ -498,11 +498,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
     
-    showToast("Termin in Bearbeitung", null);
+    
     terminForm.addEventListener("submit", async e => {
         e.preventDefault();
+        
 
-        showToast("Termin in Bearbeitung", null);
+       
         console.log("Formular abgesendet, Daten werden verarbeitet...");
 
         const formData = new FormData(terminForm);
@@ -541,7 +542,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const istSerie = document.getElementById("istSerie").checked;
         let termineDaten = [data];
         if (istSerie) {
-            showToast("Termin in Bearbeitung", null);
             const intervall = parseInt(document.getElementById("serieIntervall").value) || 1;
             const anzahl = parseInt(document.getElementById("serieAnzahl").value) || 1;
             const startDatum = new Date(data.datum);
@@ -554,6 +554,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // UTC-Zeiten für das jeweilige Datum berechnen
                 neuerTermin.utc_starttime = localInputTimeToUTCStr(neuerTermin.datum, data.utc_starttime);
                 neuerTermin.utc_endtime = localInputTimeToUTCStr(neuerTermin.datum, data.utc_endtime);
+                
                 termineDaten.push(neuerTermin);
             }
         }
@@ -561,7 +562,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let url, method;
         const kundeId  = data.kundeId || data.kunde_id || null;
         const gruppeId = data.gruppeId || data.gruppe_id || null;
-        showToast("Termin in Bearbeitung", null);
+        
         if (data.terminId && data.kundeId) { //wenn termine und kunde vorhanden
             // console.log("🔄 Update Termin ID:", data.terminId);
             url = `/api/termine/${data.terminId}`;
@@ -587,7 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // 🔁 Alle Termine nacheinander speichern
             for (let termin of termineDaten) {
                 // console.log(`Sende ${method} an ${url} für Datum: ${termin.datum}`);
-
+                showToast("Termin in Bearbeitung", null);
                 const res = await fetch(url, {
                     method,
                     headers: { "Content-Type": "application/json" },
