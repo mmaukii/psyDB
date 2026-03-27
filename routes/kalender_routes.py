@@ -445,20 +445,99 @@ END:VEVENT
 END:VCALENDAR
 """
         if termin.get("caldav_uid"):
-            # Update
-            print("Event wird aktualisiert")
+            # Update: Vergleiche Timestamps
+            print("Vergleiche Timestamps für Update")
             event = cal.event_by_uid(uid)
-            event.data = vevent
-            event.save()
-            etag = get_event_etag(event)
-            db.session.execute(
-                text(f"UPDATE {table} SET caldav_etag=:etag WHERE id=:id"),
-                {"etag": etag, "id": id}
-            )
-            db.session.commit()
+            # Hole changestamp (DB) und modified (Kalender)
+            db_changestamp = None
+            caldav_modified = None
+            try:
+                if is_gruppe:
+                    db_changestamp = db.session.execute(text(f"SELECT changestamp FROM gruppentermine WHERE id=:id"), {"id": id}).scalar()
+                else:
+                    db_changestamp = db.session.execute(text(f"SELECT changestamp FROM termine WHERE id=:id"), {"id": id}).scalar()
+            except Exception as e:
+                print(f"⚠ Fehler beim Lesen des DB-changestamp: {e}")
+            try:
+                # modified (Kalender) direkt aus event.data als Text extrahieren
+                caldav_modified = None
+                lines = event.data.splitlines()
+                for line in lines:
+                    if line.startswith('LAST-MODIFIED:'):
+                        caldav_modified = line.replace('LAST-MODIFIED:', '').strip()
+                        break
+                if not caldav_modified:
+                    for line in lines:
+                        if line.startswith('DTSTAMP:'):
+                            caldav_modified = line.replace('DTSTAMP:', '').strip()
+                            break
+            except Exception as e:
+                print(f"⚠ Fehler beim Lesen des Kalender-modified: {e}")
+            # Vergleiche changestamp (DB) und modified (Kalender) als Strings (ISO-Format bevorzugt)
+            db_dt = db_changestamp
+            cal_dt = caldav_modified
+            update_calendar = False
+            update_db = False
+            if db_dt and cal_dt:
+                # Versuche als ISO-Strings zu vergleichen, ansonsten als Text
+                try:
+                    db_dt_cmp = db_dt.replace('Z','').replace('T','').replace(':','').replace('-','') if isinstance(db_dt, str) else str(db_dt)
+                    cal_dt_cmp = cal_dt.replace('Z','').replace('T','').replace(':','').replace('-','') if isinstance(cal_dt, str) else str(cal_dt)
+                    if db_dt_cmp > cal_dt_cmp:
+                        update_calendar = True
+                    elif cal_dt_cmp > db_dt_cmp:
+                        update_db = True
+                    else:
+                        update_calendar = True  # Gleichstand: DB gewinnt
+                except Exception as e:
+                    print(f"⚠ Fehler beim String-Vergleich changestamp/modified: {e}")
+                    update_calendar = True
+            elif db_dt and not cal_dt:
+                update_calendar = True
+            elif cal_dt and not db_dt:
+                update_db = True
+            else:
+                # Wenn beide None, DB gewinnt
+                update_calendar = True
+            if update_calendar:
+                print("changestamp (DB) ist neuer oder nur changestamp vorhanden → Kalender aktualisieren")
+                event.data = vevent
+                event.save()
+                etag = get_event_etag(event)
+                db.session.execute(
+                    text(f"UPDATE {table} SET caldav_etag=:etag WHERE id=:id"),
+                    {"etag": etag, "id": id}
+                )
+                db.session.commit()
+            elif update_db:
+                print("modified (Kalender) ist neuer oder nur modified vorhanden → DB aktualisieren")
+                try:
+                    # Felder aus event.data extrahieren (vereinfachte Variante)
+                    new_datum = None
+                    new_startzeit = None
+                    new_endzeit = None
+                    for line in lines:
+                        if line.startswith('DTSTART;TZID=UTC:'):
+                            dt = line.replace('DTSTART;TZID=UTC:', '').strip()
+                            if len(dt) >= 15:
+                                new_datum = f"{dt[0:4]}-{dt[4:6]}-{dt[6:8]}"
+                                new_startzeit = f"{dt[9:11]}:{dt[11:13]}"
+                        if line.startswith('DTEND;TZID=UTC:'):
+                            dt = line.replace('DTEND;TZID=UTC:', '').strip()
+                            if len(dt) >= 15:
+                                new_endzeit = f"{dt[9:11]}:{dt[11:13]}"
+                    db.session.execute(
+                        text(f"UPDATE {table} SET datum=:datum, utc_starttime=:start, utc_endtime=:end, caldav_etag=:etag WHERE id=:id"),
+                        {"datum": new_datum, "start": new_startzeit, "end": new_endzeit, "etag": get_event_etag(event), "id": id}
+                    )
+                    db.session.commit()
+                except Exception as e:
+                    print(f"⚠ Fehler beim DB-Update aus Kalender: {e}")
+            else:
+                print("Keine Änderung nötig (changestamp/modified identisch oder nicht lesbar)")
         else:
             # Neues Event anlegen
-            print("neuen EEvent anlegen")
+            print("neuen Event anlegen")
             event = cal.add_event(vevent, content_type="text/calendar; charset=utf-8")
             event.load()
             uid = event.vobject_instance.vevent.uid.value
@@ -685,7 +764,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(kunde.stundensatz) if kunde.stundensatz is not None else 0,
-                    timestamp = datetime.now(datetime_.timezone.utc).isoformat().replace("+00:00", "Z"),
+                    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     caldav_uid=uid,
                     caldav_etag=etag
                 )
@@ -719,7 +798,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(gruppe.standardbetrag) if gruppe.standardbetrag is not None else 0,
-                    timestamp = datetime.now(datetime_.timezone.utc).isoformat().replace("+00:00", "Z"),
+                    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     caldav_uid=uid,
                     caldav_etag=etag
                 )
