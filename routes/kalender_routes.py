@@ -385,7 +385,7 @@ def push_termin(termin: dict, delete_from_db=False):
     id = termin.get("gruppentermin_id") if is_gruppe else termin.get("termin_id")
     table = "gruppentermine" if is_gruppe else "termine"
 
-    uid = termin.get("caldav_uid") or f"{'grtermin' if is_gruppe else 'termin'}-{id}@probe"
+    uid = termin.get("caldav_uid") or f"{'grtermin' if is_gruppe else 'termin'}-{id}@praxis-psydb"
 
     # Prüfen ob Timestamp für abgesagt/entfallen gesetzt
     is_abgesagt = termin.get("abgesagt_am") or termin.get("entfallen_am")
@@ -547,7 +547,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
     principal = client.principal()
     calendars = principal.calendars()
 
-    # Probe-Kalender finden
+    # Praxis-Kalender finden
     terminkalender_var  = Programmvariable.query.filter_by(name='termine_kalender').first()
     terminkalender_name =terminkalender_var.wert
     log_msg("kalender " + terminkalender_name)
@@ -662,9 +662,9 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
 
         if not termin:
             # Neues Online-Event mit gültigem Kürzel → minimal in DB anlegen
-            print(f"Neues Event UID={uid}, Summary='{summary}'")
+            #print(f"Neues Event UID={uid}, Summary='{summary}'")
             start = ve.dtstart.value
-            print("start:", start)
+            #print("start:", start)
             if not hasattr(start, "hour"):
                 start = datetime.combine(start, datetime.min.time())
             end = getattr(ve, "dtend", None)
@@ -754,11 +754,11 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
 
         # 🔁 Bestehendes Event aktualisieren (auch wenn ETag fehlt)
         # Debug-Ausgabe: Online-Event vs. DB-Event
-        log_msg(f"[VERGLEICH] UID={uid}")
-        log_msg(f"  Online: datum={start.date().isoformat()}, utc_starttime={start.time().strftime('%H:%M')}, utc_endtime={(end.time().strftime('%H:%M') if end else None)}, beschreibung={summary}, kommentar={str(getattr(ve, 'description', '')) if hasattr(ve, 'description') else ''}")
-        log_msg(f"  DB: datum={termin.datum}, utc_starttime={termin.utc_starttime}, utc_endtime={termin.utc_endtime}, beschreibung={termin.beschreibung}, kommentar={termin.kommentar}")
+        #log_msg(f"[VERGLEICH] UID={uid}")
+        #log_msg(f"  Online: datum={start.date().isoformat()}, utc_starttime={start.time().strftime('%H:%M')}, utc_endtime={(end.time().strftime('%H:%M') if end else None)}, beschreibung={summary}, kommentar={str(getattr(ve, 'description', '')) if hasattr(ve, 'description') else ''}")
+        #log_msg(f"  DB: datum={termin.datum}, utc_starttime={termin.utc_starttime}, utc_endtime={termin.utc_endtime}, beschreibung={termin.beschreibung}, kommentar={termin.kommentar}")
         try:
-            log_msg(f"[DEBUG] Werte vor Assignment: start={start}, end={end}, summary={summary}, ve={ve}")
+            #log_msg(f"[DEBUG] Werte vor Assignment: start={start}, end={end}, summary={summary}, ve={ve}")
             new_datum = start.date().isoformat()
             new_startzeit = start.time().strftime("%H:%M")
             new_endzeit = end.time().strftime("%H:%M") if end else None

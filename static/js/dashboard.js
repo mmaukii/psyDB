@@ -2,6 +2,10 @@
 
 document.addEventListener("DOMContentLoaded", function() {
     async function syncCalendar() {
+        if (!navigator.onLine) {
+            showToast("Offline: Sync nicht möglich!", 2000);
+            return;
+        }
         console.log("Sync Termine gestartet");
         const startedAt = performance.now();
         showToast("Sync Termine läuft …", null);
@@ -30,8 +34,6 @@ document.addEventListener("DOMContentLoaded", function() {
     if (btn) {
         btn.addEventListener("click", function() {
             syncCalendar();
-            // Nach manuellem Sync kann das Flag wieder entfernt werden, falls gewünscht:
-            // localStorage.removeItem("dashboardCalendarSynced");
         });
     }
 });

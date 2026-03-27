@@ -15,7 +15,11 @@ function showToast(text = "Gespeichert!", durationMs = 2000) {
     }
 }
 
-async function syncProbeKalender() {
+async function syncPraxisKalender() {
+    if (!navigator.onLine) {
+        showToast("Offline: Sync nicht möglich!", 2000);
+        return;
+    }
     const startedAt = performance.now();
     showToast("Sync Termine läuft …", null);
     const res = await fetch("/api/calendar/sync", { method: "POST" });
@@ -29,8 +33,14 @@ async function syncProbeKalender() {
     calendar.refetchEvents(); // lokale
 }
 
-document.getElementById('syncButton').addEventListener('click', syncProbeKalender);
+document.getElementById('syncButton').addEventListener('click', syncPraxisKalender);
 document.getElementById('syncExterneButton').addEventListener('click', async () => {
+    
+    if (!navigator.onLine) {
+        showToast("Offline: Sync nicht möglich!", 2000);
+        return;
+    }
+    
     const startedAt = performance.now();
     showToast("Sync Extern läuft …", null);
     await refreshExternalCache();
@@ -219,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     calendar.refetchEvents();
 
     if (!calendarInitialized) {
-        await syncProbeKalender();
+        await syncPraxisKalender();
         await loadExternEvents(true); // Cache mit Force füllen
         calendar.refetchEvents();
         calendarInitialized = true;
