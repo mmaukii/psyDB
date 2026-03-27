@@ -43,15 +43,31 @@ def auswertung_jahrestabelle():
             else:
                 einnahmen_nicht_umsatz += r.betrag
         # Einzeltermine
+        from datetime import datetime
+        def calc_min(start, end):
+            try:
+                if start and end and isinstance(start, str) and isinstance(end, str):
+                    # Versuche verschiedene Formate (mit/ohne Sekunden, mit/ohne Z)
+                    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"):
+                        try:
+                            s = datetime.strptime(start, fmt)
+                            e = datetime.strptime(end, fmt)
+                            return int((e-s).total_seconds()//60)
+                        except Exception:
+                            continue
+            except Exception as ex:
+                print(f"Fehler bei Zeitberechnung: {start} - {end}: {ex}")
+            return 0
+
         termine = Termin.query.filter(extract('year', Termin.datum) == jahr).all()
         abgehalten = len([t for t in termine if not t.abgesagt])
         abgesagt = len([t for t in termine if t.abgesagt])
-        minuten = sum([int(t.dauer_min) if hasattr(t, 'dauer_min') and t.dauer_min else 0 for t in termine if not t.abgesagt])
+        minuten = sum([calc_min(t.utc_starttime, t.utc_endtime) for t in termine if not t.abgesagt])
         # Gruppentermine
         gruppentermine = Gruppentermin.query.filter(extract('year', Gruppentermin.datum) == jahr).all()
         gruppen_abgehalten = len([g for g in gruppentermine if not g.entfallen])
         gruppen_abgesagt = len([g for g in gruppentermine if g.entfallen])
-        gruppen_minuten = sum([int(g.dauer_min) if hasattr(g, 'dauer_min') and g.dauer_min else 0 for g in gruppentermine if not g.entfallen])
+        gruppen_minuten = sum([calc_min(g.utc_starttime, g.utc_endtime) for g in gruppentermine if not g.entfallen])
         result.append({
             'jahr': jahr,
             'einnahmen_gesamt': float(einnahmen_gesamt),
@@ -83,13 +99,32 @@ def auswertung_kunden():
         einnahmen_gesamt = sum([r.betrag for r in rechnungen])
         einnahmen_umsatz = sum([r.betrag for r in rechnungen if k.ust == 1])
         einnahmen_nicht_umsatz = sum([r.betrag for r in rechnungen if k.ust != 1])
+        from datetime import datetime
+        def calc_min(start, end):
+            try:
+                if start and end and isinstance(start, str) and isinstance(end, str):
+                    print(f"Berechnung Minuten: Start {start} - End {end}")
+                    for fmt in ("%Y-%m-%dT%H:%M:%S",  "%H:%M","%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"):
+                        try:
+                            s = datetime.strptime(start, fmt)
+                            e = datetime.strptime(end, fmt)
+                            print(f"Berechnung11 Minuten: Start {s} - End {e} => {(e-s).total_seconds()//60} Minuten")
+                            return int((e-s).total_seconds()//60)
+                        except Exception:
+                            continue
+            except Exception as ex:
+                print(f"Fehler bei Zeitberechnung: {start} - {end}: {ex}")
+            return 0
+
         termine = Termin.query.filter(Termin.kunde_id == k.id)
         if jahr:
             termine = termine.filter(extract('year', Termin.datum) == jahr)
         termine = list(termine)
         abgehalten = len([t for t in termine if not t.abgesagt])
         abgesagt = len([t for t in termine if t.abgesagt])
-        minuten = sum([int(t.dauer_min) if hasattr(t, 'dauer_min') and t.dauer_min else 0 for t in termine if not t.abgesagt])
+        print("Zeiten Kunde", k.kuerzel, [(t.utc_starttime, t.utc_endtime) for t in termine])
+        minuten = sum([calc_min(t.utc_starttime, t.utc_endtime) for t in termine if not t.abgesagt])
+        stunden = minuten / 60
         if einnahmen_gesamt > 0:
             result.append({
                 'kuerzel': k.kuerzel,

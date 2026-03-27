@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderJahrestabelle(data) {
         let html = `<h3>Jahresübersicht</h3><table class="auswertung-table"><thead><tr>
             <th>Jahr</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-            <th>abgehaltene Termine</th><th>Minuten</th><th>abgesagte Termine</th>
-            <th>abgehaltene Gruppen</th><th>Gruppen-Minuten</th><th>abgesagte Gruppen</th>
+            <th>abgehaltene Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+            <th>abgehaltene Gruppen</th><th>Gruppen-Stunden</th><th>abgesagte Gruppen</th>
         </tr></thead><tbody>`;
 
         // Summen-Variablen initialisieren
@@ -44,10 +44,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${row.einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
                 <td>${row.einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
                 <td>${row.abgehaltene_termine}</td>
-                <td>${row.abgehaltene_termine_min}</td>
+                <td>${(row.abgehaltene_termine_min/60).toFixed(1)}</td>
                 <td>${row.abgesagte_termine}</td>
                 <td>${row.abgehaltene_gruppentermine}</td>
-                <td>${row.abgehaltene_gruppentermine_min}</td>
+                <td>${(row.abgehaltene_gruppentermine_min/60).toFixed(1)}</td>
                 <td>${row.abgesagte_gruppentermine}</td>
             </tr>`;
             sum_einnahmen_gesamt += row.einnahmen_gesamt;
@@ -68,10 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <td>${sum_einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
             <td>${sum_einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
             <td>${sum_abgehaltene_termine}</td>
-            <td>${sum_abgehaltene_termine_min}</td>
+            <td>${(sum_abgehaltene_termine_min/60).toFixed(1)}</td>
             <td>${sum_abgesagte_termine}</td>
             <td>${sum_abgehaltene_gruppentermine}</td>
-            <td>${sum_abgehaltene_gruppentermine_min}</td>
+            <td>${(sum_abgehaltene_gruppentermine_min/60).toFixed(1)}</td>
             <td>${sum_abgesagte_gruppentermine}</td>
         </tr>`;
 
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderJahresDropdown(jahre) {
-        let html = `<label for="auswertung-jahr-select">Jahr wählen: </label><select id="auswertung-jahr-select">`;
+        let html = `<label for="auswertung-jahr-select">Jahr wählen: </label><select id="auswertung-jahr-select" style="width: 80px;">`;
         for (const j of jahre) {
             html += `<option value="${j}">${j}</option>`;
         }
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderKundenTabelle(data, jahr) {
         let html = `<h3>Kunden-Auswertung für ${jahr}</h3><table class="auswertung-table"><thead><tr>
             <th>Kürzel</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-            <th>abgehaltene Termine</th><th>Minuten</th><th>abgesagte Termine</th>
+            <th>abgehaltene Termine</th><th>Stunden</th><th>abgesagte Termine</th>
         </tr></thead><tbody>`;
 
         // Summen-Variablen initialisieren
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${row.einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
                 <td>${row.einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
                 <td>${row.abgehaltene_termine}</td>
-                <td>${row.abgehaltene_termine_min}</td>
+                <td>${(row.abgehaltene_termine_min/60).toFixed(1)}</td>
                 <td>${row.abgesagte_termine}</td>
             </tr>`;
             sum_einnahmen_gesamt += row.einnahmen_gesamt;
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <td>${sum_einnahmen_umsatzsteuerpflichtig.toFixed(2)} €</td>
             <td>${sum_einnahmen_nicht_umsatzsteuerpflichtig.toFixed(2)} €</td>
             <td>${sum_abgehaltene_termine}</td>
-            <td>${sum_abgehaltene_termine_min}</td>
+            <td>${(sum_abgehaltene_termine_min/60).toFixed(1)}</td>
             <td>${sum_abgesagte_termine}</td>
         </tr>`;
 
