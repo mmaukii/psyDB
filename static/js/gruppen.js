@@ -343,7 +343,8 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
                 utc_starttime: stunde.utc_starttime || "",
                 utc_endtime: stunde.utc_endtime || "",
                 stundeId: stunde.id || "",
-                gruppeId: stunde.gruppe_id || ""
+                gruppeId: stunde.gruppe_id || "",
+                therapieform: stunde.therapieform || ""
             });
 
         } catch (err) {
@@ -499,7 +500,7 @@ async function aktualisiereTermin(button, termineId,datum) {
                     }
                 }
                 
-
+                
                 
                 const createRes = await fetch(`/api/termine/${kundeId}`, {
                     method: "POST",
@@ -884,6 +885,7 @@ neuTerminBtn.addEventListener("click", async () => {
      openfensterTerminAnpassen({
                 stundensatz: termine.standardbetrag || "",
                 beschreibung: beschreibung || "",
+                therapieform: termine.therapieform || "",
                 gruppeId: gruppen_id || ""
             });
     

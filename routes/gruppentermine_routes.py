@@ -23,7 +23,8 @@ def get_all_gruppentermine():
         "entfallen": gs.entfallen,
         "timestamp": gs.timestamp,
         "changestamp": gs.changestamp,
-        "doku": gs.doku
+        "doku": gs.doku,
+        "therapieform": gs.therapieform
     } for gs in gs_list])
 
 # --- Alle termine einer bestimmten Gruppe die nicht nur offline gelöscht wurden ---
@@ -46,7 +47,8 @@ def get_termine_fuer_gruppe(gruppe_id):
         "entfallen": gs.entfallen,
         "timestamp": gs.timestamp,
         "changestamp": gs.changestamp,
-        "doku": gs.doku
+        "doku": gs.doku,
+        "therapieform": gs.therapieform
     } for gs in termine])
 
 # --- Einzelne Gruppentermin ---
@@ -65,7 +67,8 @@ def get_gruppenstunde(id):
         "entfallen": gs.entfallen,
         "timestamp": gs.timestamp,
         "changestamp": gs.changestamp,
-        "doku": gs.doku
+        "doku": gs.doku,
+        "therapieform": gs.therapieform
     })
 
 #--- Gruppentermin löschen -----
@@ -113,6 +116,7 @@ def add_gruppenstunde(gruppe_id):
         beschreibung=data.get("beschreibung"),
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
+        therapieform=data.get("therapieform"),
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         nur_offline_vorhanden=0
     )
@@ -151,7 +155,7 @@ def update_gruppenstunde(id):
     data = request.get_json()
 
     # 1️⃣ Gruppentermin aktualisieren
-    for field in ["datum", "utc_starttime", "utc_endtime", "beschreibung", "kommentar", "betrag", "entfallen","doku"]:
+    for field in ["datum", "utc_starttime", "utc_endtime", "beschreibung", "kommentar", "betrag", "entfallen", "doku", "therapieform"]:
         if field in data:
             setattr(gs, field, data[field])
     gs.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -227,7 +231,8 @@ def get_gruppentermine(gruppe_id):
                     "entfallen": gs.entfallen,
                     "timestamp": gs.timestamp,
                     "changestamp": gs.changestamp,
-                    "teilnehmer": teilnehmer  # hier die Liste der Teilnehmer
+                    "teilnehmer": teilnehmer,  # hier die Liste der Teilnehmer
+                    "therapieform": gs.therapieform
                 })
 
             return jsonify(result)
