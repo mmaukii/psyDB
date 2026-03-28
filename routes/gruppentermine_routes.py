@@ -24,7 +24,8 @@ def get_all_gruppentermine():
         "timestamp": gs.timestamp,
         "changestamp": gs.changestamp,
         "doku": gs.doku,
-        "therapieform": gs.therapieform
+        "therapieform": gs.therapieform,
+        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None
     } for gs in gs_list])
 
 # --- Alle termine einer bestimmten Gruppe die nicht nur offline gelöscht wurden ---
@@ -48,7 +49,8 @@ def get_termine_fuer_gruppe(gruppe_id):
         "timestamp": gs.timestamp,
         "changestamp": gs.changestamp,
         "doku": gs.doku,
-        "therapieform": gs.therapieform
+        "therapieform": gs.therapieform,
+        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None
     } for gs in termine])
 
 # --- Einzelne Gruppentermin ---
@@ -68,7 +70,8 @@ def get_gruppenstunde(id):
         "timestamp": gs.timestamp,
         "changestamp": gs.changestamp,
         "doku": gs.doku,
-        "therapieform": gs.therapieform
+        "therapieform": gs.therapieform,
+        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None
     })
 
 #--- Gruppentermin löschen -----
