@@ -78,6 +78,7 @@ function activateRowEvents() {
             }
             document.getElementById("rechnungstext").value = row.dataset.rechnungstext;
             document.getElementById("aktiv").checked = row.dataset.aktiv === "1" || row.dataset.aktiv === "true";
+            document.getElementById("therapieform").value = row.dataset.therapieform || "";
 
             
 
@@ -497,6 +498,9 @@ async function aktualisiereTermin(button, termineId,datum) {
                         betrag = fetchedBetrag; // nur überschreiben, wenn gültig
                     }
                 }
+                
+
+                
                 const createRes = await fetch(`/api/termine/${kundeId}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -631,6 +635,7 @@ document.getElementById("gruppenForm").addEventListener("submit", async (e) => {
         dauer_min: document.getElementById("dauer_min").value,
         doku: gruppenDokuText ? gruppenDokuText.value : "",
         rechnungstext: document.getElementById("rechnungstext").value,
+        therapieform: document.getElementById("therapieform").value,
         aktiv: aktivValue
     };
 
@@ -739,7 +744,8 @@ async function reloadGruppenTabelle() {
             data-gruppenkuerzel="${g.gruppenkuerzel}"
             data-doku="${g.doku}"
             data-rechnungstext="${g.rechnungstext}"
-            data-aktiv="${g.aktiv}">
+            data-aktiv="${g.aktiv}"
+            data-therapieform="${g.therapieform}">
             <td>${g.gruppenkuerzel}</td>
         </tr>
     `}).join("");

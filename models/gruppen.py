@@ -14,6 +14,7 @@ class Gruppe(db.Model):
     aktiv = db.Column(db.Integer, default=1)
     timestamp = db.Column(db.String)
     changestamp = db.Column(db.String)
+    therapieform = db.Column(db.Integer)  # 4=Gruppentherapie, 6=Gruppensupervision, 8=Gruppenselbsterfahrung
 
     # ✅ FEHLTE
     gruppentermine = db.relationship(

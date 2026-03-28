@@ -17,7 +17,8 @@ def get_all_gruppen():
         "gruppenkuerzel": g.gruppenkuerzel,
         "rechnungstext": g.rechnungstext,
         "doku": g.doku,
-        "aktiv": g.aktiv
+        "aktiv": g.aktiv,
+        "therapieform": getattr(g, "therapieform", None)
     } for g in gruppen])
 
 # --- Einzelne Gruppe ---
@@ -32,7 +33,8 @@ def get_gruppe(id):
         "gruppenkuerzel": g.gruppenkuerzel,
         "rechnungstext": g.rechnungstext,
         "doku": g.doku,
-        "aktiv": g.aktiv
+        "aktiv": g.aktiv,
+        "therapieform": getattr(g, "therapieform", None)
     })
 
 # --- aktive Gruppen ----
@@ -47,7 +49,8 @@ def get_aktive_gruppen():
         "gruppenkuerzel": g.gruppenkuerzel,
         "rechnungstext": g.rechnungstext,
         "doku": g.doku,
-        "aktiv": g.aktiv
+        "aktiv": g.aktiv,
+        "therapieform": getattr(g, "therapieform", None)
     } for g in gruppen])
 
 # --- inaktive Gruppen ----
@@ -62,7 +65,8 @@ def get_inaktive_gruppen():
         "gruppenkuerzel": g.gruppenkuerzel,
         "rechnungstext": g.rechnungstext,
         "doku": g.doku,
-        "aktiv": g.aktiv
+        "aktiv": g.aktiv,
+        "therapieform": getattr(g, "therapieform", None)
     } for g in gruppen])    
 
 # --- Gruppe anlegen ---
@@ -80,7 +84,8 @@ def add_gruppe():
         rechnungstext=data.get("rechnungstext"),
         doku=data.get("doku"),
         aktiv=data.get("aktiv", 1),
-        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        therapieform=data.get("therapieform"),
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
     db.session.add(g)
     db.session.commit()
@@ -94,7 +99,7 @@ def update_gruppe(id):
     if "gruppenkuerzel" in data:
         if not data["gruppenkuerzel"]:
             return jsonify({"success": False, "error": "Gruppenkuerzel ist erforderlich"}), 400
-    for field in ["gruppenname", "standardbetrag", "dauer_min", "gruppenkuerzel", "rechnungstext", "doku", "aktiv"]:
+    for field in ["gruppenname", "standardbetrag", "dauer_min", "gruppenkuerzel", "rechnungstext", "doku", "aktiv", "therapieform"]:
         if field in data:
             setattr(g, field, data[field])
     g.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
