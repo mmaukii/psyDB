@@ -9,6 +9,62 @@ document.addEventListener('DOMContentLoaded', function() {
             renderJahrestabelle(data);
         });
 
+        // Rechnungs-Tabelle Bereich vorbereiten
+        if (document.getElementById('auswertung-rechnungstabelle')) {
+            // Standard: letztes Jahr, wird nach Dropdown-Auswahl geladen
+            fetch('/api/auswertung/jahre')
+                .then(res => res.json())
+                .then(jahre => {
+                    if (jahre.length > 0) {
+                        loadRechnungsTabelle(jahre[jahre.length-1]);
+                    }
+                    // Dropdown für Rechnungsjahr
+                    let html = `<label for="auswertung-rechnungsjahr-select">Jahr wählen: </label><select id="auswertung-rechnungsjahr-select" style="width: 80px;">`;
+                    for (const j of jahre) {
+                        html += `<option value="${j}">${j}</option>`;
+                    }
+                    html += '</select>';
+                    document.getElementById('auswertung-rechnungsjahr-auswahl').innerHTML = html;
+                    document.getElementById('auswertung-rechnungsjahr-select').addEventListener('change', function() {
+                        loadRechnungsTabelle(this.value);
+                    });
+                });
+        }
+
+        function loadRechnungsTabelle(jahr) {
+            fetch(`/api/rechnungen/mit-kunde?jahr=${jahr}`)
+                .then(res => res.json())
+                .then(data => renderRechnungsTabelle(data, jahr));
+        }
+
+
+        function renderRechnungsTabelle(data, jahr) {
+            // Daten sind bereits nach Jahr gefiltert
+            let html = `<h3>Rechnungen für ${jahr}</h3>`;
+            html += `<table class="auswertung-table"><thead><tr>` +
+                `<th>Rechnungsnr</th><th>Datum</th><th>Kürzel</th><th>Zahlungsverweis</th><th>Offener Betrag</th><th>Bezahlter Betrag</th>` +
+                `</tr></thead><tbody>`;
+            let sum_offen = 0;
+            let sum_bezahlt = 0;
+            for (const r of data) {
+                let offen = (!r.bezahlt || r.bezahlt == 0) ? (r.betrag || 0) : 0;
+                let bezahlt = (r.bezahlt && r.bezahlt != 0) ? (r.betrag || 0) : 0;
+                sum_offen += offen;
+                sum_bezahlt += bezahlt;
+                html += `<tr>` +
+                    `<td>${r.rechnungsnr || ''}</td>` +
+                    `<td>${r.datum ? r.datum.substring(0,10) : ''}</td>` +
+                    `<td>${r.kuerzel || ''}</td>` +
+                    `<td>${r.zahlungsverweis || ''}</td>` +
+                    `<td style=\"text-align:right;\">${offen > 0 ? offen.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €' : ''}</td>` +
+                    `<td style=\"text-align:right;\">${bezahlt > 0 ? bezahlt.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €' : ''}</td>` +
+                    `</tr>`;
+            }
+            html += `<tr style="font-weight:bold;background:#f0f0f0;"><td colspan="4">Summe</td><td style="text-align:right;">${sum_offen.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td><td style="text-align:right;">${sum_bezahlt.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €</td></tr>`;
+            html += '</tbody></table>';
+            document.getElementById('auswertung-rechnungstabelle').innerHTML = html;
+        }
+
     // 2. Jahresauswahl laden
     fetch('/api/auswertung/jahre')
         .then(res => res.json())
