@@ -436,6 +436,7 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
             utc_endtime: stunde.utc_endtime || "",
             stundeId: stunde.id || "",
             kundeId: id || "",
+            therapieform: stunde.therapieform || "",
             push_termin: 1,  // ✅ Push-Flag für das Backend
         });
         
@@ -964,7 +965,8 @@ neuTerminBtn.addEventListener("click", async () => {
     openfensterTerminAnpassen({
         kundeId: id,
         stundensatz: kunde.stundensatz || "",
-        beschreibung
+        beschreibung,
+        therapieform: kunde.therapieform || ""
     });
 });
 

@@ -27,12 +27,11 @@ window.openfensterTerminAnpassen = async function ({
     datum = "",
     utc_starttime = "",
     utc_endtime = "",
+    therapieform = ""
 }) {
 
 
     terminForm.reset();
-    
-
     // console.log("🆕 Neuer Termin für Kunde:", kundeId);
 
     if (datum === "") {
@@ -86,7 +85,11 @@ window.openfensterTerminAnpassen = async function ({
         // console.log("Termindaten: ", termin);
         beschreibung = termin.beschreibung;
         betrag = termin.betrag
+        therapieform = termin.therapieform;
+        console.log("Termindaten geladen für ID:", termin);
         // console.log("🆕 Neuer Termin für Kunde:", kundeId);
+        console.log("Beschreibung aus DB:", beschreibung);
+        console.log("therapieform aus DB:", therapieform);
     }
 
 
@@ -104,6 +107,8 @@ window.openfensterTerminAnpassen = async function ({
 
     // 🆔 Gruppe ID (nur bei neu )
     document.getElementById("gruppeId").value = gruppeId || "";
+
+    document.getElementById("terminTherapieform").value = therapieform || "";
 
     // 🔓 Modal öffnen
     fenstertermineanpassen.style.display = "block";
