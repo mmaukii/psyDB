@@ -229,7 +229,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
           utc_endtime: s.utc_endtime,
           anzeigeName: gruppe.gruppenname,
           type: "gruppe",
-          abgesagt: s.abgesagt || false
+          abgesagt: s.abgesagt || false,
+          entfallen: s.entfallen || false
         }));
 
       gruppenDokus.push(...mitDoku);
@@ -268,7 +269,7 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
     dokuListe.innerHTML = alleDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">
       <div class="doku-header">
-        <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""} ${d.beschreibung ? ` , ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''}</div>
+        <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
         <button class="doku-edit-btn" data-id="${d.dokuId}" title="Datensatz editieren">✏️</button>
       </div>
       <div class="doku-text">
@@ -323,6 +324,10 @@ async function ladeDokusFuerGruppe(gruppeId) {
         doku: s.doku,
         pers_doku: s.pers_doku,
         datum: s.datum,
+        utc_starttime: s.utc_starttime,
+        utc_endtime: s.utc_endtime,
+        beschreibung: s.beschreibung,
+        entfallen: s.entfallen || false,
         anzeigeName: gruppe.gruppenname,
         type: "gruppe"
       }))
@@ -334,12 +339,23 @@ async function ladeDokusFuerGruppe(gruppeId) {
       dokuListe.innerHTML = "<p>Keine Dokumentation vorhanden.</p>";
       return;
     }
+    function utcToLocalTime(dateStr, utcTime) {
+          if (!dateStr || !utcTime) return "";
+          const [h, m, s] = utcTime.split(":");
+          const date = new Date(Date.UTC(
+              parseInt(dateStr.slice(0, 4)),
+              parseInt(dateStr.slice(5, 7)) - 1,
+              parseInt(dateStr.slice(8, 10)),
+              h, m, s || 0
+          ));
+          return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
 
     dokuListe.innerHTML = alleDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">
         <div class="doku-header">
-          <div class="doku-datum">${formatDatum(d.datum)} – ${escapeHtml(d.anzeigeName)}</div>
-          <button class="doku-edit-btn" data-id="${d.dokuId}">✏️ Ändern</button>
+          <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
+          <button class="doku-edit-btn" data-id="${d.dokuId}">✏️</button>
         </div>
         <div class="doku-text">
           ${
