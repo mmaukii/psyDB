@@ -1,9 +1,83 @@
-
 from flask import Blueprint, render_template, jsonify, request
 from models import Rechnung, Termin, Gruppentermin, Kunde, Gruppe
 from sqlalchemy import extract, func
 
 auswertung_bp = Blueprint("auswertung", __name__)
+
+@auswertung_bp.route("/api/auswertung/therapieformen", methods=["GET"])
+def auswertung_therapieformen():
+    jahr = request.args.get("jahr", type=int)
+    # Mapping für Anzeige
+    therapieform_map = {
+        1: "Einzeltherapie",
+        2: "Paartherapie",
+        3: "Familientherapie",
+        4: "Gruppentherapie",
+        5: "Einzelsupervision",
+        6: "Gruppensupervision",
+        7: "Einzelselbsterfahrung",
+        8: "Gruppenselbsterfahrung",
+        9: "Coaching"
+    }
+    from datetime import datetime
+    def calc_min(start, end):
+        try:
+            if start and end and isinstance(start, str) and isinstance(end, str):
+                for fmt in ("%Y-%m-%dT%H:%M:%S", "%H:%M", "%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"):
+                    try:
+                        s = datetime.strptime(start, fmt)
+                        e = datetime.strptime(end, fmt)
+                        return int((e-s).total_seconds()//60)
+                    except Exception:
+                        continue
+        except Exception as ex:
+            print(f"Fehler bei Zeitberechnung: {start} - {end}: {ex}")
+        return 0
+
+    # Alle Termine im Jahr, gruppiert nach therapieform
+    query = Termin.query
+    if jahr:
+        query = query.filter(extract('year', Termin.datum) == jahr)
+    termine = query.all()
+    therapieform_dict = {}
+    for t in termine:
+        tf = t.therapieform or 0
+        if tf not in therapieform_dict:
+            therapieform_dict[tf] = {
+                'therapieform': tf,
+                'therapieform_bezeichnung': therapieform_map.get(tf, str(tf)),
+                'einnahmen_gesamt': 0.0,
+                'einnahmen_umsatzsteuerpflichtig': 0.0,
+                'einnahmen_nicht_umsatzsteuerpflichtig': 0.0,
+                'abgehaltene_termine': 0,
+                'abgehaltene_termine_min': 0,
+                'abgesagte_termine': 0
+            }
+        # Nur Termine, die einer Rechnung zugeordnet sind, zählen
+        rechnung_zugeordnet = False
+        rechnungsbetrag = 0.0
+        for tr in t.termine_rechnungen:
+            if tr.rechnung and (not jahr or (tr.rechnung.datum and tr.rechnung.datum.startswith(str(jahr)))):
+                rechnung_zugeordnet = True
+                rechnungsbetrag += tr.rechnung.betrag
+        if rechnung_zugeordnet and not t.abgesagt:
+            therapieform_dict[tf]['abgehaltene_termine'] += 1
+            therapieform_dict[tf]['abgehaltene_termine_min'] += calc_min(t.utc_starttime, t.utc_endtime)
+            therapieform_dict[tf]['einnahmen_gesamt'] += rechnungsbetrag
+            # USt-pflichtig: über Kunde
+            if t.kunde and getattr(t.kunde, 'ust', 0) == 1:
+                therapieform_dict[tf]['einnahmen_umsatzsteuerpflichtig'] += rechnungsbetrag
+            else:
+                therapieform_dict[tf]['einnahmen_nicht_umsatzsteuerpflichtig'] += rechnungsbetrag
+        elif t.abgesagt:
+            therapieform_dict[tf]['abgesagte_termine'] += 1
+    # Ausgabe als Liste
+    result = list(therapieform_dict.values())
+    # Nach Einnahmen sortieren (optional)
+    result.sort(key=lambda x: x['einnahmen_gesamt'], reverse=True)
+    return jsonify(result)
+
+
 
 @auswertung_bp.route("/auswertung")
 def auswertung_page():
