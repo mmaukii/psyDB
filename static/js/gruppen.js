@@ -210,7 +210,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                         <button class="editBtnTermineProGruppe" data-id="${st.id}"title="Datensatz editieren">✏️</button>
                         <button class="deleteBtnTermineProGruppe" data-id="${st.id}"title="Datensatz löschen">🗑️</button>
                         <button class="dokuBtntermineproKunde" data-id="${st.id}"title="Doku Eintrag erstellen/bearbeiten">📝</button>
-                        <button class="absageBtnAnwesenheit" data-id="${st.id}"title="Ereignis absagen">🚫</button>
+                        <button class="absageBtnGruppe" data-id="${st.id}"title="Ereignis absagen">🚫</button>
                     </td>
                 </tr>
             `}).join("");
@@ -351,10 +351,14 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
         }
     }
 
-    if (e.target.classList.contains("absageBtnAnwesenheit")) {
+    if (e.target.classList.contains("absageBtnGruppe")) {
         const stundeId = e.target.dataset.id;
         const row = e.target.closest("tr");
         const btn = e.target;
+
+        // --- Doku-Eintrag abfragen ---
+        let dokuText = prompt("Optional: Doku-Eintrag zur Absage hinzufügen (leer lassen für keinen Eintrag):", "");
+        if (dokuText === null) return; // Abbruch
 
         // --- UI sofort ---
         row.classList.add("abgesagt");
@@ -372,7 +376,7 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
         fetch(`/api/gruppentermine/${stundeId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ entfallen: 1 })
+            body: JSON.stringify({ entfallen: 1, doku: dokuText })
         })
         .then(res => {
             if (!res.ok) throw new Error("Fehler beim Absagen");

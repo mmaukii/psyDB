@@ -447,6 +447,10 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
         const row = e.target.closest("tr");
         const btn = e.target;
 
+        // --- Doku-Eintrag abfragen ---
+        let dokuText = prompt("Optional: Doku-Eintrag zur Absage hinzufügen (leer lassen für keinen Eintrag):", "");
+        if (dokuText === null) return; // Abbruch
+
         // --- UI sofort ---
         row.classList.add("abgesagt");
         btn.disabled = true;
@@ -463,7 +467,7 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
         fetch(`/api/termine/${stundeId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ abgesagt: 1 })
+            body: JSON.stringify({ abgesagt: 1, doku: dokuText })
         })
         .then(res => {
             if (!res.ok) throw new Error("Fehler beim Absagen");
