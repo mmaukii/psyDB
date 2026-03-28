@@ -27,7 +27,8 @@ window.openfensterTerminAnpassen = async function ({
     datum = "",
     utc_starttime = "",
     utc_endtime = "",
-    therapieform = ""
+    therapieform = "",
+    ust = "0"
 }) {
 
 
@@ -86,10 +87,12 @@ window.openfensterTerminAnpassen = async function ({
         beschreibung = termin.beschreibung;
         betrag = termin.betrag
         therapieform = termin.therapieform;
+        ust = termin.ust;
         console.log("Termindaten geladen für ID:", termin);
         // console.log("🆕 Neuer Termin für Kunde:", kundeId);
         console.log("Beschreibung aus DB:", beschreibung);
         console.log("therapieform aus DB:", therapieform);
+        console.log("ust aus DB:", ust);
     }
 
 
@@ -109,6 +112,8 @@ window.openfensterTerminAnpassen = async function ({
     document.getElementById("gruppeId").value = gruppeId || "";
 
     document.getElementById("terminTherapieform").value = therapieform || "";
+
+    document.getElementById("terminUst").checked = ust === 1 ? true : false;
 
     // 🔓 Modal öffnen
     fenstertermineanpassen.style.display = "block";
@@ -553,7 +558,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         data.utc_starttime = localInputTimeToUTCStr(data.datum,data.utc_starttime );
         data.utc_endtime = localInputTimeToUTCStr(data.datum,data.utc_endtime);
-
+        data.ust = document.getElementById("terminUst").checked ? 1 : 0;
         if (data.kunde_id==""){
             delete data.kunde_id;       
         }
@@ -588,7 +593,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let url, method;
         const kundeId  = data.kundeId || data.kunde_id || null;
         const gruppeId = data.gruppeId || data.gruppe_id || null;
-        
+        console.log("Verarbeite Termin mit Daten:", data);
         if (data.terminId && data.kundeId) { //wenn termine und kunde vorhanden
             // console.log("🔄 Update Termin ID:", data.terminId);
             url = `/api/termine/${data.terminId}`;

@@ -51,21 +51,27 @@
 		</div>
 
 
-		<div class="field" style="margin-bottom: 8px;">
-			<label for="terminTherapieform">Form:</label>
-			<select name="therapieform" id="terminTherapieform">
-				<option value="">– bitte wählen –</option>
-				<option value="1">Einzeltherapie</option>
-				<option value="2">Paartherapie</option>
-				<option value="3">Familientherapie</option>
-				<option value="4">Gruppentherapie</option>
-				<option value="5">Einzelsupervision</option>
-				<option value="6">Gruppensupervision</option>
-				<option value="7">Einzelselbsterfahrung</option>
-				<option value="8">Gruppenselbsterfahrung</option>
-				<option value="9">Coaching</option>
-				<option value="10">Vortrag/Seminar/Workshop</option>
-			</select>
+		<div style="display: flex; gap: 15px; margin-bottom: 8px;">
+			<div class="field" style="flex: 1;">
+				<label for="terminTherapieform">Form:</label>
+				<select name="therapieform" id="terminTherapieform" style="width: 100%;">
+					<option value="">– bitte wählen –</option>
+					<option value="1">Einzeltherapie</option>
+					<option value="2">Paartherapie</option>
+					<option value="3">Familientherapie</option>
+					<option value="4">Gruppentherapie</option>
+					<option value="5">Einzelsupervision</option>
+					<option value="6">Gruppensupervision</option>
+					<option value="7">Einzelselbsterfahrung</option>
+					<option value="8">Gruppenselbsterfahrung</option>
+					<option value="9">Coaching</option>
+					<option value="10">Vortrag/Seminar/Workshop</option>
+				</select>
+			</div>
+			<div class="field" style="flex: 1; display: flex; align-items: center; gap: 6px;">
+				<input type="checkbox" name="ust" id="terminUst" style="width: auto;">
+				<label for="terminUst" style="margin: 0;">USt</label>
+			</div>
 		</div>
 
 		<label for="beschreibung">Beschreibung:</label>

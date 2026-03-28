@@ -437,6 +437,7 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
             stundeId: stunde.id || "",
             kundeId: id || "",
             therapieform: stunde.therapieform || "",
+            ust: stunde.ust || "0",
             push_termin: 1,  // ✅ Push-Flag für das Backend
         });
         
@@ -970,7 +971,8 @@ neuTerminBtn.addEventListener("click", async () => {
         kundeId: id,
         stundensatz: kunde.stundensatz || "",
         beschreibung,
-        therapieform: kunde.therapieform || ""
+        therapieform: kunde.therapieform || "",
+        ust: kunde.ust || "0"
     });
 });
 
@@ -1175,7 +1177,7 @@ document.addEventListener("change", async function (e) {
         if (e.target.value === "9") { // Coaching
             standardWert = await ladeProgrammvariableNachName("coaching_betrag");
         }
-        
+
 
         if (!standardWert) return;
 
