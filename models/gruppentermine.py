@@ -22,6 +22,7 @@ class Gruppentermin(db.Model):
     caldav_uid = db.Column(db.String, unique=True, nullable=True)
     caldav_etag = db.Column(db.String, nullable=True)
     therapieform = db.Column(db.Integer)  # 4=Gruppentherapie, 6=Gruppensupervision, 8=Gruppenselbsterfahrung
+    ust = db.Column(db.Integer) 
 
     pers_doku = db.Column(EncryptedString)
     nur_offline_vorhanden = db.Column(db.Integer, default=0)

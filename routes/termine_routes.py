@@ -31,7 +31,8 @@ def get_all_termine():
         "gruppentermin_id": s.gruppentermin_id,
         "doku": s.doku,
         "pers_doku": s.pers_doku,
-        "therapieform": s.therapieform
+        "therapieform": s.therapieform,
+        "ust": s.ust
     } for s in termine])
 
 # --- Alle Termine die  nur offline gelöscht wurden ---
@@ -53,7 +54,8 @@ def get_all_termine_nur_offline_geloescht():
         "gruppentermin_id": s.gruppentermin_id,
         "doku": s.doku,
         "pers_doku": s.pers_doku,
-        "therapieform": s.therapieform
+        "therapieform": s.therapieform,
+        "ust": s.ust
     } for s in termine])
 
 # --- Termine nach Kunde die nicht nur_offline_geloescht---
@@ -75,7 +77,8 @@ def get_termine_by_kunde(kunde_id):
         "gruppentermin_id": s.gruppentermin_id,
         "doku": s.doku,
         "pers_doku": s.pers_doku,
-        "therapieform": s.therapieform
+        "therapieform": s.therapieform,
+        "ust": s.ust
     } for s in termine])
 
 # --- Einzelne Termin ---
@@ -97,7 +100,8 @@ def get_stunde(id):
         "gruppentermin_id": s.gruppentermin_id,
         "doku": s.doku,
         "pers_doku": s.pers_doku,
-        "therapieform": s.therapieform
+        "therapieform": s.therapieform,
+        "ust": s.ust
     })
 
 # --- Termin anlegen ---
@@ -117,7 +121,8 @@ def add_stunde():
         abgesagt=data.get("abgesagt"),
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         gruppentermin_id=data.get("gruppentermin_id"),
-        therapieform=data.get("therapieform")
+        therapieform=data.get("therapieform"),
+        ust=data.get("ust")
     )
 
     db.session.add(s)
@@ -142,7 +147,8 @@ def add_stunde_mit_kunde(kunde_id):
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         gruppentermin_id=data.get("gruppentermin_id"),
         nur_offline_vorhanden=0,
-        therapieform=data.get("therapieform")
+        therapieform=data.get("therapieform"),
+        ust=data.get("ust")
     )
 
     db.session.add(s)
@@ -189,7 +195,7 @@ def update_stunde(id):
     for field in [
         "kunde_id", "datum", "utc_starttime", "utc_endtime",
         "beschreibung", "kommentar", "betrag", "caldav_uid", 
-        "abgesagt", "timestamp", "changestamp", "gruppentermin_id","doku","pers_doku", "therapieform"
+        "abgesagt", "timestamp", "changestamp", "gruppentermin_id","doku","pers_doku", "therapieform", "ust"
     ]:
         if field in data:
             setattr(s, field, data[field])
