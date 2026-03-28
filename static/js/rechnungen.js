@@ -201,9 +201,9 @@ async function ladeRechnungen() {
         </select>
       </td>
       <td>
-        <button class="mail-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung per E-Mail senden">✉️</button>
+        <button class="mail-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung per E-Mail senden">📧</button>
         <button class="pdf-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung als PDF herunterladen">🗂️</button>
-        <button class="mahnung-btn table-btn" data-id="${r.rechnung_id}" title="Mahnung erstellen">🔔</button>
+        <button class="mahnung-btn table-btn" data-id="${r.rechnung_id}" title="Mahnung erstellen">⏰</button>
         <button class="delete-btn table-btn" data-id="${r.rechnung_id}" title="Datensatz löschen">🗑️</button>
       </td>
     </tr>
@@ -379,9 +379,9 @@ async function ladeMahnungen(rechnungId) {
                   </span>
                 </td>
                 <td>    
-                <button class="mail-mahnung-btn" data-id="${m.id}" title="Mahnung per E-Mail senden">✉️</button>
-                      <button class="pdf-mahnung-btn" data-id="${m.id}" title="Mahnung als PDF herunterladen">🗂️</button>
-                      <button class="delete-mahnung-btn" data-id="${m.id}"title="Datensatz löschen">🗑️</button>
+                <button class="mail-mahnung-btn table-btn" data-id="${m.id}" title="Mahnung per E-Mail senden">📧</button>
+                      <button class="pdf-mahnung-btn table-btn" data-id="${m.id}" title="Mahnung als PDF herunterladen">🗂️</button>
+                      <button class="delete-mahnung-btn table-btn" data-id="${m.id}"title="Datensatz löschen">🗑️</button>
                   </td>
               </tr>
             `;

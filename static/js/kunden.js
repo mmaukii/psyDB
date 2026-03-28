@@ -910,13 +910,56 @@ neuTerminBtn.addEventListener("click", async () => {
     const kunde = await res.json();
 
     let beschreibung = "";
-    if (kunde.therapieform === 1) {
-        const dauer = await ladeProgrammvariableNachName("einzel_zeit");
-        beschreibung = "Einzeltherapie á " + dauer + " min";
-    } else if (kunde.therapieform === 2) {
-        const dauer = await ladeProgrammvariableNachName("paar_zeit");
-        beschreibung = "Paartherapie á " + dauer + " min";
-    } 
+    // Beachte: kunde.therapieform kann als String ("1") oder Zahl (1) kommen
+    switch (String(kunde.therapieform)) {
+        case "1": {
+            const dauer = await ladeProgrammvariableNachName("einzel_zeit");
+            beschreibung = "Einzeltherapie á " + dauer + " min";
+            break;
+        }
+        case "2": {
+            const dauer = await ladeProgrammvariableNachName("paar_zeit");
+            beschreibung = "Paartherapie á " + dauer + " min";
+            break;
+        }
+        case "3": {
+            const dauer = await ladeProgrammvariableNachName("familie_zeit");
+            beschreibung = "Familientherapie á " + dauer + " min";
+            break;
+        }
+        case "4": {
+            const dauer = await ladeProgrammvariableNachName("gruppe_zeit");
+            beschreibung = "Gruppentherapie á " + dauer + " min";
+            break;
+        }
+        case "5": {
+            const dauer = await ladeProgrammvariableNachName("einzelsupervision_zeit");
+            beschreibung = "Einzelsupervision á " + dauer + " min";
+            break;
+        }
+        case "6": {
+            const dauer = await ladeProgrammvariableNachName("gruppensupervision_zeit");
+            beschreibung = "Gruppensupervision á " + dauer + " min";
+            break;
+        }
+        case "7": {
+            const dauer = await ladeProgrammvariableNachName("einzelselbesterfahrung_zeit");
+            beschreibung = "Einzelselbsterfahrung á " + dauer + " min";
+            break;
+        }
+        case "8": {
+            const dauer = await ladeProgrammvariableNachName("gruppenselbsterfahrung_zeit");
+            beschreibung = "Gruppenselbsterfahrung á " + dauer + " min";
+            break;
+        }
+        case "9": {
+            const dauer = await ladeProgrammvariableNachName("coaching_zeit");
+            beschreibung = "Coaching á " + dauer + " min";
+            break;
+        }
+        default:
+            beschreibung = "";
+    }
 
     openfensterTerminAnpassen({
         kundeId: id,
@@ -1099,16 +1142,32 @@ document.addEventListener("change", async function (e) {
         if (!stundensatzInput) return;
 
         let standardWert = "";
-        if (e.target.value === "1") { // Einzel
+        if (e.target.value === "1") { // Einzeltherapie
             standardWert = await ladeProgrammvariableNachName("einzel_betrag");
         }
-
-        if (e.target.value === "2") { // Paar
+        if (e.target.value === "2") { // Paartherapie
             standardWert = await ladeProgrammvariableNachName("paar_betrag");
         }
-
-        if (e.target.value === "4") { // Supervision
-            standardWert = await ladeProgrammvariableNachName("supervision_betrag");
+        if (e.target.value === "3") { // Familientherapie
+            standardWert = await ladeProgrammvariableNachName("familie_betrag");
+        }
+        if (e.target.value === "4") { // Gruppentherapie
+            standardWert = await ladeProgrammvariableNachName("gruppe_betrag");
+        }
+        if (e.target.value === "5") { // Einzelsupervision
+            standardWert = await ladeProgrammvariableNachName("einzelsupervision_betrag");
+        }
+        if (e.target.value === "6") { // Gruppensupervision
+            standardWert = await ladeProgrammvariableNachName("gruppensupervision_betrag");
+        }
+        if (e.target.value === "7") { // Einzelselbsterfahrung
+            standardWert = await ladeProgrammvariableNachName("einzelselbsterfahrung_betrag");
+        }
+        if (e.target.value === "8") { // Gruppenselbsterfahrung
+            standardWert = await ladeProgrammvariableNachName("gruppenselbsterfahrung_betrag");
+        }
+        if (e.target.value === "9") { // Coaching
+            standardWert = await ladeProgrammvariableNachName("coaching_betrag");
         }
 
         if (!standardWert) return;

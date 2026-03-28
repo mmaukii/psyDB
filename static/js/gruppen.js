@@ -208,7 +208,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                     <td align="right">${betragFormatted} €</td>
                     <td>
                         <button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
-                        <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">�</button>
+                        <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
                         <button class="absageBtnGruppe table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>
                         <button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>                     
                     </td>
@@ -407,7 +407,7 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
         }
          const stunde = await res.json();
 
-        console.log("� Doku öffnen für Termin:", gruppentermineId);
+        console.log("📚 Doku öffnen für Termin:", gruppentermineId);
 
         openFensterDoku({
             gruppentermineId,
