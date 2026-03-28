@@ -221,7 +221,8 @@ def auswertung_therapieformen():
         6: "Gruppensupervision",
         7: "Einzelselbsterfahrung",
         8: "Gruppenselbsterfahrung",
-        9: "Coaching"
+        9: "Coaching",
+        10: "Vortrag/Seminar/Workshop"
     }
     from datetime import datetime
     def calc_min(start, end):

@@ -958,6 +958,10 @@ neuTerminBtn.addEventListener("click", async () => {
             beschreibung = "Coaching á " + dauer + " min";
             break;
         }
+        case "10": {
+            beschreibung = "Vortrag/Seminar/Workshop";
+            break;
+        }
         default:
             beschreibung = "";
     }
@@ -1171,6 +1175,7 @@ document.addEventListener("change", async function (e) {
         if (e.target.value === "9") { // Coaching
             standardWert = await ladeProgrammvariableNachName("coaching_betrag");
         }
+        
 
         if (!standardWert) return;
 

@@ -261,6 +261,8 @@ function setupKundenListener() {
                 } else if (kunde.therapieform === 9) {
                     const dauer = await ladeProgrammvariableNachName("coaching_zeit");
                     beschreibung = "Coaching á " + dauer + " min";
+                } else if (kunde.therapieform === 10) {   
+                    beschreibung = "Vortrag/Seminar/Workshop";
                 }
                 
                 document.getElementById("beschreibung").value =beschreibung || "";
