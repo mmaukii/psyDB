@@ -30,7 +30,8 @@ def get_all_termine():
         "changestamp": s.changestamp,
         "gruppentermin_id": s.gruppentermin_id,
         "doku": s.doku,
-        "pers_doku": s.pers_doku
+        "pers_doku": s.pers_doku,
+        "therapieform": s.therapieform
     } for s in termine])
 
 # --- Alle Termine die  nur offline gelöscht wurden ---
@@ -51,7 +52,8 @@ def get_all_termine_nur_offline_geloescht():
         "changestamp": s.changestamp,
         "gruppentermin_id": s.gruppentermin_id,
         "doku": s.doku,
-        "pers_doku": s.pers_doku
+        "pers_doku": s.pers_doku,
+        "therapieform": s.therapieform
     } for s in termine])
 
 # --- Termine nach Kunde die nicht nur_offline_geloescht---
@@ -72,7 +74,8 @@ def get_termine_by_kunde(kunde_id):
         "changestamp": s.changestamp,
         "gruppentermin_id": s.gruppentermin_id,
         "doku": s.doku,
-        "pers_doku": s.pers_doku
+        "pers_doku": s.pers_doku,
+        "therapieform": s.therapieform
     } for s in termine])
 
 # --- Einzelne Termin ---
@@ -93,7 +96,8 @@ def get_stunde(id):
         "changestamp": s.changestamp,
         "gruppentermin_id": s.gruppentermin_id,
         "doku": s.doku,
-        "pers_doku": s.pers_doku
+        "pers_doku": s.pers_doku,
+        "therapieform": s.therapieform
     })
 
 # --- Termin anlegen ---
@@ -113,6 +117,7 @@ def add_stunde():
         abgesagt=data.get("abgesagt"),
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         gruppentermin_id=data.get("gruppentermin_id"),
+        therapieform=data.get("therapieform")
     )
 
     db.session.add(s)
@@ -136,7 +141,8 @@ def add_stunde_mit_kunde(kunde_id):
         betrag=data["betrag"],
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         gruppentermin_id=data.get("gruppentermin_id"),
-        nur_offline_vorhanden=0
+        nur_offline_vorhanden=0,
+        therapieform=data.get("therapieform")
     )
 
     db.session.add(s)
@@ -183,10 +189,9 @@ def update_stunde(id):
     for field in [
         "kunde_id", "datum", "utc_starttime", "utc_endtime",
         "beschreibung", "kommentar", "betrag", "caldav_uid", 
-        "abgesagt", "timestamp", "changestamp", "gruppentermin_id","doku","pers_doku"
+        "abgesagt", "timestamp", "changestamp", "gruppentermin_id","doku","pers_doku", "therapieform"
     ]:
         if field in data:
-            #print(f"Updating field {field} to {data[field]}")
             setattr(s, field, data[field])
 
     # changestamp immer setzen

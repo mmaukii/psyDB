@@ -23,6 +23,7 @@ class Termin(db.Model):
     doku = db.Column(EncryptedString)
     caldav_uid = db.Column(db.String, unique=True, nullable=True)
     caldav_etag = db.Column(db.String, nullable=True)
+    therapieform = db.Column(db.Integer)  # 1=Einzeltherapie, 2=Gruppentherapie, 3=Supervision, 4=Gruppensupervision, 5=Coaching, 6=Gruppenselbsterfahrung, 7=Einzelselbsterfahrung, 8=Gruppenselbsterfahrung, 9=Coaching
 
     kunde_id = db.Column(db.Integer, db.ForeignKey("kunden.id"), nullable=False)
     kunde = db.relationship("Kunde", backref="termine")
