@@ -11,30 +11,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Rechnungs-Tabelle Bereich vorbereiten
         if (document.getElementById('auswertung-rechnungstabelle')) {
-            // Standard: letztes Jahr, wird nach Dropdown-Auswahl geladen
+            // Standard: höchstes Jahr vorauswählen
             fetch('/api/auswertung/jahre')
                 .then(res => res.json())
                 .then(jahre => {
                     if (jahre.length > 0) {
-                        loadRechnungsTabelle(jahre[jahre.length-1]);
+                        const maxJahr = Math.max(...jahre.map(Number));
+                        loadRechnungsTabelle(maxJahr);
+                        // Dropdown für Rechnungsjahr
+                        let html = `<label for="auswertung-rechnungsjahr-select">Jahr wählen: </label><select id="auswertung-rechnungsjahr-select" style="width: 80px;">`;
+                        for (const j of jahre) {
+                            html += `<option value="${j}"${j == maxJahr ? ' selected' : ''}>${j}</option>`;
+                        }
+                        html += '</select>';
+                        const jahrAuswahlElem = document.getElementById('auswertung-rechnungsjahr-auswahl');
+                        if (jahrAuswahlElem) {
+                            jahrAuswahlElem.innerHTML = html;
+                            const jahrSelectElem = document.getElementById('auswertung-rechnungsjahr-select');
+                            if (jahrSelectElem) {
+                                jahrSelectElem.addEventListener('change', function() {
+                                    loadRechnungsTabelle(this.value);
+                                });
+                            }
+                        }
                     }
-                    // Dropdown für Rechnungsjahr
-                    let html = `<label for="auswertung-rechnungsjahr-select">Jahr wählen: </label><select id="auswertung-rechnungsjahr-select" style="width: 80px;">`;
-                    for (const j of jahre) {
-                        html += `<option value="${j}">${j}</option>`;
-                    }
-                    html += '</select>';
-                    document.getElementById('auswertung-rechnungsjahr-auswahl').innerHTML = html;
-                    document.getElementById('auswertung-rechnungsjahr-select').addEventListener('change', function() {
-                        loadRechnungsTabelle(this.value);
-                    });
                 });
         }
 
         function loadRechnungsTabelle(jahr) {
-            fetch(`/api/rechnungen/mit-kunde?jahr=${jahr}`)
+            fetch('/api/rechnungen')
                 .then(res => res.json())
-                .then(data => renderRechnungsTabelle(data, jahr));
+                .then(data => {
+                    // Nach Jahr filtern
+                    console.log("länge", data.length);
+                    const gefiltert = data.filter(r => {
+                        if (!r.datum) return false;
+                        // Datum im Format YYYY-MM-DD
+                        return r.datum.startsWith(jahr.toString());
+                    });
+                    console.log("gefiltert", gefiltert.length);
+                    renderRechnungsTabelle(gefiltert, jahr);
+                });
         }
 
 
@@ -80,8 +97,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderJahrestabelle(data) {
         let html = `<h3>Jahresübersicht</h3><table class="auswertung-table"><thead><tr>
             <th>Jahr</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-            <th>abgehaltene Termine</th><th>Stunden</th><th>abgesagte Termine</th>
-            <th>abgehaltene Gruppen</th><th>Gruppen-Stunden</th><th>abgesagte Gruppen</th>
+            <th>verrechnete Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+            <th>verrechnete Gruppen</th><th>Gruppen-Stunden</th><th>abgesagte Gruppen</th>
         </tr></thead><tbody>`;
 
         // Summen-Variablen initialisieren
@@ -138,17 +155,54 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderJahresDropdown(jahre) {
+        const maxJahr = Math.max(...jahre.map(Number));
         let html = `<label for="auswertung-jahr-select">Jahr wählen: </label><select id="auswertung-jahr-select" style="width: 80px;">`;
         for (const j of jahre) {
-            html += `<option value="${j}">${j}</option>`;
+            html += `<option value="${j}"${j == maxJahr ? ' selected' : ''}>${j}</option>`;
         }
         html += '</select>';
         document.getElementById('auswertung-jahresauswahl').innerHTML = html;
-        document.getElementById('auswertung-jahr-select').addEventListener('change', function() {
-            loadKundenTabelle(this.value);
-            loadGruppenTabelle(this.value);
-            loadTherapieformTabelle(this.value);
-        });
+        const jahrSelectElem = document.getElementById('auswertung-jahr-select');
+        if (jahrSelectElem) {
+            jahrSelectElem.addEventListener('change', function() {
+                const jahr = this.value;
+                loadKundenTabelle(jahr);
+                loadGruppenTabelle(jahr);
+                loadTherapieformTabelle(jahr);
+                // Rechnungsjahresauswahl und Tabelle aktualisieren
+                updateRechnungsjahrDropdown(jahr);
+            });
+        }
+        // Initialdaten für höchstes Jahr laden
+        loadKundenTabelle(maxJahr);
+        loadGruppenTabelle(maxJahr);
+        loadTherapieformTabelle(maxJahr);
+        updateRechnungsjahrDropdown(maxJahr);
+    }
+
+    // Neue Hilfsfunktion, um Rechnungsjahr-Dropdown und Tabelle zu aktualisieren
+    function updateRechnungsjahrDropdown(selectedJahr) {
+        fetch('/api/auswertung/jahre')
+            .then(res => res.json())
+            .then(jahre => {
+                let html = `<label for="auswertung-rechnungsjahr-select">Jahr wählen: </label><select id="auswertung-rechnungsjahr-select" style="width: 80px;">`;
+                for (const j of jahre) {
+                    html += `<option value="${j}"${j == selectedJahr ? ' selected' : ''}>${j}</option>`;
+                }
+                html += '</select>';
+                const jahrAuswahlElem = document.getElementById('auswertung-rechnungsjahr-auswahl');
+                if (jahrAuswahlElem) {
+                    jahrAuswahlElem.innerHTML = html;
+                    const jahrSelectElem = document.getElementById('auswertung-rechnungsjahr-select');
+                    if (jahrSelectElem) {
+                        jahrSelectElem.addEventListener('change', function() {
+                            loadRechnungsTabelle(this.value);
+                        });
+                    }
+                }
+                // Tabelle für das gewählte Jahr laden
+                loadRechnungsTabelle(selectedJahr);
+            });
     }
         function loadTherapieformTabelle(jahr) {
             fetch(`/api/auswertung/therapieformen?jahr=${jahr}`)
@@ -159,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function renderTherapieformTabelle(data, jahr) {
             let html = `<h3>Therapieformen-Auswertung für ${jahr}</h3><table class="auswertung-table"><thead><tr>
                 <th>Therapieform</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-                <th>abgehaltene Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+                <th>verrechnete Termine</th><th>Stunden</th><th>abgesagte Termine</th>
             </tr></thead><tbody>`;
             
             // Summen-Variablen initialisieren
@@ -211,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderGruppenTabelle(data, jahr) {
         let html = `<h3>Gruppen-Auswertung für ${jahr}</h3><table class="auswertung-table"><thead><tr>
             <th>Kürzel</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-            <th>abgehaltene Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+            <th>verrechnete Termine</th><th>Stunden</th><th>abgesagte Termine</th>
         </tr></thead><tbody>`;
         for (const row of data) {
             html += `<tr>
@@ -237,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderKundenTabelle(data, jahr) {
         let html = `<h3>Kunden-Auswertung für ${jahr}</h3><table class="auswertung-table"><thead><tr>
             <th>Kürzel</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-            <th>abgehaltene Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+            <th>verrechnete Termine</th><th>Stunden</th><th>abgesagte Termine</th>
         </tr></thead><tbody>`;
 
         // Summen-Variablen initialisieren
