@@ -217,7 +217,7 @@ def upload_logo():
                 wert=''
             )
             db.session.add(logo_var)
-            print(f"📝 Neue logo_file Variable erstellt")
+            print(f"📚 Neue logo_file Variable erstellt")
         
         # Speichere relativen Pfad
         relative_path = f"/static/{filename}"

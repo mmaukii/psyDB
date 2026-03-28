@@ -93,10 +93,10 @@ window.openfensterTerminAnpassen = async function ({
     // 💰 stundensatz (Priorität: Übergabe > Kunde > leer)
     document.getElementById("betrag").value =new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(stundensatz)|| "";
 
-    // 📝 Beschreibung (Priorität: Übergabe > leer)
+    // 📚 Beschreibung (Priorität: Übergabe > leer)
     document.getElementById("beschreibung").value =beschreibung || "";
 
-    // 📝 Termin ID (Priorität: Übergabe > leer)
+    // 📚 Termin ID (Priorität: Übergabe > leer)
     document.getElementById("terminId").value =  stundeId || "";
 
     // 🆔 Kunde ID (nur bei neu )

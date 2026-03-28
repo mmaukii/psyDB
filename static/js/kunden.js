@@ -219,12 +219,14 @@ async function reloadTermineFuerKunde(kundeId) {
 
             // Buttons: nur Doku wenn Rechnungsnr vorhanden
             const buttons = st.rechnungsnr
-                ? `<button class="dokuBtntermineproKunde" data-id="${st.id}"title="Doku Eintrag erstellen/bearbeiten">📝</button>`
+                ? `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`
                 : `
-                    <button class="editBtntermineproKunde" data-id="${st.id}"title="Datensatz editieren">✏️</button>
-                    <button class="deleteBtntermineproKunde" data-id="${st.id}"title="Datensatz löschen">🗑️</button>
-                    <button class="absageBtntermineproKunde" data-id="${st.id}"title="Ereignis absagen">🚫</button>
-                    <button class="dokuBtntermineproKunde" data-id="${st.id}"title="Doku Eintrag erstellen/bearbeiten">📝</button>
+                    <button class="editBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
+                    <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
+                    <button class="absageBtntermineproKunde table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>
+                    <button class="deleteBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
+                    
+                    
                 `;
 
             // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
@@ -485,7 +487,7 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
         });
     }
     // ===============================
-    // 📝 DOKU BUTTON GEDRÜCKT
+    // 📚 DOKU BUTTON GEDRÜCKT
     // ===============================
     if (e.target.classList.contains("dokuBtntermineproKunde")) {
         const termineId = e.target.dataset.id;
@@ -497,7 +499,7 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
         }
          const stunde = await res.json();
 
-        console.log("📝 Doku öffnen für Termin:", termineId);
+        console.log("📚 Doku öffnen für Termin:", termineId);
 
         openFensterDoku({
             termineId,
@@ -939,10 +941,10 @@ function renderOderUpdateZeile(stunde) {
             <td>${stunde.beschreibung || ""}</td>
             <td>${stunde.betrag || ""}</td>
             <td>
-                <button class="editBtntermineproKunde" data-id="${stunde.id}"title="Datensatz editieren">✏️</button>
-                <button class="deleteBtntermineproKunde" data-id="${stunde.id}"title="Datensatz löschen">🗑️</button>
-                <button class="absageBtntermineproKunde" data-id="${stunde.id}"title="Ereignis absagen">🚫</button>
-                <button class="dokuBtntermineproKunde" data-id="${st.id}"title="Doku Eintrag erstellen/bearbeiten">📝</button>
+                <button class="editBtntermineproKunde table-btn" data-id="${stunde.id}" title="Datensatz editieren">🛠️</button>
+                <button class="deleteBtntermineproKunde table-btn" data-id="${stunde.id}" title="Datensatz löschen">🗑️</button>
+                <button class="absageBtntermineproKunde table-btn" data-id="${stunde.id}" title="Ereignis absagen">🚫</button>
+                <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
             </td>
         </tr>
     `;

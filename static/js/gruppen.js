@@ -207,10 +207,10 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
                     <td>
-                        <button class="editBtnTermineProGruppe" data-id="${st.id}"title="Datensatz editieren">✏️</button>
-                        <button class="deleteBtnTermineProGruppe" data-id="${st.id}"title="Datensatz löschen">🗑️</button>
-                        <button class="dokuBtntermineproKunde" data-id="${st.id}"title="Doku Eintrag erstellen/bearbeiten">📝</button>
-                        <button class="absageBtnGruppe" data-id="${st.id}"title="Ereignis absagen">🚫</button>
+                        <button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
+                        <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">�</button>
+                        <button class="absageBtnGruppe table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>
+                        <button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>                     
                     </td>
                 </tr>
             `}).join("");
@@ -324,10 +324,10 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
         }
     }
 
-    // ✏️ BEARBEITEN
+    // 🛠️ BEARBEITEN
     if (e.target.classList.contains("editBtnTermineProGruppe")) {
         const id = e.target.dataset.id;
-        console.log("✏️ Termin bearbeiten:", id);
+        console.log("🛠️ Termin bearbeiten:", id);
 
         try {
             const response = await fetch(`/api/gruppentermine/${id}`);
@@ -395,7 +395,7 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
     }
 
     // ===============================
-    // 📝 DOKU BUTTON GEDRÜCKT
+    // � DOKU BUTTON GEDRÜCKT
     // ===============================
     if (e.target.classList.contains("dokuBtntermineproKunde")) {
         const gruppentermineId = e.target.dataset.id;
@@ -407,7 +407,7 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
         }
          const stunde = await res.json();
 
-        console.log("📝 Doku öffnen für Termin:", gruppentermineId);
+        console.log("� Doku öffnen für Termin:", gruppentermineId);
 
         openFensterDoku({
             gruppentermineId,

@@ -35,8 +35,8 @@ async function ladeTermine() {
             <td>${st.gruppenkuerzel}</td>
             <td align="right">${betragFormatted}&nbsp;€</td>
             <td>
-                <button class="editBtn" data-id="${st.id}"title="Datensatz editieren">✏️</button>
-                <button class="deleteBtn" data-id="${st.id}"title="Datensatz löschen">🗑️</button>
+                <button class="editBtn table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
+                <button class="deleteBtn table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
             </td> 
             <td>${st.abgesagt}</td>    
          </tr>
@@ -80,8 +80,8 @@ async function ladeTermine() {
                 <td>${st.gruppenkuerzel}</td>
                 <td align="right">${betragFormatted}&nbsp;€</td>
                 <td>
-                    <button class="editBtn" data-id="${st.id}"title="Datensatz editieren">✏️</button>
-                    <button class="deleteBtn" data-id="${st.id}"title="Datensatz löschen">🗑️</button>
+                    <button class="editBtn table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
+                    <button class="deleteBtn table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
                 </td> 
                 <td hidden>${st.abgesagt}</td>    
             </tr>

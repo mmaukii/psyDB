@@ -269,8 +269,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
     dokuListe.innerHTML = alleDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">
       <div class="doku-header">
-        <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
-        <button class="doku-edit-btn" data-id="${d.dokuId}" title="Datensatz editieren">✏️</button>
+          <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
+          <button class="doku-edit-btn table-btn" data-id="${d.dokuId}" title="Datensatz editieren">🛠️</button>
       </div>
       <div class="doku-text">
         ${
@@ -355,7 +355,7 @@ async function ladeDokusFuerGruppe(gruppeId) {
       <div class="doku-item" data-id="${d.dokuId}">
         <div class="doku-header">
           <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
-          <button class="doku-edit-btn" data-id="${d.dokuId}">✏️</button>
+          <button class="doku-edit-btn table-btn" data-id="${d.dokuId}">🛠️</button>
         </div>
         <div class="doku-text">
           ${

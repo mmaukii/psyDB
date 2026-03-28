@@ -1,0 +1,19 @@
+.table-btn {
+  background: #f5f5f5;
+  border: 1px solid #acb2ec;
+  border-radius: 4px;
+  color: #333;
+  padding: 2px 8px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  margin: 0 2px;
+}
+.table-btn:hover, .table-btn:focus {
+  background: #e0e0e0;
+  box-shadow: 0 0 2px #888;
+  outline: none;
+}
+.table-btn:active {
+  background: #d0d0d0;
+}

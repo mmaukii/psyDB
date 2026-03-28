@@ -201,10 +201,10 @@ async function ladeRechnungen() {
         </select>
       </td>
       <td>
-        <button class="mail-btn" data-id="${r.rechnung_id}"title="Rechnung per E-Mail senden">✉️</button>
-        <button class="pdf-btn" data-id="${r.rechnung_id}"title="Rechnung als PDF herunterladen">🗂️</button>
-        <button class="mahnung-btn" data-id="${r.rechnung_id}"title="Mahnung erstellen">🔔</button>
-        <button class="delete-btn" data-id="${r.rechnung_id}"title="Datensatz löschen">🗑️</button>
+        <button class="mail-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung per E-Mail senden">✉️</button>
+        <button class="pdf-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung als PDF herunterladen">🗂️</button>
+        <button class="mahnung-btn table-btn" data-id="${r.rechnung_id}" title="Mahnung erstellen">🔔</button>
+        <button class="delete-btn table-btn" data-id="${r.rechnung_id}" title="Datensatz löschen">🗑️</button>
       </td>
     </tr>
   `}).join("");

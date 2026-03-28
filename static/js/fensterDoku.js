@@ -13,7 +13,7 @@ window.openFensterDoku = function ({
     doku = "",
     pers_doku = ""
 }) {
-    console.log("📝 Öffne Doku");
+    console.log("📚 Öffne Doku");
     console.log({  termineId, gruppentermineId ,doku, pers_doku});
 
     dokuForm.reset();
