@@ -232,7 +232,8 @@ def get_gruppentermine(gruppe_id):
                     "timestamp": gs.timestamp,
                     "changestamp": gs.changestamp,
                     "teilnehmer": teilnehmer,  # hier die Liste der Teilnehmer
-                    "therapieform": gs.therapieform
+                    "therapieform": gs.therapieform,
+                    "ust": gs.gruppe.ust
                 })
 
             return jsonify(result)

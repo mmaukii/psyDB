@@ -79,6 +79,7 @@ function activateRowEvents() {
             document.getElementById("rechnungstext").value = row.dataset.rechnungstext;
             document.getElementById("aktiv").checked = row.dataset.aktiv === "1" || row.dataset.aktiv === "true";
             document.getElementById("therapieform").value = row.dataset.therapieform || "";
+            document.getElementById("ust").checked = row.dataset.ust === "1" || row.dataset.ust === "true";
 
             
 
@@ -344,7 +345,8 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
                 utc_endtime: stunde.utc_endtime || "",
                 stundeId: stunde.id || "",
                 gruppeId: stunde.gruppe_id || "",
-                therapieform: stunde.therapieform || ""
+                therapieform: stunde.therapieform || "",
+                ust: stunde.ust || 0
             });
 
         } catch (err) {
@@ -486,60 +488,72 @@ async function aktualisiereTermin(button, termineId,datum) {
         // 2️⃣ NEU → POST (Betrag pro Kunde von Flask holen)
         await Promise.all(selectedIds.map(async kundeId => {
             if (!vorhandeneIds.includes(kundeId)) {
-                // Betrag von Flask abrufen
-                const rawBetrag = parseFloat(document.getElementById("standardbetrag").value) || 0;
+            // 2️⃣ NEU → POST (Betrag pro Kunde von Flask holen)
+            await Promise.all(selectedIds.map(async kundeId => {
+                if (!vorhandeneIds.includes(kundeId)) {
+                    // Betrag von Flask abrufen
+                    const rawBetrag = parseFloat(document.getElementById("standardbetrag").value) || 0;
 
-                const betragRes = await fetch(`api/gruppen/${gruppenId}/kunden/${kundeId}/betrag`);
-                let betrag = rawBetrag; // Standard fallback
+                    const betragRes = await fetch(`api/gruppen/${gruppenId}/kunden/${kundeId}/betrag`);
+                    let betrag = rawBetrag; // Standard fallback
 
-                if (betragRes.ok) {
-                    const betragData = await betragRes.json();
-                    const fetchedBetrag = parseFloat(betragData.betrag);
-                    if (!isNaN(fetchedBetrag) && fetchedBetrag > 0) {
-                        betrag = fetchedBetrag; // nur überschreiben, wenn gültig
+                    if (betragRes.ok) {
+                        const betragData = await betragRes.json();
+                        const fetchedBetrag = parseFloat(betragData.betrag);
+                        if (!isNaN(fetchedBetrag) && fetchedBetrag > 0) {
+                            betrag = fetchedBetrag; // nur überschreiben, wenn gültig
+                        }
                     }
-                }
-                
-                
-                
-                const createRes = await fetch(`/api/termine/${kundeId}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        datum: datum,
+
+                    // Gruppentermin fetchen und Felder holen
+                    let beschreibung = "";
+                    let ust = 0;
+                    let therapieform = 0;
+                    try {
+                        const gtRes = await fetch(`/api/gruppentermine/${termineId}`);
+                        if (gtRes.ok) {
+                            const gtData = await gtRes.json();
+                            beschreibung = typeof gtData.beschreibung === "string" ? gtData.beschreibung : "";
+                            ust = typeof gtData.ust === "number" ? gtData.ust : (parseInt(gtData.ust) || 0);
+                            therapieform = typeof gtData.therapieform === "number" ? gtData.therapieform : (parseInt(gtData.therapieform) || 0);
+                        }
+                    } catch (err) {
+                        console.warn("Konnte Gruppentermin nicht laden für Felder", err);
+                    }
+
+                    // Logge alle Werte vor dem POST
+                    console.log("POST /api/termine/", {
+                        kundeId,
+                        datum,
                         utc_starttime,
                         utc_endtime,
                         betrag,
                         gruppentermin_id: termineId,
-                        beschreibung: "Gruppentherapie á " + dauer + " min",
-                        push_termin: 1 
-                    })
-                });
-                const createData = await createRes.json();
-                console.log("➕ Termin erstellt:", createData);
-            }
-        }));
+                        therapieform,
+                        ust,
+                        beschreibung,
+                        push_termin: 1
+                    });
 
-        // 3️⃣ ENTFERNT → DELETE
-        await Promise.all(termineDerGruppe.map(async s => {
-            if (!selectedIds.includes(s.kunde_id.toString())) {
-                const delRes = await fetch(`/api/termine/${s.id}`, { method: "DELETE" });
-                const delData = await delRes.json();
-                console.log("🗑️ Termin gelöscht:", delData);
-            }
-        }));
-
-        // 4️⃣ VORHANDEN → PUT (optional)
-        await Promise.all(termineDerGruppe.map(async s => {
-            if (selectedIds.includes(s.kunde_id.toString())) {
-                await fetch(`/api/termine/${s.id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        changestamp: new Date().toISOString(),
-                        push_termin: 1  // ✅ Push-Flag für das Backend
-                     })
-                });
+                    const createRes = await fetch(`/api/termine/${kundeId}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            datum: datum,
+                            utc_starttime,
+                            utc_endtime,
+                            betrag,
+                            gruppentermin_id: termineId,
+                            therapieform: therapieform,
+                            ust: ust,
+                            beschreibung: beschreibung,
+                            push_termin: 1 
+                        })
+                    });
+                    const createData = await createRes.json();
+                    console.log("➕ Termin erstellt:", createData);
+                }
+            }));
             }
         }));
 
@@ -627,6 +641,7 @@ document.getElementById("gruppenForm").addEventListener("submit", async (e) => {
     // Komma durch Punkt ersetzen, dann in Float konvertieren
     const standardbetrag = parseFloat(rawBetrag.replace(",", "."));
     const aktivValue = document.querySelector('[name="aktiv"]').checked ? 1 : 0;
+    const ustValue = document.querySelector('[name="ust"]').checked ? 1 : 0;
 
     const id = document.getElementById("gruppenForm_id").value;
     const data = {
@@ -637,8 +652,10 @@ document.getElementById("gruppenForm").addEventListener("submit", async (e) => {
         doku: gruppenDokuText ? gruppenDokuText.value : "",
         rechnungstext: document.getElementById("rechnungstext").value,
         therapieform: document.getElementById("therapieform").value,
+        ust: ustValue,
         aktiv: aktivValue
     };
+    console.log("Daten für Gruppe:", data);
 
     const kundenData = {
         kunden_ids: selected.map(k => k.id)  // ausgewählte Kunden
@@ -746,7 +763,9 @@ async function reloadGruppenTabelle() {
             data-doku="${g.doku}"
             data-rechnungstext="${g.rechnungstext}"
             data-aktiv="${g.aktiv}"
-            data-therapieform="${g.therapieform}">
+            data-therapieform="${g.therapieform}"
+            datat-ust="${g.ust}" 
+            >
             <td>${g.gruppenkuerzel}</td>
         </tr>
     `}).join("");
@@ -880,12 +899,44 @@ neuTerminBtn.addEventListener("click", async () => {
         return;
     }
     const termine = await response.json();
+    console.log("Geladene Gruppendaten für Termin:", termine);
 
-    beschreibung = "Gruppentherapie á " + termine.dauer_min + " min"
+        if (termine.therapieform === 1) {
+            const dauer = await ladeProgrammvariableNachName("einzel_zeit");
+            beschreibung = "Einzeltherapie á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 2) {
+            const dauer = await ladeProgrammvariableNachName("paar_zeit");
+            beschreibung = "Paartherapie á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 3) {
+            console.log("Familientherapie erkannt, lade Dauer...");
+            const dauer = await ladeProgrammvariableNachName("familie_zeit");
+            beschreibung = "Familientherapie á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 4) {
+            const dauer = await ladeProgrammvariableNachName("gruppe_zeit");
+            beschreibung = "Gruppentherapie á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 5) {
+            const dauer = await ladeProgrammvariableNachName("einzelsupervision_zeit");
+            beschreibung = "Einzelsupervision á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 6) {
+            const dauer = await ladeProgrammvariableNachName("gruppensupervision_zeit");
+            beschreibung = "Gruppensupervision á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 7) {
+            const dauer = await ladeProgrammvariableNachName("einzelselbsterfahrung_zeit");
+            beschreibung = "Einzelselbsterfahrung á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 8) {
+            const dauer = await ladeProgrammvariableNachName("gruppenselbsterfahrung_zeit");
+            beschreibung = "Gruppenselbsterfahrung á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 9) {
+            const dauer = await ladeProgrammvariableNachName("coaching_zeit");
+            beschreibung = "Coaching á " + termine.dauer_min + " min";
+        } else if (termine.therapieform === 10) {   
+            beschreibung = "Vortrag/Seminar/Workshop";
+        }
      openfensterTerminAnpassen({
                 stundensatz: termine.standardbetrag || "",
                 beschreibung: beschreibung || "",
                 therapieform: termine.therapieform || "",
+                ust: termine.ust || 0,
                 gruppeId: gruppen_id || ""
             });
     
