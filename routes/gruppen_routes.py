@@ -52,8 +52,8 @@ def get_aktive_gruppen():
         "rechnungstext": g.rechnungstext,
         "doku": g.doku,
         "aktiv": g.aktiv,
-        "therapieform": getattr(g, "therapieform", None),
-        "ust": getattr(g, "ust", None)
+        "therapieform": g.therapieform,
+        "ust": g.ust
     } for g in gruppen])
 
 # --- inaktive Gruppen ----

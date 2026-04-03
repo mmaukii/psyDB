@@ -640,8 +640,8 @@ document.getElementById("gruppenForm").addEventListener("submit", async (e) => {
     const rawBetrag = document.getElementById("standardbetrag").value;
     // Komma durch Punkt ersetzen, dann in Float konvertieren
     const standardbetrag = parseFloat(rawBetrag.replace(",", "."));
-    const aktivValue = document.querySelector('[name="aktiv"]').checked ? 1 : 0;
-    const ustValue = document.querySelector('[name="ust"]').checked ? 1 : 0;
+    const aktivValue = document.getElementById('aktiv').checked ? 1 : 0;
+    const ustValue = document.getElementById('ust').checked ? 1 : 0;
 
     const id = document.getElementById("gruppenForm_id").value;
     const data = {
@@ -764,7 +764,7 @@ async function reloadGruppenTabelle() {
             data-rechnungstext="${g.rechnungstext}"
             data-aktiv="${g.aktiv}"
             data-therapieform="${g.therapieform}"
-            datat-ust="${g.ust}" 
+            data-ust="${g.ust}" 
             >
             <td>${g.gruppenkuerzel}</td>
         </tr>
