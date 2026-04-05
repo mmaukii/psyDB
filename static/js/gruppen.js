@@ -454,9 +454,10 @@ toggleAbgesagtBtn.addEventListener("click", () => {
 });
 
 // Funktion: Termin aktualisieren basierend auf ausgewählten Teilnehmern
-async function aktualisiereTermin(button, termineId,datum) {
+async function aktualisiereTermin(button, termineId, datum) {
     const tr = button.closest("tr");
     showToast("Wird akualisiert …", null);
+
     if (!tr) {
         console.error("Keine Tabellenzeile gefunden");
         return;
@@ -467,10 +468,6 @@ async function aktualisiereTermin(button, termineId,datum) {
     // ausgewählte Teilnehmer
     const selectedDivs = tr.querySelectorAll(".anwesenheit-tag.selected");
     const selectedIds = Array.from(selectedDivs).map(div => div.dataset.kundenId);
-    const dauer = document.getElementById("dauer_min").value
-
-    console.log("Gruppentermine-ID:", termineId);
-    console.log("Ausgewählte Kunden-IDs:", selectedIds);
 
     const { utc_starttime, utc_endtime } = tr.dataset;
 
@@ -485,45 +482,54 @@ async function aktualisiereTermin(button, termineId,datum) {
 
         const vorhandeneIds = termineDerGruppe.map(s => s.kunde_id.toString());
 
-        // 2️⃣ NEU → POST (Betrag pro Kunde von Flask holen)
+        // 2️⃣ Gruppentermin EINMAL laden (optimiert)
+        let beschreibung = "";
+        let ust = 0;
+        let therapieform = 0;
+
+        try {
+            const gtRes = await fetch(`/api/gruppentermine/${termineId}`);
+            if (gtRes.ok) {
+                const gtData = await gtRes.json();
+                beschreibung = typeof gtData.beschreibung === "string" ? gtData.beschreibung : "";
+                ust = typeof gtData.ust === "number" ? gtData.ust : (parseInt(gtData.ust) || 0);
+                therapieform = typeof gtData.therapieform === "number"
+                    ? gtData.therapieform
+                    : (parseInt(gtData.therapieform) || 0);
+            }
+        } catch (err) {
+            console.warn("Konnte Gruppentermin nicht laden", err);
+        }
+
+        // 3️⃣ Termine pro Kunde erstellen (OHNE doppelte Schleife)
         await Promise.all(selectedIds.map(async kundeId => {
             if (!vorhandeneIds.includes(kundeId)) {
-            // 2️⃣ NEU → POST (Betrag pro Kunde von Flask holen)
-            await Promise.all(selectedIds.map(async kundeId => {
-                if (!vorhandeneIds.includes(kundeId)) {
-                    // Betrag von Flask abrufen
-                    const rawBetrag = parseFloat(document.getElementById("standardbetrag").value) || 0;
 
-                    const betragRes = await fetch(`api/gruppen/${gruppenId}/kunden/${kundeId}/betrag`);
-                    let betrag = rawBetrag; // Standard fallback
+                const rawBetrag = parseFloat(document.getElementById("standardbetrag").value) || 0;
 
-                    if (betragRes.ok) {
-                        const betragData = await betragRes.json();
-                        const fetchedBetrag = parseFloat(betragData.betrag);
-                        if (!isNaN(fetchedBetrag) && fetchedBetrag > 0) {
-                            betrag = fetchedBetrag; // nur überschreiben, wenn gültig
-                        }
+                let betrag = rawBetrag;
+                const betragRes = await fetch(`api/gruppen/${gruppenId}/kunden/${kundeId}/betrag`);
+
+                if (betragRes.ok) {
+                    const betragData = await betragRes.json();
+                    const fetchedBetrag = parseFloat(betragData.betrag);
+                    if (!isNaN(fetchedBetrag) && fetchedBetrag > 0) {
+                        betrag = fetchedBetrag;
                     }
+                }
 
-                    // Gruppentermin fetchen und Felder holen
-                    let beschreibung = "";
-                    let ust = 0;
-                    let therapieform = 0;
-                    try {
-                        const gtRes = await fetch(`/api/gruppentermine/${termineId}`);
-                        if (gtRes.ok) {
-                            const gtData = await gtRes.json();
-                            beschreibung = typeof gtData.beschreibung === "string" ? gtData.beschreibung : "";
-                            ust = typeof gtData.ust === "number" ? gtData.ust : (parseInt(gtData.ust) || 0);
-                            therapieform = typeof gtData.therapieform === "number" ? gtData.therapieform : (parseInt(gtData.therapieform) || 0);
-                        }
-                    } catch (err) {
-                        console.warn("Konnte Gruppentermin nicht laden für Felder", err);
-                    }
+                console.log("POST /api/termine/", {
+                    kundeId,
+                    datum,
+                    utc_starttime,
+                    utc_endtime,
+                    betrag
+                });
 
-                    // Logge alle Werte vor dem POST
-                    console.log("POST /api/termine/", {
-                        kundeId,
+                const createRes = await fetch(`/api/termine/${kundeId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
                         datum,
                         utc_starttime,
                         utc_endtime,
@@ -533,35 +539,31 @@ async function aktualisiereTermin(button, termineId,datum) {
                         ust,
                         beschreibung,
                         push_termin: 1
-                    });
+                    })
+                });
 
-                    const createRes = await fetch(`/api/termine/${kundeId}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            datum: datum,
-                            utc_starttime,
-                            utc_endtime,
-                            betrag,
-                            gruppentermin_id: termineId,
-                            therapieform: therapieform,
-                            ust: ust,
-                            beschreibung: beschreibung,
-                            push_termin: 1 
-                        })
-                    });
-                    const createData = await createRes.json();
-                    console.log("➕ Termin erstellt:", createData);
-                }
-            }));
+                const createData = await createRes.json();
+                console.log("➕ Termin erstellt:", createData);
             }
         }));
 
-    } catch (err) {
+        // 4️⃣ Alle Termine, die zu diesem Gruppentermin gehören, aber deren Kunde NICHT mehr ausgewählt ist, löschen
+        const zuLoeschende = termineDerGruppe.filter(
+            s => !selectedIds.includes(s.kunde_id.toString())
+        );
+        await Promise.all(zuLoeschende.map(async termin => {
+            try {
+            await fetch(`/api/termine/${termin.id}`, { method: "DELETE" });
+            console.log(`Termin ${termin.id} für Kunde ${termin.kunde_id} gelöscht`);
+            } catch (err) {
+            console.error(`Fehler beim Löschen von Termin ${termin.id}:`, err);
+            }
+        }));
+
+        } catch (err) {
         console.error("Fehler:", err);
     }
 }
-
 
 // Nach dem Einfügen: Klick-Events auf Tags
 document.querySelectorAll('.anwesenheit-container .anwesenheit-tag').forEach(tag => {
