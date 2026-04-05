@@ -194,10 +194,10 @@ def get_gruppentermine(gruppe_id):
                 teilnehmer = []
                 gruppenkunden = GruppenKunde.query.filter_by(gruppe_id=gs.gruppe_id).all()
                 kunden = Kunde.query.all()
-                for k in gruppenkunden:
-                     print(k.__dict__)
-                for k in kunden:
-                    print(k.__dict__)
+                # for k in gruppenkunden:
+                #      print(k.__dict__)
+                # for k in kunden:
+                #     print(k.__dict__)
                 kunden_ids = [k.id for k in kunden]
                 kunden_map = {k.id: k.kuerzel for k in kunden}
 

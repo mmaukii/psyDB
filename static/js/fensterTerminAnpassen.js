@@ -127,10 +127,6 @@ window.openfensterTerminAnpassen = async function ({
         if (istSerieCheckbox) istSerieCheckbox.checked = false;
     }
 
-    //listener zum ausfüllen wenn kunde gewechselt wird
-    setupKundenListener()
-    setupGruppenListener()
-    // console.log("Listener für Kundenwechsel gesetzt");
     
     // 🕐 Listener für automatische Endzeit-Berechnung (nur einmal setzen)
     if (!endzeitListenerInitialized) {
@@ -211,122 +207,7 @@ function berechneEndzeit() {
     endzeitInput.value = endeStr;
 }
 
-// Betrag und Beschreibung automatisch füllen beim Kundenwechsel
-// Listener direkt auf <select> setzen, jedes Mal wenn das Modal geöffnet wird
-function setupKundenListener() {
-    // console.log("setupKundenListener aufgerufen");
-    const kundeSelect = document.getElementById("kunde"); // korrekt!
-    const gruppeSelect = document.getElementById("gruppe");
-    // console.log (kundeSelect)
-    if (kundeSelect) {
-        kundeSelect.addEventListener("change", async (e) => {
-              const kundeId = e.target.value;
 
-            if (!kundeId) {
-                document.getElementById("betrag").value = "";
-                document.getElementById("beschreibung").value = "";
-                return;
-            }
-
-            // 👉 Gruppe zurücksetzen
-            if (gruppeSelect) gruppeSelect.value = "";
-
-            try {
-                const res = await fetch(`/api/kunden/${kundeId}`);
-                if (!res.ok) throw new Error("Kundendaten nicht verfügbar");
-                const kunde = await res.json();
-                // console.log(kunde)
-                document.getElementById("betrag").value = new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(kunde.stundensatz)|| "";            
-                console.log("Therapieform Kunde:", kunde.therapieform);
-                if (kunde.therapieform === 1) {
-                    const dauer = await ladeProgrammvariableNachName("einzel_zeit");
-                    beschreibung = "Einzeltherapie á " + dauer + " min";
-                } else if (kunde.therapieform === 2) {
-                    const dauer = await ladeProgrammvariableNachName("paar_zeit");
-                    beschreibung = "Paartherapie á " + dauer + " min";
-                } else if (kunde.therapieform === 3) {
-                    console.log("Familientherapie erkannt, lade Dauer...");
-                    const dauer = await ladeProgrammvariableNachName("familie_zeit");
-                    beschreibung = "Familientherapie á " + dauer + " min";
-                } else if (kunde.therapieform === 4) {
-                    const dauer = await ladeProgrammvariableNachName("gruppe_zeit");
-                    beschreibung = "Gruppentherapie á " + dauer + " min";
-                } else if (kunde.therapieform === 5) {
-                    const dauer = await ladeProgrammvariableNachName("einzelsupervision_zeit");
-                    beschreibung = "Einzelsupervision á " + dauer + " min";
-                } else if (kunde.therapieform === 6) {
-                    const dauer = await ladeProgrammvariableNachName("gruppensupervision_zeit");
-                    beschreibung = "Gruppensupervision á " + dauer + " min";
-                } else if (kunde.therapieform === 7) {
-                    const dauer = await ladeProgrammvariableNachName("einzelselbsterfahrung_zeit");
-                    beschreibung = "Einzelselbsterfahrung á " + dauer + " min";
-                } else if (kunde.therapieform === 8) {
-                    const dauer = await ladeProgrammvariableNachName("gruppenselbsterfahrung_zeit");
-                    beschreibung = "Gruppenselbsterfahrung á " + dauer + " min";
-                } else if (kunde.therapieform === 9) {
-                    const dauer = await ladeProgrammvariableNachName("coaching_zeit");
-                    beschreibung = "Coaching á " + dauer + " min";
-                } else if (kunde.therapieform === 10) {   
-                    beschreibung = "Vortrag/Seminar/Workshop";
-                }
-                
-                document.getElementById("beschreibung").value =beschreibung || "";
-                
-                // 🕒 Endzeit automatisch aktualisieren
-                berechneEndzeit();
-
-                // console.log("Betrag und Beschreibung automatisch ausgefüllt");
-            } catch (err) {
-                console.error(err);
-            }
-        });
-    }
-}
-
-async function ladeProgrammvariableNachName(name) {
-    const res = await fetch(`api/programmvariablen/by-name/${name}`);
-    const data = await res.json();
-    return data.wert;
-}
-
-
-function setupGruppenListener() {
-    // console.log("setupGruppenListener aufgerufen");
-    const gruppeSelect = document.getElementById("gruppe"); // korrekt!
-    const kundeSelect = document.getElementById("kunde");
-    // console.log (gruppeSelect)
-    if (gruppeSelect) {
-        gruppeSelect.addEventListener("change", async (e) => {
-            const gruppeId = e.target.value;
-            if (!gruppeId) {
-                document.getElementById("betrag").value = "";
-                document.getElementById("beschreibung").value = "";
-                return;
-            }
-
-            // 👉 Gruppe zurücksetzen
-                if (kundeSelect) kundeSelect.value = "";
-
-            try {
-                const res = await fetch(`/api/gruppen/${gruppeId}`);
-                if (!res.ok) throw new Error("Gruppendaten nicht verfügbar");
-                const gruppe = await res.json();
-                // console.log(gruppe)
-
-                document.getElementById("betrag").value = new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(gruppe.standardbetrag)|| "";
-                beschreibung = "Gruppentherapie á " + gruppe.dauer_min + " min"
-                document.getElementById("beschreibung").value =beschreibung || "";
-                
-                // 🕒 Endzeit automatisch aktualisieren
-                berechneEndzeit();
-
-                // console.log("Betrag und Beschreibung automatisch ausgefüllt");
-            } catch (err) {
-                console.error(err);
-            }
-        });
-    }
-}
 
 // ===============================
 // === SERIENTERMINE ===

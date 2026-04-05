@@ -902,29 +902,29 @@ neuTerminBtn.addEventListener("click", async () => {
     console.log("Geladene Gruppendaten für Termin:", termine);
 
         if (termine.therapieform === 1) {
-            const dauer = await ladeProgrammvariableNachName("einzel_zeit");
+            //const dauer = await ladeProgrammvariableNachName("einzel_zeit");
             beschreibung = "Einzeltherapie á " + termine.dauer_min + " min";
         } else if (termine.therapieform === 2) {
-            const dauer = await ladeProgrammvariableNachName("paar_zeit");
+            //const dauer = await ladeProgrammvariableNachName("paar_zeit");
             beschreibung = "Paartherapie á " + termine.dauer_min + " min";
         } else if (termine.therapieform === 3) {
             console.log("Familientherapie erkannt, lade Dauer...");
-            const dauer = await ladeProgrammvariableNachName("familie_zeit");
+            //const dauer = await ladeProgrammvariableNachName("familie_zeit");
             beschreibung = "Familientherapie á " + termine.dauer_min + " min";
         } else if (termine.therapieform === 4) {
-            const dauer = await ladeProgrammvariableNachName("gruppe_zeit");
+            //const dauer = await ladeProgrammvariableNachName("gruppe_zeit");
             beschreibung = "Gruppentherapie á " + termine.dauer_min + " min";
         } else if (termine.therapieform === 5) {
-            const dauer = await ladeProgrammvariableNachName("einzelsupervision_zeit");
+            //const dauer = await ladeProgrammvariableNachName("einzelsupervision_zeit");
             beschreibung = "Einzelsupervision á " + termine.dauer_min + " min";
         } else if (termine.therapieform === 6) {
-            const dauer = await ladeProgrammvariableNachName("gruppensupervision_zeit");
+            //const dauer = await ladeProgrammvariableNachName("gruppensupervision_zeit");
             beschreibung = "Gruppensupervision á " + termine.dauer_min + " min";
         } else if (termine.therapieform === 7) {
-            const dauer = await ladeProgrammvariableNachName("einzelselbsterfahrung_zeit");
+            //const dauer = await ladeProgrammvariableNachName("einzelselbsterfahrung_zeit");
             beschreibung = "Einzelselbsterfahrung á " + termine.dauer_min + " min";
         } else if (termine.therapieform === 8) {
-            const dauer = await ladeProgrammvariableNachName("gruppenselbsterfahrung_zeit");
+            // const dauer = await ladeProgrammvariableNachName("gruppenselbsterfahrung_zeit");
             beschreibung = "Gruppenselbsterfahrung á " + termine.dauer_min + " min";
         } else if (termine.therapieform === 9) {
             const dauer = await ladeProgrammvariableNachName("coaching_zeit");
