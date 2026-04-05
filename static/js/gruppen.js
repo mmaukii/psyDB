@@ -221,6 +221,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 const localStart = utcToLocalTime(st.datum, st.utc_starttime);
                 const localEnd = utcToLocalTime(st.datum, st.utc_endtime);
 
+                // Buttons nur anzeigen, wenn keine Termine mit dieser gruppentermin_id existieren
+                const hatTermine = alleTermine.some(t => t.gruppentermin_id === st.id);
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</td>
@@ -229,10 +231,10 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
                     <td>
-                        <button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
+                        ${!hatTermine ? `<button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>` : ""}
                         <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
-                        <button class="absageBtnGruppe table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>
-                        <button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>                     
+                        ${!hatTermine ? `<button class="absageBtnGruppe table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>` : ""}
+                        ${!hatTermine ? `<button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>` : ""}
                     </td>
                 </tr>
             `}).join("");
