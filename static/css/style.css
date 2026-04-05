@@ -1,3 +1,7 @@
+/* Schwarzer Rahmen für nicht toggelbare Kunden */
+.anwesenheit-tag.not-togglable {
+    border: 2px solid #000 !important;
+}
 .required-field {
     border: 2px solid #ccc !important;
 }

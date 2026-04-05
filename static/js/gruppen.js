@@ -108,6 +108,20 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
         const gruppentermine = await response.json();
         console.log("gruppentermine", gruppentermine)
 
+        // 1b: Für jeden Gruppentermin: hole Kunden mit Rechnung
+        // Map: gruppentermin_id -> Set(kunden_id)
+        const kundenMitRechnungMap = {};
+        await Promise.all(gruppentermine.map(async st => {
+            const res = await fetch(`/api/gruppentermine/${st.id}/kunden_mit_rechnung`);
+            if (res.ok) {
+                const kundenIds = await res.json();
+                kundenMitRechnungMap[st.id] = new Set(kundenIds);
+            } else {
+                kundenMitRechnungMap[st.id] = new Set();
+            }
+            console.log(`Kunden mit Rechnung für Gruppentermin ${st.id}:`, kundenMitRechnungMap[st.id]);
+        }));
+
         // 2️⃣ Fetch für alle bestehenden Termine
         console.log("Lade alle Termine für Anwesenheitsabgleich");
         const termineResponse = await fetch("api/termine");
@@ -145,6 +159,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 }
 
+                // Kunden mit Rechnung für diesen Gruppentermin
+                const kundenMitRechnung = kundenMitRechnungMap[st.id] || new Set();
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}"
                     data-utc_starttime="${utcToLocalTime(st.datum, st.utc_starttime)}" 
@@ -159,9 +175,13 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                                 const istSelected = alleTermine.some(s =>
                                     s.gruppentermin_id === st.id && s.kunde_id === t.kunde_id
                                 );
+                                // Wenn der Kunde bereits in alleTermine ist, nicht toggelbar machen
+                                // NEU: Wenn Kunde in kundenMitRechnung, dann nicht toggelbar
+                                const istDisabled = kundenMitRechnung.has(t.kunde_id);
+                                const notTogglableClass = istDisabled ? ' not-togglable' : '';
                                 return `
-                                    <div class="anwesenheit-tag ${istSelected ? 'selected' : ''}" 
-                                        data-kunden-id="${t.kunde_id}">
+                                    <div class="anwesenheit-tag${istSelected ? ' selected' : ''}${istDisabled ? ' disabled' : ''}${notTogglableClass}" 
+                                        data-kunden-id="${t.kunde_id}"${istDisabled ? ' title=\"bereits in Rechnung\"' : ''}>
                                         ${t.kuerzel}
                                     </div>
                                 `;
@@ -218,10 +238,13 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
             `}).join("");
 
             // Event Listener für Toggle direkt nach Einfügen
+            // Click-Events nur für nicht-disabled Tags
             termineProGruppeAnwesenheitsListe.querySelectorAll(".anwesenheit-tag").forEach(tag => {
-                tag.addEventListener("click", () => {
-                    tag.classList.toggle("selected"); // toggelt Auswahl
-                });
+                if (!tag.classList.contains("disabled")) {
+                    tag.addEventListener("click", () => {
+                        tag.classList.toggle("selected"); // toggelt Auswahl
+                    });
+                }
             });
         }
        if (!kunden || kunden.length === 0) {

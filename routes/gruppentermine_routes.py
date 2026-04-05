@@ -240,3 +240,20 @@ def get_gruppentermine(gruppe_id):
                 })
 
             return jsonify(result)
+
+@gruppentermine_bp.get("/gruppentermine/<int:gruppentermin_id>/kunden_mit_rechnung")
+def get_kunden_ids_mit_rechnung(gruppentermin_id):
+    """
+    Gibt alle Kunden-IDs zurück, die über einen Termin mit dieser gruppentermin_id verfügen
+    und deren Termin bereits in einer Rechnung verwendet wurde.
+    """
+    from models import Termin, TermineRechnung
+    # Alle Termine mit dieser gruppentermin_id
+    termine = Termin.query.filter_by(gruppentermin_id=gruppentermin_id).all()
+    kunden_ids = set()
+    for termin in termine:
+        # Prüfen, ob Termin in TermineRechnung verwendet wurde
+        termin_rechnung = TermineRechnung.query.filter_by(termin_id=termin.id).first()
+        if termin_rechnung:
+            kunden_ids.add(termin.kunde_id)
+    return jsonify(sorted(list(kunden_ids)))
