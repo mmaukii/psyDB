@@ -51,8 +51,7 @@
            <!-- LINKER BUTTON-BEREICH (Neu/Bearbeiten) -->
     <div style="display: flex; gap: 10px; align-items: center;">
         <button id="toggleButton" class="toggleButtonBearbeiten">Bearbeiten</button>
-        <button type="button" id="mailGruppeBtn" title="Mail an Teilnehmer" style="font-size: 20px; line-height: 1;">📧</button>
-    </div>
+        <button type="button" class="table-btn" id="mailGruppeBtn" title="Mail an Teilnehmer" style="font-size: 20px; line-height: 1;">📧</button>  </div>
 
     <!-- RECHTER BUTTON-BEREICH (Speichern/Löschen) -->
     <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center;">
@@ -200,7 +199,7 @@
         <!-- Tab: Anwesenheit -->
          <div class="tab-content" id="anwesenheit" style="grid-column: 1 / -1;">
                         <div style="margin-bottom:8px;color:#555;font-size:13px;">
-                            Hier Anwesenheit bei Terminen festlegen. Nach Klick auf das Speichersymbol werden Gruppentermine auf die einzelnen Kunden übetragen/gelöscht.
+                            Hier Anwesenheit bei Terminen festlegen. Nach Klick auf Aktualisierung werden Gruppentermine bei Kunden erstellt/gelöscht. Haben Kunden eine schwarzen Rahmen, wurde bereits eine Rechnung erstellt und sie können nich mehr an und abgewählt werden. Soll ihr Termine gelöscht/geändert werden, muss erst die Rechnung gelöscht werden.
                         </div>
             
             <table class="table">

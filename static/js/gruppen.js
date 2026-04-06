@@ -181,7 +181,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                                 const notTogglableClass = istDisabled ? ' not-togglable' : '';
                                 return `
                                     <div class="anwesenheit-tag${istSelected ? ' selected' : ''}${istDisabled ? ' disabled' : ''}${notTogglableClass}" 
-                                        data-kunden-id="${t.kunde_id}"${istDisabled ? ' title=\"bereits in Rechnung\"' : ''}>
+                                        data-kunden-id="${t.kunde_id}"${istDisabled ? ' title="bereits in Rechnung"' : ''}>
                                         ${t.kuerzel}
                                     </div>
                                 `;
@@ -189,8 +189,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                         </div>
                     </td>
                     <td class="actions">
-                        <button class="refresh-btn" onclick="aktualisiereTermin(this, ${st.id}, '${st.datum}')" title="Speichern der Anwesenheit">
-                            💾
+                        <button class="refresh-btn table-btn" onclick="aktualisiereTermin(this, ${st.id}, '${st.datum}')" title="Speichern der Anwesenheit">
+                            🔁
                         </button>
                     </td>
                 </tr>
@@ -585,7 +585,10 @@ async function aktualisiereTermin(button, termineId, datum) {
             }
         }));
 
-        } catch (err) {
+        // Tabelle neu laden, damit Button-Anzeige stimmt
+        await reloadGruppentermineAnwesenheit(gruppenId);
+
+    } catch (err) {
         console.error("Fehler:", err);
     }
 }

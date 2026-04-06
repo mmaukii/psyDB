@@ -35,16 +35,23 @@ def auswertung_jahrestabelle():
         einnahmen_umsatz = 0
         einnahmen_nicht_umsatz = 0
         for r in rechnungen:
-            # Kunde zu Rechnung finden (über Termin)
-            kunde_ust = None
-            for tr in r.termine_rechnungen:
-                if tr.termin and tr.termin.kunde and hasattr(tr.termin.kunde, 'ust'):
-                    kunde_ust = tr.termin.kunde.ust
-                    break
-            if kunde_ust == 1:
-                einnahmen_umsatz += r.betrag
+            # Umsatzsteuerpflichtig jetzt über alle zugeordneten termine_rechnungen prüfen
+            ust_anteil = 0.0
+            nicht_ust_anteil = 0.0
+            if r.termine_rechnungen:
+                for tr in r.termine_rechnungen:
+                    if tr.termin and hasattr(tr.termin, 'betrag') and tr.termin.betrag is not None:
+                        betrag = tr.termin.betrag
+                    else:
+                        betrag = 0.0
+                    if tr.termin and hasattr(tr.termin, 'ust') and tr.termin.ust == 1:
+                        ust_anteil += betrag
+                    else:
+                        nicht_ust_anteil += betrag
             else:
-                einnahmen_nicht_umsatz += r.betrag
+                nicht_ust_anteil += r.betrag
+            einnahmen_umsatz += ust_anteil
+            einnahmen_nicht_umsatz += nicht_ust_anteil
         # Einzeltermine
         from datetime import datetime
         def calc_min(start, end):
@@ -107,8 +114,22 @@ def auswertung_kunden():
                         rechnungen.append(r)
                         break
         einnahmen_gesamt = sum([r.betrag for r in rechnungen])
-        einnahmen_umsatz = sum([r.betrag for r in rechnungen if k.ust == 1])
-        einnahmen_nicht_umsatz = sum([r.betrag for r in rechnungen if k.ust != 1])
+        # Umsatzsteuerpflichtig jetzt über termine_rechnungen prüfen
+        einnahmen_umsatz = 0.0
+        einnahmen_nicht_umsatz = 0.0
+        for r in rechnungen:
+            if r.termine_rechnungen:
+                for tr in r.termine_rechnungen:
+                    if tr.termin and hasattr(tr.termin, 'betrag') and tr.termin.betrag is not None:
+                        betrag = tr.termin.betrag
+                    else:
+                        betrag = 0.0
+                    if tr.termin and hasattr(tr.termin, 'ust') and tr.termin.ust == 1:
+                        einnahmen_umsatz += betrag
+                    else:
+                        einnahmen_nicht_umsatz += betrag
+            else:
+                einnahmen_nicht_umsatz += r.betrag
         from datetime import datetime
         def calc_min(start, end):
             try:
@@ -181,17 +202,22 @@ def auswertung_gruppen():
 
         # Einnahmen: nur Termine, die in einer Rechnung vorkommen
         termin_ids = [t.id for t in termine]
-        rechnungs_betraege = 0
+        einnahmen_umsatz = 0.0
+        einnahmen_nicht_umsatz = 0.0
         if termin_ids:
             for r in Rechnung.query.all():
                 for tr in r.termine_rechnungen:
                     if tr.termin_id in termin_ids:
                         if not jahr or (r.datum and r.datum.startswith(str(jahr))):
-                            rechnungs_betraege += r.betrag
-                            break
-        einnahmen_gesamt = rechnungs_betraege
-        einnahmen_umsatz = 0
-        einnahmen_nicht_umsatz = einnahmen_gesamt
+                            if tr.termin and hasattr(tr.termin, 'betrag') and tr.termin.betrag is not None:
+                                betrag = tr.termin.betrag
+                            else:
+                                betrag = 0.0
+                            if tr.termin and hasattr(tr.termin, 'ust') and tr.termin.ust == 1:
+                                einnahmen_umsatz += betrag
+                            else:
+                                einnahmen_nicht_umsatz += betrag
+        einnahmen_gesamt = einnahmen_umsatz + einnahmen_nicht_umsatz
 
         abgehalten = len([gt for gt in gruppentermine if not gt.entfallen])
         abgesagt = len([gt for gt in gruppentermine if gt.entfallen])
@@ -268,11 +294,23 @@ def auswertung_therapieformen():
             therapieform_dict[tf]['abgehaltene_termine'] += 1
             therapieform_dict[tf]['abgehaltene_termine_min'] += calc_min(t.utc_starttime, t.utc_endtime)
             therapieform_dict[tf]['einnahmen_gesamt'] += t.betrag or 0.0
-            # USt-pflichtig: über Kunde
-            if t.kunde and getattr(t.kunde, 'ust', 0) == 1:
-                therapieform_dict[tf]['einnahmen_umsatzsteuerpflichtig'] += t.betrag or 0.0
+            # USt-pflichtig: jetzt über alle termine_rechnungen prüfen
+            ust_anteil = 0.0
+            nicht_ust_anteil = 0.0
+            if t.termine_rechnungen:
+                for tr in t.termine_rechnungen:
+                    if tr.termin and hasattr(tr.termin, 'betrag') and tr.termin.betrag is not None:
+                        betrag = tr.termin.betrag
+                    else:
+                        betrag = 0.0
+                    if tr.termin and hasattr(tr.termin, 'ust') and tr.termin.ust == 1:
+                        ust_anteil += betrag
+                    else:
+                        nicht_ust_anteil += betrag
             else:
-                therapieform_dict[tf]['einnahmen_nicht_umsatzsteuerpflichtig'] += t.betrag or 0.0
+                nicht_ust_anteil += t.betrag or 0.0
+            therapieform_dict[tf]['einnahmen_umsatzsteuerpflichtig'] += ust_anteil
+            therapieform_dict[tf]['einnahmen_nicht_umsatzsteuerpflichtig'] += nicht_ust_anteil
         elif t.abgesagt:
             therapieform_dict[tf]['abgesagte_termine'] += 1
     # Ausgabe als Liste, aber nur Therapieformen mit echten Werten
