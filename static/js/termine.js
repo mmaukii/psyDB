@@ -10,43 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const offeneTermineTabelle = document.getElementById("offeneTermineTabelle").querySelector("tbody");
 
-// Beispiel: Daten vom Server holen
-async function ladeTermine() {
-    const response = await fetch('/api/termine/nicht-abgesagt-aktive-kunde-nicht-in-rechnung'); // sollte JSON mit allen Termine + Kundendaten liefern
-    const termine = await response.json();
-    console.log("Geladene Termine:", termine);
-
-    offeneTermineTabelle.innerHTML = termine.map(st => {
-        // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
-            const datumParts = st.datum.split("-");
-            const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
-            let betragNum = parseFloat(st.betrag);
-            let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
-            return `
-        <tr data-termine-id="${st.id}">
-            <td><input type="checkbox" class="selectRow" data-termine-id="${st.id}"></td>
-            <th align="center">${datumDeutsch}</td>            
-            <td>${st.vorname}</td>
-            <td>${st.nachname}</td>
-            <td>${st.kuerzel}</td>
-            <td align="center">${st.utc_starttime}</td>
-            <td align="center">${st.utc_endtime}</td>
-            <td>${st.beschreibung}</td>
-            <td>${st.gruppenkuerzel}</td>
-            <td align="right">${betragFormatted}&nbsp;€</td>
-            <td>
-                <button class="editBtn table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
-                <button class="deleteBtn table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
-            </td> 
-            <td>${st.abgesagt}</td>    
-         </tr>
-    `;
-        }).join("");
-
-        filterTabelle();
-        restoreSelectedTermine();
-}
-
 
 
 // Beispiel: Daten vom Server holen
@@ -83,7 +46,9 @@ async function ladeTermine() {
                     <button class="editBtn table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
                     <button class="deleteBtn table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
                 </td> 
-                <td hidden>${st.abgesagt}</td>    
+                <td hidden>${st.abgesagt}</td> 
+                <td hidden>${st.ust}</td> 
+                <td hidden>${st.kundeId}</td>    
             </tr>
     `;
         }).join("");
@@ -381,9 +346,62 @@ document.getElementById('getSelectedButton').addEventListener('click', () => {
     });
     console.log("Ausgewählte Termine-IDs:", selectedIds);
 
+    // Prüfen, ob alle Termine pro Kunde den gleichen ust-Wert haben
+    // Map: kundeId -> { ust: Set, ids: [] }
+    const kundeMap = {};
+    selectedIds.forEach(id => {
+        const row = document.querySelector(`#offeneTermineTabelle tr[data-termine-id="${id}"]`);
+        if (!row) return;
+        const kundeId = row.cells[13] ? row.cells[13].textContent.trim() : null;
+        const ust = row.cells[12] ? row.cells[12].textContent.trim() : null;
+        console.log(`Termin ${id}: KundeID=${kundeId}, USt=${ust}`);
+        if (!kundeId) return;
+        if (!kundeMap[kundeId]) {
+            kundeMap[kundeId] = { ustSet: new Set(), ids: [] };
+        }
+        kundeMap[kundeId].ustSet.add(ust);
+        kundeMap[kundeId].ids.push(id);
+    });
+
+    // IDs, die entfernt werden müssen (wegen unterschiedlicher ust pro Kunde)
+    let removedIds = [];
+    Object.entries(kundeMap).forEach(([kundeId, obj]) => {
+        if (obj.ustSet.size > 1) {
+            // Mehrere unterschiedliche ust-Werte für diesen Kunden
+            removedIds = removedIds.concat(obj.ids);
+        }
+    });
+
+    let filteredIds = selectedIds.filter(id => !removedIds.includes(id));
+    if (removedIds.length > 0) {
+        // Kundenkürzel der betroffenen Kunden sammeln
+        const kundeKuerzel = Object.entries(kundeMap)
+            .filter(([_, obj]) => obj.ustSet.size > 1)
+            .map(([kundeId, _]) => {
+            // Suche das erste Vorkommen in der Tabelle, um das Kürzel zu holen
+            const row = document.querySelector(`#offeneTermineTabelle tr[data-termine-id="${kundeMap[kundeId].ids[0]}"]`);
+            return row ? row.cells[4].textContent.trim() : kundeId;
+            });
+
+        alert(
+            "Achtung: Für mindestens einen Kunden wurden Termine mit unterschiedlichen USt-Werten ausgewählt. Diese Termine werden von der Rechnungsstellung ausgeschlossen.\n\nBetroffene Kunden: " +
+            kundeKuerzel.join(", ")
+        );
+        // Optional: Checkboxen für entfernte Termine abwählen
+        removedIds.forEach(id => {
+            const cb = document.querySelector(`#offeneTermineTabelle input.selectRow[data-termine-id="${id}"]`);
+            if (cb) cb.checked = false;
+        });
+    }
+
+    if (filteredIds.length === 0) {
+        alert("Keine gültigen Termine für die Rechnungsstellung ausgewählt.");
+        return;
+    }
+
     // POST-Request an Flask senden
     const formData = new FormData();
-    selectedIds.forEach(id => formData.append("termine_ids[]", id));
+    filteredIds.forEach(id => formData.append("termine_ids[]", id));
     console.log("FormData zum Senden:", Array.from(formData.entries()));
 
     fetch('/api/rechnungen/aus-termine', {
@@ -392,7 +410,7 @@ document.getElementById('getSelectedButton').addEventListener('click', () => {
                 'Content-Type': 'application/json'   // ❗ extrem wichtig
             },
             body: JSON.stringify({
-                termine_ids: selectedIds
+                termine_ids: filteredIds
             })
         })
     .then(response => response.json())

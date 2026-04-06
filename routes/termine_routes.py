@@ -265,6 +265,7 @@ def get_termine_nicht_in_rechnung_nicht_abgesagt_kunde_aktiv():
             Termin.betrag,
             Termin.gruppentermin_id,
             Termin.beschreibung,
+            Termin.ust,
             Kunde.vorname,
             Kunde.nachname,
             Kunde.kuerzel,
@@ -301,7 +302,8 @@ def get_termine_nicht_in_rechnung_nicht_abgesagt_kunde_aktiv():
             "kundeId": r.kundeId,
             "gruppentermin_id": r.gruppentermin_id,
             "beschreibung": r.beschreibung,
-            "gruppenkuerzel": r.gruppenkuerzel or ""
+            "gruppenkuerzel": r.gruppenkuerzel or "",
+            "ust": r.ust
         }
         for r in result
     ])
@@ -319,6 +321,7 @@ def get_termine_nicht_in_rechnung_kunde_aktiv():
             Termin.gruppentermin_id,
             Termin.beschreibung,
             Termin.abgesagt,
+            Termin.ust,
             Kunde.vorname,
             Kunde.nachname,
             Kunde.kuerzel,
@@ -356,7 +359,8 @@ def get_termine_nicht_in_rechnung_kunde_aktiv():
             "gruppentermin_id": r.gruppentermin_id,
             "beschreibung": r.beschreibung,
             "gruppenkuerzel": r.gruppenkuerzel or "",
-            "abgesagt": r.abgesagt
+            "abgesagt": r.abgesagt,
+            "ust": r.ust
         }
         for r in result
     ])
