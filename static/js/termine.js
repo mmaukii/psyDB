@@ -20,39 +20,55 @@ async function ladeTermine() {
 
     offeneTermineTabelle.innerHTML = termine.map(st => {
         // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
-            const datumParts = st.datum.split("-");
-            const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
-            let betragNum = parseFloat(st.betrag);
-            let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
-            
-            const abgesagt = st.abgesagt && st.abgesagt !== "null" && st.abgesagt !== "0";
-            const datumHtml = abgesagt
-                ? `<s>${datumDeutsch}</s>` // <s> = durchgestrichen
-                : datumDeutsch;
+        const datumParts = st.datum.split("-");
+        const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
+        let betragNum = parseFloat(st.betrag);
+        let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
 
-            return `
-            <tr data-termine-id="${st.id}">
-                <td><input type="checkbox" class="selectRow" data-termine-id="${st.id}"></td>
-                <th align="center">${datumHtml}</th>            
-                <td>${st.vorname}</td>
-                <td>${st.nachname}</td>
-                <td>${st.kuerzel}</td>
-                <td align="center">${st.utc_starttime}</td>
-                <td align="center">${st.utc_endtime}</td>
-                <td>${st.beschreibung}</td>
-                <td>${st.gruppenkuerzel}</td>
-                <td align="right">${betragFormatted}&nbsp;€</td>
-                <td>
-                    <button class="editBtn table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
-                    <button class="deleteBtn table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
-                </td> 
-                <td hidden>${st.abgesagt}</td> 
-                <td hidden>${st.ust}</td> 
-                <td hidden>${st.kundeId}</td>    
-            </tr>
-    `;
-        }).join("");
-        filterTabelle(); // Tabelle nach dem Laden filtern
+        const abgesagt = st.abgesagt && st.abgesagt !== "null" && st.abgesagt !== "0";
+        const datumHtml = abgesagt
+            ? `<s>${datumDeutsch}</s>` // <s> = durchgestrichen
+            : datumDeutsch;
+
+        // Zeitumwandlung UTC → Lokalzeit
+        const startLocal = utcToLocalTime(st.datum, st.utc_starttime);
+        const endLocal = utcToLocalTime(st.datum, st.utc_endtime);
+
+        return `
+        <tr data-termine-id="${st.id}">
+            <td><input type="checkbox" class="selectRow" data-termine-id="${st.id}"></td>
+            <th align="center">${datumHtml}</th>            
+            <td>${st.vorname}</td>
+            <td>${st.nachname}</td>
+            <td>${st.kuerzel}</td>
+            <td align="center">${startLocal}</td>
+            <td align="center">${endLocal}</td>
+            <td>${st.beschreibung}</td>
+            <td>${st.gruppenkuerzel}</td>
+            <td align="right">${betragFormatted}&nbsp;€</td>
+            <td>
+                <button class="editBtn table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
+                <button class="deleteBtn table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
+            </td> 
+            <td hidden>${st.abgesagt}</td> 
+            <td hidden>${st.ust}</td> 
+            <td hidden>${st.kundeId}</td>    
+        </tr>
+        `;
+    }).join("");
+    filterTabelle(); // Tabelle nach dem Laden filtern
+// Funktion zur Umwandlung von UTC-Zeit in Lokalzeit
+function utcToLocalTime(dateStr, utcTime) {
+    if (!dateStr || !utcTime) return "";
+    const [h, m, s] = utcTime.split(":");
+    const date = new Date(Date.UTC(
+        parseInt(dateStr.slice(0, 4)),
+        parseInt(dateStr.slice(5, 7)) - 1,
+        parseInt(dateStr.slice(8, 10)),
+        h, m, s || 0
+    ));
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 }
 
 
