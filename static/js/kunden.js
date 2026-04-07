@@ -193,6 +193,7 @@ async function reloadTermineFuerKunde(kundeId) {
             return;
         }
 
+
         termineProKundeListe.innerHTML = termine.map(st => {
             // Datum formatieren
             const datumParts = st.datum.split("-");
@@ -217,17 +218,22 @@ async function reloadTermineFuerKunde(kundeId) {
             const localStart = utcToLocalTime(st.datum, st.utc_starttime);
             const localEnd = utcToLocalTime(st.datum, st.utc_endtime);
 
-            // Buttons: nur Doku wenn Rechnungsnr vorhanden
-            const buttons = st.rechnungsnr
-                ? `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`
-                : `
-                    <button class="editBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
-                    <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
-                    <button class="absageBtntermineproKunde table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>
-                    <button class="deleteBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
-                    
-                    
-                `;
+            // Buttons: je nach Status
+            let buttons = "";
+            if (st.abgesagt) {
+                buttons = `<button class="restoreBtntermineproKunde table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️ Termin wiederherstellen</button>`;
+            } else {
+                if (st.rechnungsnr) {
+                    buttons = `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
+                } else {
+                    buttons = `
+                        <button class="editBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
+                        <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
+                        <button class="absageBtntermineproKunde table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>
+                        <button class="deleteBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
+                    `;
+                }
+            }
 
             // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
             const rowStyle = (st.abgesagt && toggleAbgesagtBtn.dataset.show === "false") ? "display:none;" : "";
