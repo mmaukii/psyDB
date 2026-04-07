@@ -221,7 +221,7 @@ async function reloadTermineFuerKunde(kundeId) {
             // Buttons: je nach Status
             let buttons = "";
             if (st.abgesagt) {
-                buttons = `<button class="restoreBtntermineproKunde table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️ Termin wiederherstellen</button>`;
+                buttons = `<button class="restoreBtntermineproKunde table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️</button>`;
             } else {
                 if (st.rechnungsnr) {
                     buttons = `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
@@ -464,7 +464,7 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
         // --- UI sofort ---
         row.classList.add("abgesagt");
         btn.disabled = true;
-        btn.textContent = "Abgesagt";
+        btn.textContent = "🚫";
 
         const datumCell = row.cells[0];
         datumCell.innerHTML = `<s>${datumCell.textContent}</s>`;
@@ -514,6 +514,45 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
             doku : stunde.doku || ""
         });
     }
+
+
+        // Wiederherstellen-Button gedrückt
+        if (e.target.classList.contains("restoreBtntermineproKunde")) {
+            console.log("Termin wiederherstellen, ID:", e.target.dataset.id);
+            const stundeId = e.target.dataset.id;
+            if (!confirm("Soll dieser Termin wirklich wiederhergestellt werden?")) return;
+            const row = e.target.closest("tr");
+            // UI sofort anpassen
+            row.classList.remove("abgesagt");
+            // Fetch im Hintergrund
+            try {
+                const res = await fetch(`/api/termine/${stundeId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ abgesagt: null })
+                });
+                if (!res.ok) throw new Error("Fehler beim Wiederherstellen");
+                // Toggle-Status für abgesagte Zeilen merken
+                const showAbgesagte = toggleAbgesagtBtn.dataset.show;
+                // Tabelle neu laden, damit Buttons und Status stimmen
+                const kundeId = document.getElementById("kundenForm").id.value;
+                await reloadTermineFuerKunde(kundeId);
+                // Toggle-Status wiederherstellen
+                toggleAbgesagtBtn.dataset.show = showAbgesagte;
+                if (showAbgesagte === "true") {
+                    toggleAbgesagtBtn.textContent = "Abgesagte ausblenden";
+                    // Alle abgesagten Zeilen einblenden
+                    document.querySelectorAll("#termineProKundeListe tr.abgesagt").forEach(row => {
+                        row.style.display = "";
+                    });
+                } else {
+                    toggleAbgesagtBtn.textContent = "Abgesagte anzeigen";
+                    hideAbgesagteRows();
+                }
+            } catch (err) {
+                alert("Fehler beim Wiederherstellen: " + err.message);
+            }
+        }
 });
 
 document.addEventListener("kalenderTermineAnpassung", function (e) {
@@ -705,6 +744,30 @@ kundenForm.addEventListener("submit", async (e) => {
 
     try {
         // 1️⃣ Kunde speichern / anlegen
+
+        // Wiederherstellen-Button gedrückt
+        if (e.target.classList.contains("restoreBtntermineproKunde")) {
+            console.log("Termin wiederherstellen, ID:", e.target.dataset.id);
+            const stundeId = e.target.dataset.id;
+            if (!confirm("Soll dieser Termin wirklich wiederhergestellt werden?")) return;
+            const row = e.target.closest("tr");
+            // UI sofort anpassen
+            row.classList.remove("abgesagt");
+            // Fetch im Hintergrund
+            try {
+                const res = await fetch(`/api/termine/${stundeId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ abgesagt: null })
+                });
+                if (!res.ok) throw new Error("Fehler beim Wiederherstellen");
+                // Tabelle neu laden, damit Buttons und Status stimmen
+                const kundeId = document.getElementById("kundenForm").id.value;
+                await reloadTermineFuerKunde(kundeId);
+            } catch (err) {
+                alert("Fehler beim Wiederherstellen: " + err.message);
+            }
+        }
         const response = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
