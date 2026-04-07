@@ -171,8 +171,17 @@ searchInput.addEventListener("input", () => {
 // === DOKU LADEN FÜR KUNDEN + GRUPPEN MIT NAMEN
 // ===============================
 
+
 async function ladeDokusFuerKundenMitGruppen(kundeId) {
   dokuListe.innerHTML = "<p>Lade Dokumentation…</p>";
+  // PDF-Button im HTML-Template sichtbar machen und verlinken
+  const htmlBtn = document.getElementById("doku-pdf-export-html-btn");
+  if (htmlBtn) {
+    htmlBtn.style.display = "inline-block";
+    htmlBtn.onclick = () => {
+      window.open(`/api/doku/kunde/${kundeId}/pdf`, "_blank");
+    };
+  }
   const filter = document.getElementById("DokuFilter")?.value;
   try {
     // 1️⃣ Kundendaten holen
@@ -242,6 +251,7 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
 
     if (!alleDokus.length) {
       dokuListe.innerHTML = "<p>Keine Dokumentation vorhanden.</p>";
+      // PDF-Button trotzdem anzeigen
       return;
     }
     console.log("filter",filter);

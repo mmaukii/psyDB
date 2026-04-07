@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <title>Dokumentation für {{ kunde.vorname }} {{ kunde.nachname }}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0 20px; }
+      h2 { margin-top: 30px; }
+      .doku-block { margin-bottom: 24px; }
+      .doku-header { font-weight: bold; }
+      .doku-content { margin-left: 1em; }
+      .doku-trenner { margin: 10px 0; color: #aaa; }
+    </style>
+</head>
+<body>
+<h2>Dokumentation für {{ kunde.vorname }} {{ kunde.nachname }}</h2>
+{% for d in alle_dokus %}
+  <div class="doku-block">
+    <div class="doku-header">
+      {{ d.datum }} {% if d.utc_starttime %}{{ d.utc_starttime }} – {{ d.utc_endtime }}{% endif %} {{ d.anzeigeName }}
+      {% if d.beschreibung %}, {{ d.beschreibung }}{% endif %}
+      {% if d.abgesagt %} – abgesagt{% endif %}
+      {% if d.entfallen %} – entfallen{% endif %}
+    </div>
+    <div class="doku-content">
+      {% if d.doku %}<div>{{ d.doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+      {% if d.pers_doku %}<div style="margin-top:8px; color:#555;">{{ d.pers_doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+    </div>
+    <div class="doku-trenner">*****</div>
+  </div>
+{% endfor %}
+</body>
+</html>

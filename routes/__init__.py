@@ -12,3 +12,4 @@ from .mahnungen_routes import mahnungen_bp
 from .programmvariablen_routes import programmvariablen_bp
 from .dashboard_routes import dashboard_bp
 from .druckvorlagen_routes import druckvorlagen_bp
+from .doku_routes import doku_bp

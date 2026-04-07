@@ -9,7 +9,7 @@ import shutil
 import threading
 import subprocess
 import sys
-from routes import kunden_bp, standorte_bp, termine_bp, rechnungen_bp, kalender_bp, gruppen_bp, gruppentermine_bp, gruppenkunden_bp ,  mahnungen_bp, programmvariablen_bp, dashboard_bp, druckvorlagen_bp
+from routes import kunden_bp, standorte_bp, termine_bp, rechnungen_bp, kalender_bp, gruppen_bp, gruppentermine_bp, gruppenkunden_bp ,  mahnungen_bp, programmvariablen_bp, dashboard_bp, druckvorlagen_bp, doku_bp
 from routes.auswertung_routes import auswertung_bp
 from services.backup_service import backup_sqlite_db
 from config import DB_FILE, MAX_BACKUPS, set_passphrase, use_passphrase_mode, is_encryption_ready, verify_passphrase, is_passphrase_initialized, set_new_passphrase, should_force_passphrase_prompt, mark_passphrase_prompt_done  # <-- import aus ini
@@ -195,6 +195,7 @@ app.register_blueprint(gruppentermine_bp, url_prefix="/api")  # Gruppentermine-R
 app.register_blueprint(mahnungen_bp, url_prefix="/api")      # Mahnungen Seite
 app.register_blueprint(programmvariablen_bp, url_prefix="/api")  # Programmvariablen
 app.register_blueprint(druckvorlagen_bp, url_prefix="/api")  # Druckvorlagen
+app.register_blueprint(doku_bp, url_prefix="/api")   # Doku-API
 app.register_blueprint(dashboard_bp)                   # Dashboard
 app.register_blueprint(auswertung_bp)                 # Auswertungs-API
 app.register_blueprint(seiten_bp)                    # HTML-Seiten
