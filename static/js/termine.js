@@ -26,26 +26,28 @@ async function ladeTermine() {
         let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
 
         const abgesagt = st.abgesagt && st.abgesagt !== "null" && st.abgesagt !== "0";
-        const datumHtml = abgesagt
-            ? `<s>${datumDeutsch}</s>` // <s> = durchgestrichen
-            : datumDeutsch;
 
         // Zeitumwandlung UTC → Lokalzeit
         const startLocal = utcToLocalTime(st.datum, st.utc_starttime);
         const endLocal = utcToLocalTime(st.datum, st.utc_endtime);
 
+        // Wenn abgesagt, alles durchstreichen
+        function sWrap(val) {
+            return abgesagt ? `<s style=\"color:gray;\">${val}</s>` : val;
+        }
+
         return `
         <tr data-termine-id="${st.id}">
-            <td><input type="checkbox" class="selectRow" data-termine-id="${st.id}"></td>
-            <th align="center">${datumHtml}</th>            
-            <td>${st.vorname}</td>
-            <td>${st.nachname}</td>
-            <td>${st.kuerzel}</td>
-            <td align="center">${startLocal}</td>
-            <td align="center">${endLocal}</td>
-            <td>${st.beschreibung}</td>
-            <td>${st.gruppenkuerzel}</td>
-            <td align="right">${betragFormatted}&nbsp;€</td>
+            <td>${abgesagt ? `<s style=\"color:gray;\"><input type=\"checkbox\" class=\"selectRow\" data-termine-id=\"${st.id}\"></s>` : `<input type=\"checkbox\" class=\"selectRow\" data-termine-id=\"${st.id}\">`}</td>
+            <th align="center">${sWrap(datumDeutsch)}</th>            
+            <td>${sWrap(st.vorname)}</td>
+            <td>${sWrap(st.nachname)}</td>
+            <td>${sWrap(st.kuerzel)}</td>
+            <td align="center">${sWrap(startLocal)}</td>
+            <td align="center">${sWrap(endLocal)}</td>
+            <td>${sWrap(st.beschreibung)}</td>
+            <td>${sWrap(st.gruppenkuerzel)}</td>
+            <td align="right">${sWrap(betragFormatted)}&nbsp;€</td>
             <td>
                 <button class="editBtn table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
                 <button class="deleteBtn table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
