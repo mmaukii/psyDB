@@ -452,26 +452,10 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
 
 
     if (e.target.classList.contains("absageBtntermineproKunde")) {
-        if (!confirm("Soll dieser Termin abgesagt werden?")) return;
         const stundeId = e.target.dataset.id;
-        const row = e.target.closest("tr");
-        const btn = e.target;
-
         // --- Doku-Eintrag abfragen ---
         let dokuText = prompt("Optional: Doku-Eintrag zur Absage hinzufügen (leer lassen für keinen Eintrag):", "");
         if (dokuText === null) return; // Abbruch
-
-        // --- UI sofort ---
-        row.classList.add("abgesagt");
-        btn.disabled = true;
-        btn.textContent = "🚫";
-
-        const datumCell = row.cells[0];
-        datumCell.innerHTML = `<s>${datumCell.textContent}</s>`;
-
-        if (toggleAbgesagtBtn.dataset.show === "false") {
-            row.style.display = "none";
-        }
 
         // --- Fetch im Hintergrund ---
         fetch(`/api/termine/${stundeId}`, {
@@ -483,14 +467,13 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
             if (!res.ok) throw new Error("Fehler beim Absagen");
             return res.text();
         })
-        .then(result => console.log("Server bestätigt Absage:", result))
+        .then(result => {
+            // Nach erfolgreicher Absage Tabelle neu laden, damit die Button-Logik korrekt ist
+            const kundeId = document.getElementById("kundenForm").id.value;
+            reloadTermineFuerKunde(kundeId);
+        })
         .catch(err => {
             console.error(err);
-            // Optional: UI zurücksetzen, falls Fehler
-            row.classList.remove("abgesagt");
-            btn.disabled = false;
-            btn.textContent = "🚫";
-            datumCell.textContent = datumCell.textContent.replace(/^\u0336+|\u0336+$/g, "");
             alert("Absage konnte nicht gespeichert werden!");
         });
     }

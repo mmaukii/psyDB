@@ -221,8 +221,21 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 const localStart = utcToLocalTime(st.datum, st.utc_starttime);
                 const localEnd = utcToLocalTime(st.datum, st.utc_endtime);
 
-                // Buttons nur anzeigen, wenn keine Termine mit dieser gruppentermin_id existieren
+                // Buttons je nach Status anzeigen
                 const hatTermine = alleTermine.some(t => t.gruppentermin_id === st.id);
+                let buttons = "";
+                if (st.entfallen) {
+                    buttons = `<button class="restoreBtnTermineProGruppe table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️</button>`;
+                } else {
+                    if (!hatTermine) {
+                        buttons += `<button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>`;
+                    }
+                    buttons += `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
+                    if (!hatTermine) {
+                        buttons += `<button class="absageBtnGruppe table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>`;
+                        buttons += `<button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
+                    }
+                }
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</td>
@@ -230,14 +243,10 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                     <td align="center">${utcToLocalTime(st.datum, st.utc_endtime)}</td>
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
-                    <td>
-                        ${!hatTermine ? `<button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>` : ""}
-                        <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
-                        ${!hatTermine ? `<button class="absageBtnGruppe table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>` : ""}
-                        ${!hatTermine ? `<button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>` : ""}
-                    </td>
+                    <td>${buttons}</td>
                 </tr>
-            `}).join("");
+            `;
+            }).join("");
 
             // Event Listener für Toggle direkt nach Einfügen
             // Click-Events nur für nicht-disabled Tags
@@ -351,6 +360,52 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
         }
     }
 
+    // 📅↩️ RESTORE (Termin wiederherstellen)
+    if (e.target.classList.contains("restoreBtnTermineProGruppe")) {
+        const id = e.target.dataset.id;
+        const row = e.target.closest("tr");
+        // Toggle-Status merken
+        const showAbgesagte = toggleAbgesagtBtn.dataset.show;
+        // UI sofort
+        row.classList.remove("abgesagt");
+        row.style.display = "";
+        e.target.disabled = true;
+        //e.target.textContent = "Wiederhergestellt";
+        // Datum ggf. durchgestrichen entfernen
+        const datumCell = row.cells[0];
+        if (datumCell && datumCell.querySelector("s")) {
+            datumCell.innerHTML = datumCell.querySelector("s").textContent;
+        }
+        // Backend-Update
+        try {
+            const res = await fetch(`/api/gruppentermine/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ entfallen: null })
+            });
+            if (!res.ok) throw new Error("Fehler beim Wiederherstellen");
+            // Tabelle neu laden und Toggle-Status wiederherstellen
+            await reloadGruppentermineAnwesenheit(document.getElementById("gruppenForm_id").value);
+            // Toggle-Status zurücksetzen
+            toggleAbgesagtBtn.dataset.show = showAbgesagte;
+            toggleAbgesagtBtn.textContent = showAbgesagte === "true"
+                ? "Abgesagte ausblenden"
+                : "Abgesagte anzeigen";
+            // Zeilenanzeige entsprechend Toggle
+            const rows = document.querySelectorAll("#termineProGruppeListe tr.abgesagt");
+            rows.forEach(r => {
+                r.style.display = showAbgesagte === "true" ? "" : "none";
+            });
+            const rows1 = document.querySelectorAll("#termineProGruppeAnwesenheitsListe tr.abgesagt");
+            rows1.forEach(r => {
+                r.style.display = showAbgesagte === "true" ? "" : "none";
+            });
+        } catch (err) {
+            console.error(err);
+            alert("Fehler beim Wiederherstellen des Termins!");
+        }
+    }
+
     // 🛠️ BEARBEITEN
     if (e.target.classList.contains("editBtnTermineProGruppe")) {
         const id = e.target.dataset.id;
@@ -389,18 +444,6 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
         let dokuText = prompt("Optional: Doku-Eintrag zur Absage hinzufügen (leer lassen für keinen Eintrag):", "");
         if (dokuText === null) return; // Abbruch
 
-        // --- UI sofort ---
-        row.classList.add("abgesagt");
-        btn.disabled = true;
-        btn.textContent = "Abgesagt";
-
-        const datumCell = row.cells[0];
-        datumCell.innerHTML = `<s>${datumCell.textContent}</s>`;
-
-        if (toggleAbgesagtBtn.dataset.show === "false") {
-            row.style.display = "none";
-        }
-
         // --- Fetch im Hintergrund ---
         fetch(`/api/gruppentermine/${stundeId}`, {
             method: "PUT",
@@ -411,14 +454,12 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
             if (!res.ok) throw new Error("Fehler beim Absagen");
             return res.text();
         })
-        .then(result => console.log("Server bestätigt Absage:", result))
+        .then(result => {
+            // Nach erfolgreicher Absage Tabelle neu laden, damit die Button-Logik korrekt ist
+            reloadGruppentermineAnwesenheit(document.getElementById("gruppenForm_id").value);
+        })
         .catch(err => {
             console.error(err);
-            // Optional: UI zurücksetzen, falls Fehler
-            row.classList.remove("abgesagt");
-            btn.disabled = false;
-            btn.textContent = "🚫";
-            datumCell.textContent = datumCell.textContent.replace(/^\u0336+|\u0336+$/g, "");
             alert("Absage konnte nicht gespeichert werden!");
         });
     }
