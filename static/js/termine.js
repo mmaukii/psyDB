@@ -36,6 +36,20 @@ async function ladeTermine() {
             return abgesagt ? `<s style=\"color:gray;\">${val}</s>` : val;
         }
 
+        // Button-Logik: Wenn abgesagt, nur Delete und Wiederherstellen anzeigen
+        let buttonHtml = "";
+        if (abgesagt) {
+            buttonHtml = `
+                <button class=\"deleteBtn table-btn\" data-id=\"${st.id}\" title=\"Datensatz löschen\">🗑️</button>
+                <button class=\"restoreBtn table-btn\" data-id=\"${st.id}\" title=\"Wiederherstellen\">📅↩️</button>
+            `;
+        } else {
+            buttonHtml = `
+                <button class=\"editBtn table-btn\" data-id=\"${st.id}\" title=\"Datensatz editieren\">🛠️</button>
+                <button class=\"deleteBtn table-btn\" data-id=\"${st.id}\" title=\"Datensatz löschen\">🗑️</button>
+            `;
+        }
+
         return `
         <tr data-termine-id="${st.id}">
             <td>${abgesagt ? `<s style=\"color:gray;\"><input type=\"checkbox\" class=\"selectRow\" data-termine-id=\"${st.id}\"></s>` : `<input type=\"checkbox\" class=\"selectRow\" data-termine-id=\"${st.id}\">`}</td>
@@ -49,8 +63,7 @@ async function ladeTermine() {
             <td>${sWrap(st.gruppenkuerzel)}</td>
             <td align="right">${sWrap(betragFormatted)}&nbsp;€</td>
             <td>
-                <button class="editBtn table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
-                <button class="deleteBtn table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
+                ${buttonHtml}
             </td> 
             <td hidden>${st.abgesagt}</td> 
             <td hidden>${st.ust}</td> 
@@ -76,23 +89,57 @@ function utcToLocalTime(dateStr, utcTime) {
 
 //offene Termine Eventlistener für Lösch-Buttons (Event Delegation)
 offeneTermineTabelle.addEventListener("click", async (e) => {
-    if (e.target.classList.contains("deleteBtn")) {
-    const id = e.target.dataset.id;
-    if (!confirm("Soll dieser Eintrag wirklich gelöscht werden?")) return;
 
-    try {
-        const res = await fetch(`api/termine/${id}`, { method: "DELETE" });
-        if (res.ok) {
-            e.target.closest("tr").remove();
-            console.log(`🗑️ Termin ${id} gelöscht`);
-        } else {
-            alert("Fehler beim Löschen!");
+    if (e.target.classList.contains("deleteBtn")) {
+        const id = e.target.dataset.id;
+        if (!confirm("Soll dieser Eintrag wirklich gelöscht werden?")) return;
+
+        try {
+            const res = await fetch(`api/termine/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                e.target.closest("tr").remove();
+                console.log(`🗑️ Termin ${id} gelöscht`);
+            } else {
+                alert("Fehler beim Löschen!");
+            }
+        } catch (err) {
+            console.error("Fehler:", err);
+            alert("Verbindung fehlgeschlagen.");
         }
-    } catch (err) {
-        console.error("Fehler:", err);
-        alert("Verbindung fehlgeschlagen.");
     }
-}
+
+    // Wiederherstellungsbutton (restoreBtn)
+    if (e.target.classList.contains("restoreBtn")) {
+        const id = e.target.dataset.id;
+        if (!confirm("Soll dieser Termin wiederhergestellt werden?")) return;
+        const row = e.target.closest("tr");
+        // UI sofort anpassen: Zeile nicht mehr durchgestrichen/grau, Buttons wechseln
+        if (row) {
+            // Ersetze Zeile durch Lade-Spinner oder entferne Durchstreichung
+            row.style.opacity = "0.5";
+        }
+        // Fetch im Hintergrund
+        try {
+            const res = await fetch(`/api/termine/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ abgesagt: 0, push_termin: 1 })
+            });
+            if (res.ok) {
+                // Zeile sofort entfernen (optional) oder Tabelle neu laden
+                if (row) row.style.opacity = "";
+                ladeTermine();
+                console.log(`↩️ Termin ${id} wiederhergestellt`);
+            } else {
+                if (row) row.style.opacity = "";
+                alert("Fehler beim Wiederherstellen!");
+            }
+        } catch (err) {
+            if (row) row.style.opacity = "";
+            console.error("Fehler:", err);
+            alert("Verbindung fehlgeschlagen.");
+        }
+    }
 
     //ändern Buttone gedrückt
     if (e.target.classList.contains("editBtn")) {
