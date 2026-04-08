@@ -60,15 +60,17 @@
   <!-- RECHTE SEITE -->
     <div id="rightDoku" style="grid-column: 1 / -1;">
       <!-- PDF-Export-Button für Kunden, wird per JS sichtbar gemacht -->
-      <button id="doku-pdf-export-html-btn" style="display:none; margin-bottom:16px;" class="table-btn">Doku als PDF exportieren</button>
-      <details style="margin-bottom: 10px;">
-        <summary style="cursor: pointer; font-size: 0.9em; color: #555;">Hinweis zur Dokumentation</summary>
-        <div style="font-size: 0.9em; background: #f5f5f5; border: 1px solid #ddd; color: #555; padding: 10px 12px; border-radius: 6px; margin-top: 8px;">
-          Hier werden die Dokumentationen angezeigt. Wähle links einen Kunden oder eine Gruppe aus, um die zugehörige Dokumentation zu sehen.
-          <br> Neue Dokumentation kann direkt bei Stunden der Kunden oder Gruppen hinzugefügt werden. Allgemeine Dokumentation kann über die Schaltfläche "Neue Dokumentation" in der oberen rechten Ecke erstellt werden.
-          <br> Allgemeine und persönliche Dokumentation werden durch *** getrennt. Alles vor den drei Sternen ist die allgemeine Dokumentation, alles nach den drei Sternen ist die persönliche Dokumentation.
-        </div>
-      </details>
+      <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 10px;">
+        <button id="doku-pdf-export-html-btn" style="display:none; margin-bottom:0;" class="button">Pdf exportieren</button>
+        <details>
+          <summary style="cursor: pointer; font-size: 0.9em; color: #555;">Hinweis zur Dokumentation</summary>
+          <div style="font-size: 0.9em; background: #f5f5f5; border: 1px solid #ddd; color: #555; padding: 10px 12px; border-radius: 6px; margin-top: 8px;">
+            Hier werden die Dokumentationen angezeigt. Wähle links einen Kunden oder eine Gruppe aus, um die zugehörige Dokumentation zu sehen.
+            <br> Neue Dokumentation kann direkt bei Stunden der Kunden oder Gruppen hinzugefügt werden. Allgemeine Dokumentation kann über die Schaltfläche "Neue Dokumentation" in der oberen rechten Ecke erstellt werden.
+            <br> Allgemeine und persönliche Dokumentation werden durch *** getrennt. Alles vor den drei Sternen ist die allgemeine Dokumentation, alles nach den drei Sternen ist die persönliche Dokumentation.
+          </div>
+        </details>
+      </div>
       <div class="tab-content active"  id="dokuListe"></div>
     </div>
 
