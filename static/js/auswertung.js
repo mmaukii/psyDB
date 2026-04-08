@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function loadRechnungsTabelle(jahr) {
-            fetch('/api/rechnungen')
+            fetch('/api/rechnungen/mit-kunde')
                 .then(res => res.json())
                 .then(data => {
                     // Nach Jahr filtern
@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function renderRechnungsTabelle(data, jahr) {
             // Daten sind bereits nach Jahr gefiltert
+            console.log("renderRechnungsTabelle", data);
             let html = `<h3>Rechnungen für ${jahr}</h3>`;
             html += `<table class="auswertung-table"><thead><tr>` +
                 `<th>Rechnungsnr</th><th>Datum</th><th>Kürzel</th><th>Zahlungsverweis</th><th>Offener Betrag</th><th>Bezahlter Betrag</th>` +
