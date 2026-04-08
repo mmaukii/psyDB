@@ -226,6 +226,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 let buttons = "";
                 if (st.entfallen) {
                     buttons = `<button class="restoreBtnTermineProGruppe table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️</button>`;
+                    buttons += `<button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
                 } else {
                     if (!hatTermine) {
                         buttons += `<button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>`;
