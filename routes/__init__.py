@@ -13,3 +13,4 @@ from .programmvariablen_routes import programmvariablen_bp
 from .dashboard_routes import dashboard_bp
 from .druckvorlagen_routes import druckvorlagen_bp
 from .doku_routes import doku_bp
+from .leistungen_routes import leistungen_bp

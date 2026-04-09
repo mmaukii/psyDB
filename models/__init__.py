@@ -10,3 +10,4 @@ from .gruppen import Gruppe
 from .mahnungen import Mahnung
 from .programmvariablen import Programmvariable
 from .druckvorlagen import Druckvorlage
+from .leistungen import Leistung
