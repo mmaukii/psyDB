@@ -7,7 +7,7 @@ async function ladeTherapieformenKunden() {
         const res = await fetch("/api/leistungen");
         if (!res.ok) throw new Error("Fehler beim Laden der Leistungen");
         const leistungen = await res.json();
-        leistungen.forEach(l => {
+        leistungen.filter(l => !l.gruppe).forEach(l => {
             // value: l.value, text: l.bezeichnung
             const opt = document.createElement("option");
             opt.value = l.value;
@@ -882,7 +882,6 @@ async function reloadKundenTabelle() {
             data-krankenkasse="${k.krankenkasse || ''}"
             data-diagnose="${k.diagnose || ''}" >  
             <td>${k.kuerzel}</td>
-            <td>${k.dauer_min || ""}</td>
         </tr>
     `}).join("");
 
@@ -1230,63 +1229,71 @@ async function ladeProgrammvariableNachName(name) {
 document.addEventListener("change", async function (e) {
     if (e.target.id === "therapieform") {
         const stundensatzInput = document.getElementById("stundensatz");
-        if (!stundensatzInput) return;
+        const dauerInput = document.getElementById("dauer_min");
+        if (!stundensatzInput && !dauerInput) return;
 
-        let standardWert = "";
-        if (e.target.value === "1") { // Einzeltherapie
-            standardWert = await ladeProgrammvariableNachName("einzel_betrag");
-        }
-        if (e.target.value === "2") { // Paartherapie
-            standardWert = await ladeProgrammvariableNachName("paar_betrag");
-        }
-        if (e.target.value === "3") { // Familientherapie
-            standardWert = await ladeProgrammvariableNachName("familie_betrag");
-        }
-        if (e.target.value === "4") { // Gruppentherapie
-            standardWert = await ladeProgrammvariableNachName("gruppe_betrag");
-        }
-        if (e.target.value === "5") { // Einzelsupervision
-            standardWert = await ladeProgrammvariableNachName("einzelsupervision_betrag");
-        }
-        if (e.target.value === "6") { // Gruppensupervision
-            standardWert = await ladeProgrammvariableNachName("gruppensupervision_betrag");
-        }
-        if (e.target.value === "7") { // Einzelselbsterfahrung
-            standardWert = await ladeProgrammvariableNachName("einzelselbsterfahrung_betrag");
-        }
-        if (e.target.value === "8") { // Gruppenselbsterfahrung
-            standardWert = await ladeProgrammvariableNachName("gruppenselbsterfahrung_betrag");
-        }
-        if (e.target.value === "9") { // Coaching
-            standardWert = await ladeProgrammvariableNachName("coaching_betrag");
-        }
+        // Hole die Leistungen und suche die passende
+        try {
+            const res = await fetch("/api/leistungen");
+            if (!res.ok) throw new Error("Fehler beim Laden der Leistungen");
+            const leistungen = await res.json();
+            const leistung = leistungen.find(l => String(l.value) === String(e.target.value));
+            if (!leistung) return;
+            const standardWert = leistung.betrag;
+            const standardDauer = leistung.dauer_min;
+            console.log(leistungen)
+            console.log("Standardwert für ausgewählte Therapieform:", standardWert);
+            console.log("Standarddauer für ausgewählte Therapieform:", standardDauer);
 
+            // === Stundensatz ===
+            if (stundensatzInput) {
+                const currentValue = (stundensatzInput.value || "").trim();
+                if (!currentValue) {
+                    stundensatzInput.value = standardWert;
+                } else {
+                    const normalizeNumber = (val) => {
+                        const n = parseFloat(String(val).replace(",", "."));
+                        return Number.isFinite(n) ? n : null;
+                    };
+                    const currentNum = normalizeNumber(currentValue);
+                    const standardNum = normalizeNumber(standardWert);
+                    const isDifferent = (currentNum !== null && standardNum !== null)
+                        ? currentNum !== standardNum
+                        : currentValue !== String(standardWert);
+                    if (isDifferent) {
+                        let therapieText = leistung.bezeichnung || "dieser";
+                        if (confirm(`Der eingegebene Betrag (${currentValue}) weicht vom Standardbetrag für ${therapieText} (${standardWert}) ab. Soll der Standardbetrag übernommen werden?`)) {
+                            stundensatzInput.value = standardWert;
+                        }
+                    }
+                }
+            }
 
-        if (!standardWert) return;
-
-        const currentValue = (stundensatzInput.value || "").trim();
-        if (!currentValue) {
-            stundensatzInput.value = standardWert;
-            return;
-        }
-
-        const normalizeNumber = (val) => {
-            const n = parseFloat(String(val).replace(",", "."));
-            return Number.isFinite(n) ? n : null;
-        };
-
-        const currentNum = normalizeNumber(currentValue);
-        const standardNum = normalizeNumber(standardWert);
-        const isDifferent = (currentNum !== null && standardNum !== null)
-            ? currentNum !== standardNum
-            : currentValue !== String(standardWert);
-
-        if (isDifferent) {
-            let therapieText = "";
-            if (e.target.value === "1") therapieText = "Einzel";
-            else if (e.target.value === "2") therapieText = "Paar";
-            else therapieText = "dieser";
-            showToast(`Hinweis: eingegebener Betrag weicht vom Standardbetrag für ${therapieText}therapie ab`, stundensatzInput, "warn");
+            // === Dauer ===
+            if (dauerInput) {
+                const currentDauer = (dauerInput.value || "").trim();
+                if (!currentDauer) {
+                    dauerInput.value = standardDauer;
+                } else {
+                    const normalizeNumber = (val) => {
+                        const n = parseInt(String(val).replace(/\D/g, ""), 10);
+                        return Number.isFinite(n) ? n : null;
+                    };
+                    const currentNum = normalizeNumber(currentDauer);
+                    const standardNum = normalizeNumber(standardDauer);
+                    const isDifferent = (currentNum !== null && standardNum !== null)
+                        ? currentNum !== standardNum
+                        : currentDauer !== String(standardDauer);
+                    if (isDifferent) {
+                        let therapieText = leistung.bezeichnung || "dieser";
+                        if (confirm(`Die eingegebene Dauer (${currentDauer}) weicht von der Standarddauer für ${therapieText} (${standardDauer}) ab. Soll die Standarddauer übernommen werden?`)) {
+                            dauerInput.value = standardDauer;
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Fehler beim Laden der Leistungen für Standardbetrag und Dauer:", err);
         }
     }
 });

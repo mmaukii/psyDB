@@ -151,16 +151,14 @@
 							<label for="svnr">SVNR:</label>
 							<input type="number" name="svnr" id="svnr">
 						</div>
-						<div class="field" >
-							<label for="krankenkasse">Krankenkasse:</label>
-							<input type="text" name="krankenkasse" id="krankenkasse">
-						</div>
-						<div class="field" style="grid-column: span 1;">
-							<label for="diagnose">Diagnose:</label>
-							<input type="text" name="diagnose" id="diagnose">
-						</div>
 					
-
+					
+					<div class="field"style="grid-column: span 2;">
+					<label for="therapieform">Form:</label>
+					<select name="therapieform" id="therapieform">
+					  <!-- Optionen werden per JS geladen -->
+					</select>
+				</div>
 				<div class="field"style="grid-column: span 2;">
 					<label for="stundensatz">€/Termin:</label>
 					<input type="text" name="stundensatz" id="stundensatz">
@@ -181,16 +179,20 @@
 						   <option value="">-- bitte wählen --</option>
 					   </select>
 				</div>
-				<div class="field"style="grid-column: span 1;">
-					<label for="therapieform">Form:</label>
-					<select name="therapieform" id="therapieform">
-					  <!-- Optionen werden per JS geladen -->
-					</select>
+			
+				<div class="field" >
+					<label for="krankenkasse">Krankenkasse:</label>
+					<input type="text" name="krankenkasse" id="krankenkasse">
+				</div>
+				<div class="field" style="grid-column: span 1;">
+					<label for="diagnose">Diagnose:</label>
+					<input type="text" name="diagnose" id="diagnose">
 				</div>
 				<div class="field" style="display: inline-flex; align-items: center; gap: 6px;">
 					<input type="checkbox" name="ust" id="ust" value="1" style="margin: 0; width: auto;">
 					<label for="ust" style="margin: 0; white-space: nowrap;">USt.</label>
 				</div>
+			
 				<div class="field" style="grid-column: span 6;">
 					<label>Gruppen</label>
 
