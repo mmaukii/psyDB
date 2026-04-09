@@ -392,14 +392,16 @@ function loadLeistungen() {
             data.forEach(l => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td contenteditable="true" data-field="value">${l.value ?? ''}</td>
                     <td contenteditable="true" data-field="bezeichnung">${l.bezeichnung ?? ''}</td>
                     <td contenteditable="true" data-field="dauer_min">${l.dauer_min ?? ''}</td>
                     <td contenteditable="true" data-field="betrag">${l.betrag ?? ''}</td>
+                    <td style="text-align:center;">
+                        <input type="checkbox" class="gruppeCheckbox" data-field="gruppe" ${l.gruppe ? 'checked' : ''}>
+                    </td>
                     <td><button class="deleteLeistungBtn" title="Löschen">🗑️</button></td>
                 `;
                 tbody.appendChild(tr);
-                // Edit handler
+                // Edit handler for text fields
                 tr.querySelectorAll('td[contenteditable="true"]').forEach(td => {
                     td.addEventListener('blur', () => {
                         const field = td.dataset.field;
@@ -417,6 +419,17 @@ function loadLeistungen() {
                         }
                     });
                 });
+                // Edit handler for gruppe checkbox
+                const gruppeCheckbox = tr.querySelector('.gruppeCheckbox');
+                if (gruppeCheckbox) {
+                    gruppeCheckbox.addEventListener('change', () => {
+                        fetch(`/api/leistungen/${l.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ gruppe: gruppeCheckbox.checked ? 1 : 0 })
+                        });
+                    });
+                }
                 // Delete handler
                 tr.querySelector('.deleteLeistungBtn').addEventListener('click', () => {
                     if (confirm('Leistung wirklich löschen?')) {
@@ -432,10 +445,12 @@ document.getElementById('addLeistungBtn').addEventListener('click', () => {
     const tbody = document.querySelector('#leistungenTable tbody');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td contenteditable="true" data-field="value"></td>
         <td contenteditable="true" data-field="bezeichnung"></td>
         <td contenteditable="true" data-field="dauer_min"></td>
         <td contenteditable="true" data-field="betrag"></td>
+        <td style="text-align:center;">
+            <input type="checkbox" class="gruppeCheckbox" data-field="gruppe">
+        </td>
         <td><button class="saveLeistungBtn" title="Speichern">💾</button></td>
     `;
     tbody.appendChild(tr);
@@ -443,6 +458,9 @@ document.getElementById('addLeistungBtn').addEventListener('click', () => {
         const cells = tr.querySelectorAll('td[contenteditable="true"]');
         const newData = {};
         cells.forEach(td => newData[td.dataset.field] = td.textContent);
+        // Gruppe-Checkbox Wert hinzufügen
+        const gruppeCheckbox = tr.querySelector('.gruppeCheckbox');
+        newData.gruppe = gruppeCheckbox && gruppeCheckbox.checked ? 1 : 0;
         fetch('/api/leistungen', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

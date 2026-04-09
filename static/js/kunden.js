@@ -1,3 +1,30 @@
+// === LEISTUNGEN/THERAPIEFORMEN DYNAMISCH LADEN ===
+async function ladeTherapieformenKunden() {
+    const select = document.getElementById("therapieform");
+    if (!select) return;
+    select.innerHTML = '<option value="">– bitte wählen –</option>';
+    try {
+        const res = await fetch("/api/leistungen");
+        if (!res.ok) throw new Error("Fehler beim Laden der Leistungen");
+        const leistungen = await res.json();
+        leistungen.forEach(l => {
+            // value: l.value, text: l.bezeichnung
+            const opt = document.createElement("option");
+            opt.value = l.value;
+            opt.textContent = l.bezeichnung;
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error("Fehler beim Laden der Leistungen:", err);
+        // Fallback: Option anzeigen
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "(Leistungen nicht ladbar)";
+        select.appendChild(opt);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', ladeTherapieformenKunden);
 let selectedKundeId = localStorage.getItem("selectedKundeId");
 let isInitialLoad = true; //damit neu laden Kunde erkannt wird und dann nicht autoamatisch regeloadet
 

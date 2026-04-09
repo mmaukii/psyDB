@@ -13,18 +13,25 @@ def get_leistungen():
             'value': l.value,
             'bezeichnung': l.bezeichnung,
             'dauer_min': l.dauer_min,
-            'betrag': l.betrag
+            'betrag': l.betrag,
+            'gruppe': l.gruppe
         } for l in leistungen
     ])
 
 @leistungen_bp.route('/leistungen', methods=['POST'])
 def add_leistung():
     data = request.json
+    # Wert automatisch setzen, falls nicht übergeben
+    value = data.get('value')
+    if value is None:
+        max_value = db.session.query(db.func.max(Leistung.value)).scalar()
+        value = (max_value or 0) + 1
     leistung = Leistung(
-        value=data.get('value'),
+        value=value,
         bezeichnung=data.get('bezeichnung'),
         dauer_min=data.get('dauer_min'),
-        betrag=data.get('betrag')
+        betrag=data.get('betrag'),
+        gruppe=data.get('gruppe')
     )
     db.session.add(leistung)
     db.session.commit()
@@ -38,6 +45,7 @@ def update_leistung(id):
     leistung.bezeichnung = data.get('bezeichnung', leistung.bezeichnung)
     leistung.dauer_min = data.get('dauer_min', leistung.dauer_min)
     leistung.betrag = data.get('betrag', leistung.betrag)
+    leistung.gruppe = data.get('gruppe', leistung.gruppe)
     db.session.commit()
     return jsonify({'success': True})
 

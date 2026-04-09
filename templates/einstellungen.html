@@ -18,7 +18,7 @@
 <body>
 <h2 style="margin-bottom: 0;">Standorte</h2>
 <div style="display: flex; align-items: baseline; gap: 10px;">
-	<button id="addStandortBtn">Neuen Standort hinzufügen</button>
+	
 	<span style="font-size: 0.95em; color: #666; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
 </div>
 
@@ -41,11 +41,12 @@
 	</thead>
 	<tbody></tbody>
 </table>
+<button id="addStandortBtn">Neuen Standort hinzufügen</button>
 <br><br><br>
 
 <h2 style="margin-bottom: 0;">Druckvorlagen</h2>
 <div style="display: flex; align-items: baseline; gap: 10px;">
-	<button id="addDruckvorlageBtn">Neue Druckvorlage hinzufügen</button>
+	
 	<span style="font-size: 0.95em; color: #666; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
 </div>
 <table id="druckvorlagenTable">
@@ -59,6 +60,7 @@
 	</thead>
 	<tbody></tbody>
 </table>
+<button id="addDruckvorlageBtn">Neue Druckvorlage hinzufügen</button>
 <br><br><br>
 <h2 style="margin-bottom: 0;">Programmvariablen</h2>
 
@@ -136,21 +138,22 @@
 
 <h2 style="margin-bottom: 0;">Leistungen / Routen</h2>
 <div style="display: flex; align-items: baseline; gap: 10px;">
-	<button id="addLeistungBtn">Neue Leistung hinzufügen</button>
+	
 	<span style="font-size: 0.95em; color: #666; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
 </div>
 <table id="leistungenTable">
 	<thead>
 		 <tr>
-			  <th>Wert</th>
 			  <th>Bezeichnung</th>
 			  <th>Dauer (min)</th>
-			  <th>Betrag</th>
+			  <th>€/Termin</th>
+			  <th>für Gruppen</th>
 			  <th>Aktionen</th>
 		 </tr>
 	</thead>
 	<tbody></tbody>
 </table>
+<button id="addLeistungBtn">Neue Leistung hinzufügen</button>
 
 {% endblock %}
 
