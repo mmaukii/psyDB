@@ -666,7 +666,59 @@ toggleButton.addEventListener("click", () => {
 });
 
 // Initial aktivieren
+
 activateRowEvents();
+
+// === Standardbetrag und Dauer automatisch aus Leistungen übernehmen, wenn Gruppe ===
+const therapieformSelect = document.getElementById("therapieform");
+if (therapieformSelect) {
+    therapieformSelect.addEventListener("change", async function () {
+        const value = this.value;
+        if (!value) return;
+        try {
+            const res = await fetch("/api/leistungen");
+            if (!res.ok) throw new Error("Fehler beim Laden der Leistungen");
+            const leistungen = await res.json();
+            // Nur Leistungen mit gruppe==1
+            const leistung = leistungen.find(l => (String(l.value) === String(value)) && (l.gruppe === 1 || l.gruppe === true || l.gruppe === '1' || l.gruppe === 'true'));
+            if (!leistung) return;
+
+            // === Betrag ===
+            const standardbetragInput = document.getElementById("standardbetrag");
+            if (standardbetragInput) {
+                const currentValue = (standardbetragInput.value || "").trim();
+                const currentNum = parseFloat(currentValue.replace(",", "."));
+                const standardNum = parseFloat(leistung.betrag);
+                if (!currentValue) {
+                    standardbetragInput.value = leistung.betrag;
+                } else if (!isNaN(currentNum) && !isNaN(standardNum) && currentNum !== standardNum) {
+                    let therapieText = leistung.bezeichnung || "diese";
+                    if (confirm(`Der eingegebene Betrag (${currentValue}) weicht vom Standardbetrag für ${therapieText} (${leistung.betrag}) ab. Soll der Standardbetrag übernommen werden?`)) {
+                        standardbetragInput.value = leistung.betrag;
+                    }
+                }
+            }
+
+            // === Dauer ===
+            const dauerInput = document.getElementById("dauer_min");
+            if (dauerInput) {
+                const currentDauer = (dauerInput.value || "").trim();
+                const currentNum = parseInt(currentDauer);
+                const standardNum = parseInt(leistung.dauer_min);
+                if (!currentDauer) {
+                    dauerInput.value = leistung.dauer_min;
+                } else if (!isNaN(currentNum) && !isNaN(standardNum) && currentNum !== standardNum) {
+                    let therapieText = leistung.bezeichnung || "diese";
+                    if (confirm(`Die eingegebene Dauer (${currentDauer}) weicht von der Standarddauer für ${therapieText} (${leistung.dauer_min}) ab. Soll die Standarddauer übernommen werden?`)) {
+                        dauerInput.value = leistung.dauer_min;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Fehler beim Übernehmen der Standardwerte aus Leistungen:", err);
+        }
+    });
+}
 
 
 // Neu-Button
@@ -1091,3 +1143,28 @@ function showToast(text = "Gespeichert!") {
         toast.classList.remove("show");
     }, 2000);
 }
+
+// Dynamische Befüllung des Therapieform-Auswahlfelds aus Leistungen (nur gruppe==1)
+document.addEventListener("DOMContentLoaded", async function() {
+    const select = document.getElementById("therapieform");
+    if (!select) return;
+    try {
+        const res = await fetch("/api/leistungen");
+        if (!res.ok) throw new Error("Fehler beim Laden der Leistungen");
+        const leistungen = await res.json();
+        // Vorher leeren, damit keine Duplikate entstehen
+        select.innerHTML = '<option value="">– bitte wählen –</option>';
+        leistungen.filter(l => l.gruppe === 1 || l.gruppe === true || l.gruppe === '1' || l.gruppe === 'true').forEach(l => {
+            const opt = document.createElement("option");
+            opt.value = l.value;
+            opt.textContent = l.bezeichnung;
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error("Fehler beim Laden der Leistungen für Auswahlfeld:", err);
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "(Leistungen nicht ladbar)";
+        select.appendChild(opt);
+    }
+});
