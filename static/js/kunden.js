@@ -157,6 +157,7 @@ kundentabelle.addEventListener("click", async (e) => {
         kuerzelInput.dataset.original = (row.dataset.kuerzel || "").toLowerCase();
     }
     form.stundensatz.value = row.dataset.stundensatz || "";
+    form.dauer_min.value = row.dataset.dauer_min || "";
     form.standortKuerzel.value = standortId;
     form.druckvorlageId.value = druckvorlageId;
     form.geschlecht.value = row.dataset.geschlecht || "";
@@ -838,6 +839,7 @@ async function reloadKundenTabelle() {
             data-plz="${k.plz}"
             data-ort="${k.ort}"
             data-stundensatz="${stundensatzFormatted}"
+            data-dauer_min="${k.dauer_min || ''}"
             data-kuerzel="${k.kuerzel}"
             data-geschlecht="${k.geschlecht}"
             data-therapieform="${k.therapieform}"
@@ -853,6 +855,7 @@ async function reloadKundenTabelle() {
             data-krankenkasse="${k.krankenkasse || ''}"
             data-diagnose="${k.diagnose || ''}" >  
             <td>${k.kuerzel}</td>
+            <td>${k.dauer_min || ""}</td>
         </tr>
     `}).join("");
 

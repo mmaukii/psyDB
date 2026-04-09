@@ -32,7 +32,8 @@ class Kunde(db.Model):
     aktiv = db.Column(db.Integer, default=1)
     standort_id = db.Column(db.Integer, db.ForeignKey('standorte.id'), nullable=False)
     druckvorlage_id = db.Column(db.Integer, db.ForeignKey('druckvorlagen.id'), nullable=False)
-    
+    dauer_min = db.Column(db.Integer)
+
     # Relationship
     standort = db.relationship("Standort", backref="kunden")
     druckvorlage = db.relationship("Druckvorlage", backref="kunden")

@@ -781,18 +781,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
             else:
                 start = start.astimezone(timezone.utc)
 
-            end = getattr(ve, "dtend", None)
-            end = end.value if end and hasattr(end, "value") else end
-            if end and not hasattr(end, "hour"):
-                end = datetime.combine(end, datetime.min.time())
-            if end:
-                if end.tzinfo is None:
-                    end = end.replace(tzinfo=timezone.utc)
-                else:
-                    end = end.astimezone(timezone.utc)
-            end = end.value if end and hasattr(end, "value") else end
-            if end and not hasattr(end, "hour"):
-                end = datetime.combine(end, datetime.min.time())
+            # end wird für Kunden-Termine ausschließlich über die Dauer aus der Kundentabelle berechnet
+            # (siehe unten)
 
             if summary.lower() in kunden_by_kuerzel_low:
                 kunde = kunden_by_kuerzel_low[summary.lower()]

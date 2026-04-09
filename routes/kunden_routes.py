@@ -33,7 +33,8 @@ def get_all_kunden():
         "aktiv": k.aktiv,
         "svnr": k.svnr,
         "krankenkasse": k.krankenkasse,
-        "diagnose": k.diagnose
+        "diagnose": k.diagnose,
+        "dauer_min": k.dauer_min
     } for k in kunden])
 
 # --- aktive Kunden ---
@@ -62,7 +63,8 @@ def get_aktive_kunden():
         "aktiv": k.aktiv,
         "svnr": k.svnr,
         "krankenkasse": k.krankenkasse,
-        "diagnose": k.diagnose
+        "diagnose": k.diagnose,
+        "dauer_min": k.dauer_min
     } for k in kunden])
 
 # --- inaktive Kunden ---
@@ -91,7 +93,8 @@ def get_inaktive_kunden():
         "aktiv": k.aktiv,
         "svnr": k.svnr,
         "krankenkasse": k.krankenkasse,
-        "diagnose": k.diagnose
+        "diagnose": k.diagnose,
+        "dauer_min": k.dauer_min
     } for k in kunden])
 
 # --- Einzelner Kunde ---
@@ -120,7 +123,8 @@ def get_kunde(id):
         "aktiv": k.aktiv,
         "svnr": k.svnr,
         "krankenkasse": k.krankenkasse,
-        "diagnose": k.diagnose
+        "diagnose": k.diagnose,
+        "dauer_min": k.dauer_min
     })
 
 # --- Kunde anlegen ---
@@ -157,7 +161,8 @@ def add_kunde():
         svnr=data.get("svnr"),
         krankenkasse=data.get("krankenkasse"),
         diagnose=data.get("diagnose"),
-        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        dauer_min=data.get("dauer_min")
     )
 
     db.session.add(k)
@@ -184,7 +189,7 @@ def update_kunde(id):
         "stundensatz","kuerzel","geschlecht","gebdatum","ust",
         "rechnungTextObenVorgabe","rechnungTextUntenVorgabe",
         "doku","standort_id","druckvorlage_id","therapieform","aktiv",
-        "svnr","krankenkasse","diagnose"
+        "svnr","krankenkasse","diagnose","dauer_min"
     ]:
         if field in data:
             setattr(k, field, data[field])
