@@ -133,10 +133,24 @@
 </span>
 
 <!-- Button: Kalender neu schreiben -->
-<div style="margin-top: 05px; margin-bottom: 40px; text-align: left;">
-	<button id="rewriteCalendarBtn">Alle Termine & Gruppentermine in Kalender neu schreiben</button>
-	<span id="rewriteCalendarStatus" style="margin-left: 20px; color: #333;"></span>
+
+<h2 style="margin-bottom: 0;">Leistungen / Routen</h2>
+<div style="display: flex; align-items: baseline; gap: 10px;">
+	<button id="addLeistungBtn">Neue Leistung hinzufügen</button>
+	<span style="font-size: 0.95em; color: #666; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
 </div>
+<table id="leistungenTable">
+	<thead>
+		 <tr>
+			  <th>Wert</th>
+			  <th>Bezeichnung</th>
+			  <th>Dauer (min)</th>
+			  <th>Betrag</th>
+			  <th>Aktionen</th>
+		 </tr>
+	</thead>
+	<tbody></tbody>
+</table>
 
 {% endblock %}
 

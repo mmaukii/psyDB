@@ -381,7 +381,76 @@ document.getElementById("saveStandardtexteBtn").addEventListener("click", () => 
     });
 });
 
-// Button-Handler für Kalender-Neuschreiben
+
+// --- Leistungen (Routen) Tabelle ---
+function loadLeistungen() {
+    fetch('/api/leistungen')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.querySelector('#leistungenTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(l => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td contenteditable="true" data-field="value">${l.value ?? ''}</td>
+                    <td contenteditable="true" data-field="bezeichnung">${l.bezeichnung ?? ''}</td>
+                    <td contenteditable="true" data-field="dauer_min">${l.dauer_min ?? ''}</td>
+                    <td contenteditable="true" data-field="betrag">${l.betrag ?? ''}</td>
+                    <td><button class="deleteLeistungBtn" title="Löschen">🗑️</button></td>
+                `;
+                tbody.appendChild(tr);
+                // Edit handler
+                tr.querySelectorAll('td[contenteditable="true"]').forEach(td => {
+                    td.addEventListener('blur', () => {
+                        const field = td.dataset.field;
+                        const value = td.textContent;
+                        fetch(`/api/leistungen/${l.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ [field]: value })
+                        });
+                    });
+                    td.addEventListener('keydown', ev => {
+                        if (ev.key === 'Enter') {
+                            ev.preventDefault();
+                            td.blur();
+                        }
+                    });
+                });
+                // Delete handler
+                tr.querySelector('.deleteLeistungBtn').addEventListener('click', () => {
+                    if (confirm('Leistung wirklich löschen?')) {
+                        fetch(`/api/leistungen/${l.id}`, { method: 'DELETE' })
+                            .then(() => loadLeistungen());
+                    }
+                });
+            });
+        });
+}
+
+document.getElementById('addLeistungBtn').addEventListener('click', () => {
+    const tbody = document.querySelector('#leistungenTable tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td contenteditable="true" data-field="value"></td>
+        <td contenteditable="true" data-field="bezeichnung"></td>
+        <td contenteditable="true" data-field="dauer_min"></td>
+        <td contenteditable="true" data-field="betrag"></td>
+        <td><button class="saveLeistungBtn" title="Speichern">💾</button></td>
+    `;
+    tbody.appendChild(tr);
+    tr.querySelector('.saveLeistungBtn').addEventListener('click', () => {
+        const cells = tr.querySelectorAll('td[contenteditable="true"]');
+        const newData = {};
+        cells.forEach(td => newData[td.dataset.field] = td.textContent);
+        fetch('/api/leistungen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newData)
+        }).then(() => loadLeistungen());
+    });
+});
+
 document.addEventListener('DOMContentLoaded', function() {
 	const btn = document.getElementById('rewriteCalendarBtn');
 	const status = document.getElementById('rewriteCalendarStatus');
@@ -406,4 +475,5 @@ document.addEventListener('DOMContentLoaded', function() {
 				});
 		});
 	}
+    loadLeistungen();
 });
