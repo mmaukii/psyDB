@@ -773,33 +773,59 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
             # Neues Online-Event mit gültigem Kürzel → minimal in DB anlegen
             #print(f"Neues Event UID={uid}, Summary='{summary}'")
             start = ve.dtstart.value
+            print("ve" + str(ve))
             if not hasattr(start, "hour"):
                 start = datetime.combine(start, datetime.min.time())
             # Stelle sicher, dass start ein UTC-Datetime ist
+            print("Start vor TZ-Anpassung: " + str(start) + ", tzinfo: " + str(start.tzinfo))   
             if start.tzinfo is None:
                 start = start.replace(tzinfo=timezone.utc)
             else:
+                print("timezone anpassen von " + str(start) + " zu UTC")
                 start = start.astimezone(timezone.utc)
+                print("angepasste Zeit: " + str(start))
 
             # end wird für Kunden-Termine ausschließlich über die Dauer aus der Kundentabelle berechnet
             # (siehe unten)
 
             if summary.lower() in kunden_by_kuerzel_low:
                 kunde = kunden_by_kuerzel_low[summary.lower()]
-                dauer_min = einzel_min if kunde.therapieform == 1 else paar_min if kunde.therapieform == 2 else 50
-                beschreibung = "Einzeltherapie á " + str(einzel_min) + " min" if kunde.therapieform == 1 else "Paartherapie á " + str(paar_min) + " min" if kunde.therapieform == 2 else summary
+                # Dauer individuell vom Kunden, sonst Standard
+                dauer_min = getattr(kunde, "dauer_min", None)
+                if not dauer_min:
+                    dauer_min = ""
+
+                # Therapieform/Bezeichnung aus Leistung holen
+                leistung_bezeichnung = None
+                try:
+                    from models import Leistung
+                    if hasattr(kunde, "therapieform") and kunde.therapieform:
+                        leistung = Leistung.query.get(kunde.therapieform)
+                        if leistung:
+                            leistung_bezeichnung = leistung.bezeichnung
+        
+                except Exception as e:
+                    log_msg(f"⚠ Fehler beim Laden der Leistung: {e}")
+
+                if leistung_bezeichnung:
+                    beschreibung = f"{leistung_bezeichnung} á {dauer_min} min"
+                else:
+                    beschreibung = f"Leistung á {dauer_min} min"
                 end = start + timedelta(minutes=dauer_min)
+                print("termin" +start.time().strftime("%H:%M"))
                 neu = Termin(
                     kunde_id=kunde.id,
                     datum=start.date().isoformat(),
                     utc_starttime=start.time().strftime("%H:%M"),
-                    utc_endtime=end.time().strftime("%H:%M") if end else None,
+                    utc_endtime=end.time().strftime("%H:%M"),
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(kunde.stundensatz) if kunde.stundensatz is not None else 0,
                     timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     caldav_uid=uid,
-                    caldav_etag=etag
+                    caldav_etag=etag,
+                    therapieform=getattr(kunde, "therapieform", None),
+                    ust=getattr(kunde, "ust", None)
                 )
                 db.session.add(neu)
                 db.session.commit()
@@ -833,7 +859,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                     betrag=float(gruppe.standardbetrag) if gruppe.standardbetrag is not None else 0,
                     timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     caldav_uid=uid,
-                    caldav_etag=etag
+                    caldav_etag=etag,
+                    therapieform=getattr(gruppe, "therapieform", None)
                 )
                 db.session.add(neu)
                 db.session.commit()
@@ -856,11 +883,11 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
 
         # Datum & Uhrzeit
         start = ve.dtstart.value
-        end = getattr(ve, "dtend", None)
-        if end is not None:
-            end = end.value if hasattr(end, "value") else end
-            if not hasattr(end, "hour"):
-                end = datetime.combine(end, datetime.min.time())
+        end = ve.dtend.value
+        print(f"Original Start: {start}, End: {end}")
+     
+        if not hasattr(end, "hour"):
+            end = datetime.combine(end, datetime.min.time())
         if not hasattr(start, "hour"):
             start = datetime.combine(start, datetime.min.time())
 
@@ -872,7 +899,9 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
         try:
             #log_msg(f"[DEBUG] Werte vor Assignment: start={start}, end={end}, summary={summary}, ve={ve}")
             new_datum = start.date().isoformat()
+            start = start.astimezone(timezone.utc)
             new_startzeit = start.time().strftime("%H:%M")
+            end = end.astimezone(timezone.utc)
             new_endzeit = end.time().strftime("%H:%M") if end else None
             #new_beschreibung = summary
             #new_kommentar = str(getattr(ve.description, "value", "")) if hasattr(ve, "description") else ""
