@@ -242,9 +242,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         calendar.refetchEvents();
         calendarInitialized = true;
         sessionStorage.setItem("kalenderInitialized", "1");
+        // Toast-Element nicht entfernen, sondern nur ausblenden
         document.querySelectorAll('.toast').forEach(toast => {
-            toast.remove(); // entfernt das Element
-            // oder toast.style.display = 'none'; // nur unsichtbar machen
+            toast.classList.remove('show');
+            toast.style.display = '';
         });
     }
 

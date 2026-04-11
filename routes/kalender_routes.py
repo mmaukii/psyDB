@@ -319,46 +319,21 @@ def kalender_extern():
                 except Exception as rrule_error:
                     print(f"⚠ Fehler beim Expandieren der RRULE: {rrule_error}")
                     # Fallback: als Einzeltermin hinzufügen
-                    # Start/Ende in UTC umwandeln
-                    if dtstart.tzinfo is None:
-                        dtstart_utc = dtstart.replace(tzinfo=UTC)
-                    else:
-                        dtstart_utc = dtstart.astimezone(UTC)
-                    if dtend:
-                        if dtend.tzinfo is None:
-                            dtend_utc = dtend.replace(tzinfo=UTC)
-                        else:
-                            dtend_utc = dtend.astimezone(UTC)
-                    else:
-                        dtend_utc = None
-
+                   
                     kalender_events.append({
                         "uid": uid,
                         "title": title,
-                        "start": dtstart_utc.isoformat(),
-                        "end": dtend_utc.isoformat() if dtend_utc else None,
+                        "start": dtstart.isoformat(),
+                        "end": dtend.isoformat() if dtend else None,
                         "calendar": cal_name
                     })
             else:
                 # Einzeltermin
-                # Start/Ende in UTC umwandeln
-                if dtstart.tzinfo is None:
-                    dtstart_utc = dtstart.replace(tzinfo=timezone.utc)
-                else:
-                    dtstart_utc = dtstart.astimezone(timezone.utc)
-                if dtend:
-                    if dtend.tzinfo is None:
-                        dtend_utc = dtend.replace(tzinfo=timezone.utc)
-                    else:
-                        dtend_utc = dtend.astimezone(timezone.utc)
-                else:
-                    dtend_utc = None
-
                 kalender_events.append({
                     "uid": uid,
                     "title": title,
-                    "start": dtstart_utc.isoformat(),
-                    "end": dtend_utc.isoformat() if dtend_utc else None,
+                    "start": dtstart.isoformat(),
+                    "end": dtend.isoformat() if dtend else None,
                     "calendar": cal_name
                 })
 
@@ -447,30 +422,29 @@ def push_termin(termin: dict, delete_from_db=False):
 
         # Wenn nicht abgesagt → normales Push/Update
         dtstart = datetime.fromisoformat(
-            f"{termin['datum']}T{termin.get('startzeit') or '00:00'}"
-        ).replace(tzinfo=timezone.utc)
+            f"{termin['datum']}T{termin.get('startzeit') or '00:00'}")
 
         dtend = datetime.fromisoformat(
-            f"{termin['datum']}T{termin.get('endzeit') or '00:00'}"
-        ).replace(tzinfo=timezone.utc)
+            f"{termin['datum']}T{termin.get('endzeit') or '00:00'}")
 
         terminkalender_var = Programmvariable.query.filter_by(name='termine_kalender').first()
         terminkalender_name =terminkalender_var.wert
 
         print(f"Push Termin: {title}, Start: {dtstart}, End: {dtend}, UID: {uid}, Kalender: {terminkalender_name}")
         
+        # Lokale Zeit für DTSTART und DTEND verwenden (ohne Zeitzonenangabe)
         vevent = f"""BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//{terminkalender_name}//termine Sync//DE
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
 UID:{uid}
-DTSTAMP:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}
-DTSTART;TZID=UTC:{dtstart.strftime('%Y%m%dT%H%M%S')}
-DTEND;TZID=UTC:{dtend.strftime('%Y%m%dT%H%M%S')}
+DTSTAMP:{datetime.now().strftime('%Y%m%dT%H%M%SZ')}
+DTSTART:{dtstart.strftime('%Y%m%dT%H%M%S')}
+DTEND:{dtend.strftime('%Y%m%dT%H%M%S')}
 SUMMARY:{title}
 DESCRIPTION:{termin.get('beschreibung') or ''}
-LAST-MODIFIED:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}
+LAST-MODIFIED:{datetime.now().strftime('%Y%m%dT%H%M%SZ')}
 END:VEVENT
 END:VCALENDAR
 """
@@ -784,14 +758,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
             print("ve" + str(ve))
             if not hasattr(start, "hour"):
                 start = datetime.combine(start, datetime.min.time())
-            # Stelle sicher, dass start ein UTC-Datetime ist
-            print("Start vor TZ-Anpassung: " + str(start) + ", tzinfo: " + str(start.tzinfo))   
-            if start.tzinfo is None:
-                start = start.replace(tzinfo=timezone.utc)
-            else:
-                print("timezone anpassen von " + str(start) + " zu UTC")
-                start = start.astimezone(timezone.utc)
-                print("angepasste Zeit: " + str(start))
+           
 
             # end wird für Kunden-Termine ausschließlich über die Dauer aus der Kundentabelle berechnet
             # (siehe unten)
@@ -901,14 +868,12 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
 
         # 🔁 Bestehendes Event aktualisieren (auch wenn ETag fehlt)
         # Debug-Ausgabe: Online-Event vs. DB-Event
-        #log_msg(f"[VERGLEICH] UID={uid}")
-        #log_msg(f"  Online: datum={start.date().isoformat()}, utc_starttime={start.time().strftime('%H:%M')}, utc_endtime={(end.time().strftime('%H:%M') if end else None)}, beschreibung={summary}, kommentar={str(getattr(ve, 'description', '')) if hasattr(ve, 'description') else ''}")
-        #log_msg(f"  DB: datum={termin.datum}, utc_starttime={termin.utc_starttime}, utc_endtime={termin.utc_endtime}, beschreibung={termin.beschreibung}, kommentar={termin.kommentar}")
+        #
         try:
             #log_msg(f"[DEBUG] Werte vor Assignment: start={start}, end={end}, summary={summary}, ve={ve}")
             online_datum = online_start.date().isoformat()
-            online_start = online_start.astimezone(timezone.utc).time().strftime("%H:%M")
-            online_end = online_end.astimezone(timezone.utc).time().strftime("%H:%M")
+            online_start = online_start.time().strftime("%H:%M")
+            online_end = online_end.time().strftime("%H:%M")
             #new_beschreibung = summary
             #new_kommentar = str(getattr(ve.description, "value", "")) if hasattr(ve, "description") else ""
             
