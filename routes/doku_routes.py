@@ -18,8 +18,8 @@ def export_dokus_kunde_pdf(kunde_id):
         {
             "dokuId": t.id,
             "datum": t.datum,
-            "utc_starttime": t.utc_starttime,
-            "utc_endtime": t.utc_endtime,
+            "startzeit": t.startzeit,
+            "endzeit": t.endzeit,
             "beschreibung": t.beschreibung,
             "doku": t.doku,
             "pers_doku": t.pers_doku,
@@ -39,8 +39,8 @@ def export_dokus_kunde_pdf(kunde_id):
                 gruppen_dokus.append({
                     "dokuId": g.id,
                     "datum": g.datum,
-                    "utc_starttime": g.utc_starttime,
-                    "utc_endtime": g.utc_endtime,
+                    "startzeit": g.startzeit,
+                    "endzeit": g.endzeit,
                     "beschreibung": g.beschreibung,
                     "doku": g.doku,
                     "pers_doku": g.pers_doku,

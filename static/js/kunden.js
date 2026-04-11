@@ -243,8 +243,8 @@ async function reloadTermineFuerKunde(kundeId) {
                 ));
                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
-            const localStart = utcToLocalTime(st.datum, st.utc_starttime);
-            const localEnd = utcToLocalTime(st.datum, st.utc_endtime);
+            const localStart = st.startzeit;
+            const localEnd = st.endzeit;
 
             // Buttons: je nach Status
             let buttons = "";
@@ -467,8 +467,8 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
             stundensatz: stunde.betrag || "",
             beschreibung: stunde.beschreibung || "",
             datum: stunde.datum || "",
-            utc_starttime: stunde.utc_starttime || "",
-            utc_endtime: stunde.utc_endtime || "",
+            startzeit: stunde.startzeit || "",
+            endzeit: stunde.endzeit || "",
             stundeId: stunde.id || "",
             kundeId: id || "",
             therapieform: stunde.therapieform || "",
@@ -997,8 +997,11 @@ neuTerminBtn.addEventListener("click", async () => {
     // Beachte: kunde.therapieform kann als String ("1") oder Zahl (1) kommen
     switch (String(kunde.therapieform)) {
         case "1": {
+            const res = await fetch(`/api/kunden/${id}`);
+            const kunde = await res.json();
             const dauer = await ladeProgrammvariableNachName("einzel_zeit");
             beschreibung = "Einzeltherapie á " + dauer + " min";
+            // Betrag kann jetzt verwendet werden, z.B. für ein Feld: betrag
             break;
         }
         case "2": {
@@ -1069,8 +1072,8 @@ function renderOderUpdateZeile(stunde) {
     const html = `
         <tr data-id="${stunde.id}">
             <td>${stunde.datum || ""}</td>
-            <td>${stunde.utc_starttime || ""}</td>
-            <td>${stunde.utc_endtime || ""}</td>
+            <td>${stunde.startzeit || ""}</td>
+            <td>${stunde.endzeit || ""}</td>
             <td>${stunde.beschreibung || ""}</td>
             <td>${stunde.betrag || ""}</td>
             <td>

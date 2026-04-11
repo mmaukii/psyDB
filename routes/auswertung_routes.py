@@ -77,14 +77,14 @@ def auswertung_jahrestabelle():
                     termine_ids_mit_rechnung.add(tr.termin_id)
         abgehalten = len([t for t in termine if not t.abgesagt and t.id in termine_ids_mit_rechnung])
         abgesagt = len([t for t in termine if t.abgesagt])
-        minuten = sum([calc_min(t.utc_starttime, t.utc_endtime) for t in termine if not t.abgesagt and t.id in termine_ids_mit_rechnung])
+        minuten = sum([calc_min(t.startzeit, t.endzeit) for t in termine if not t.abgesagt and t.id in termine_ids_mit_rechnung])
         # Gruppentermine
         gruppentermine = Gruppentermin.query.filter(extract('year', Gruppentermin.datum) == jahr).all()
         # Nur Gruppentermine, die in mindestens einem Termin als gruppentermin_id referenziert werden
         gruppentermin_ids_in_termine = set([t.gruppentermin_id for t in Termin.query.filter(Termin.gruppentermin_id.isnot(None)).all()])
         gruppen_abgehalten = len([g for g in gruppentermine if not g.entfallen and g.id in gruppentermin_ids_in_termine])
         gruppen_abgesagt = len([g for g in gruppentermine if g.entfallen])
-        gruppen_minuten = sum([calc_min(g.utc_starttime, g.utc_endtime) for g in gruppentermine if not g.entfallen and g.id in gruppentermin_ids_in_termine])
+        gruppen_minuten = sum([calc_min(g.startzeit, g.endzeit) for g in gruppentermine if not g.entfallen and g.id in gruppentermin_ids_in_termine])
         result.append({
             'jahr': jahr,
             'einnahmen_gesamt': float(einnahmen_gesamt),
@@ -153,8 +153,8 @@ def auswertung_kunden():
         termine = list(termine)
         abgehalten = len([t for t in termine if not t.abgesagt])
         abgesagt = len([t for t in termine if t.abgesagt])
-        #print("Zeiten Kunde", k.kuerzel, [(t.utc_starttime, t.utc_endtime) for t in termine])
-        minuten = sum([calc_min(t.utc_starttime, t.utc_endtime) for t in termine if not t.abgesagt])
+        #print("Zeiten Kunde", k.kuerzel, [(t.startzeit, t.endzeit) for t in termine])
+        minuten = sum([calc_min(t.startzeit, t.endzeit) for t in termine if not t.abgesagt])
         stunden = minuten / 60
         if einnahmen_gesamt > 0:
             result.append({
@@ -221,7 +221,7 @@ def auswertung_gruppen():
 
         abgehalten = len([gt for gt in gruppentermine if not gt.entfallen])
         abgesagt = len([gt for gt in gruppentermine if gt.entfallen])
-        minuten = sum([calc_min(gt.utc_starttime, gt.utc_endtime) for gt in gruppentermine if not gt.entfallen])
+        minuten = sum([calc_min(gt.startzeit, gt.endzeit) for gt in gruppentermine if not gt.entfallen])
         if einnahmen_gesamt > 0 or abgehalten > 0 or abgesagt > 0:
             result.append({
                 'kuerzel': g.gruppenkuerzel,
@@ -292,7 +292,7 @@ def auswertung_therapieformen():
         )
         if hat_rechnung and not t.abgesagt:
             therapieform_dict[tf]['abgehaltene_termine'] += 1
-            therapieform_dict[tf]['abgehaltene_termine_min'] += calc_min(t.utc_starttime, t.utc_endtime)
+            therapieform_dict[tf]['abgehaltene_termine_min'] += calc_min(t.startzeit, t.endzeit)
             therapieform_dict[tf]['einnahmen_gesamt'] += t.betrag or 0.0
             # USt-pflichtig: jetzt über alle termine_rechnungen prüfen
             ust_anteil = 0.0

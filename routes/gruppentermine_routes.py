@@ -10,13 +10,13 @@ gruppentermine_bp = Blueprint("gruppentermine", __name__)
 # --- Alle Gruppentermine die nicht nur offline gelöscht wurden ---
 @gruppentermine_bp.get("/gruppentermine")
 def get_all_gruppentermine():
-    gs_list = Gruppentermin.query.filter(Gruppentermin.nur_offline_geloescht == 0).order_by(Gruppentermin.datum, Gruppentermin.utc_starttime).all()
+    gs_list = Gruppentermin.query.filter(Gruppentermin.nur_offline_geloescht == 0).order_by(Gruppentermin.datum, Gruppentermin.startzeit).all()
     return jsonify([{
         "id": gs.id,
         "gruppe_id": gs.gruppe_id,
         "datum": gs.datum,
-        "utc_starttime": gs.utc_starttime,
-        "utc_endtime": gs.utc_endtime,
+        "startzeit": gs.startzeit,
+        "endzeit": gs.endzeit,
         "beschreibung": gs.beschreibung,
         "kommentar": gs.kommentar,
         "betrag": gs.betrag,
@@ -33,7 +33,7 @@ def get_all_gruppentermine():
 def get_termine_fuer_gruppe(gruppe_id):
     termine = Gruppentermin.query.filter_by(gruppe_id=gruppe_id)\
         .filter(Gruppentermin.nur_offline_geloescht == 0)\
-        .order_by(Gruppentermin.datum, Gruppentermin.utc_starttime)\
+        .order_by(Gruppentermin.datum, Gruppentermin.startzeit)\
         .all()
 
     return jsonify([{

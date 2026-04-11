@@ -67,8 +67,8 @@ def dashboard():
     mahnungen = overdue_mahnungen[:10]
     
     # 3. Termine heute und morgen
-    termine_heute = Termin.query.filter(Termin.datum == today.isoformat(), (Termin.abgesagt == None) | (Termin.abgesagt == "") ).order_by(Termin.utc_starttime).all()
-    termine_morgen = Termin.query.filter(Termin.datum == tomorrow.isoformat(), (Termin.abgesagt == None) | (Termin.abgesagt == "") ).order_by(Termin.utc_starttime).all()
+    termine_heute = Termin.query.filter(Termin.datum == today.isoformat(), (Termin.abgesagt == None) | (Termin.abgesagt == "") ).order_by(Termin.startzeit).all()
+    termine_morgen = Termin.query.filter(Termin.datum == tomorrow.isoformat(), (Termin.abgesagt == None) | (Termin.abgesagt == "") ).order_by(Termin.startzeit).all()
     
     # 4. Prüfung Rechnungsnummern durchgängig
     all_rechnungen = Rechnung.query.order_by(Rechnung.rechnungsnr).all()
@@ -83,7 +83,7 @@ def dashboard():
     
     # 5. Überschneidende Termine
     overlapping_termine = []
-    all_termine = Termin.query.filter(Termin.datum >= today.isoformat()).order_by(Termin.datum, Termin.utc_starttime).all()
+    all_termine = Termin.query.filter(Termin.datum >= today.isoformat()).order_by(Termin.datum, Termin.startzeit).all()
     grouped_by_date = {}
     for t in all_termine:
         if t.datum not in grouped_by_date:
@@ -91,11 +91,11 @@ def dashboard():
         grouped_by_date[t.datum].append(t)
     
     for datum, termine in grouped_by_date.items():
-        termine.sort(key=lambda x: time_to_minutes(x.utc_starttime))
+        termine.sort(key=lambda x: time_to_minutes(x.startzeit))
         for i in range(len(termine) - 1):
             current = termine[i]
             next_t = termine[i+1]
-            if time_to_minutes(current.utc_endtime) > time_to_minutes(next_t.utc_starttime):
+            if time_to_minutes(current.endzeit) > time_to_minutes(next_t.startzeit):
                 overlapping_termine.append((current, next_t))
     
     # Letzte Kalender-Synchronisierung
