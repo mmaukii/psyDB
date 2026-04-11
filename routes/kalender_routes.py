@@ -484,8 +484,16 @@ END:VCALENDAR
             try:
                 if is_gruppe:
                     db_changestamp = db.session.execute(text(f"SELECT changestamp FROM gruppentermine WHERE id=:id"), {"id": id}).scalar()
+                    if not db_changestamp:
+                        db_changestamp = db.session.execute(text(f"SELECT timestamp FROM gruppentermine WHERE id=:id"), {"id": id}).scalar()
+                       
                 else:
                     db_changestamp = db.session.execute(text(f"SELECT changestamp FROM termine WHERE id=:id"), {"id": id}).scalar()
+                    if not db_changestamp:
+                        db_changestamp = db.session.execute(text(f"SELECT timestamp FROM termine WHERE id=:id"), {"id": id}).scalar()
+                       
+            
+            
             except Exception as e:
                 print(f"⚠ Fehler beim Lesen des DB-changestamp: {e}")
             try:
@@ -832,7 +840,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                 db_uids[uid] = neu
                 log_msg(f"✅ Neuer Einzeltermin übernommen: UID={uid}")
                 # Nach dem Anlegen: Kürzel online und Kunde case-sensitiv abgleichen
-                if summary != kunde.kuerzel:
+                if summary == kunde.kuerzel:
                     push_termin({
                         "termin_id": neu.id,
                         "kuerzel": kunde.kuerzel,
@@ -882,14 +890,14 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
             continue
 
         # Datum & Uhrzeit
-        start = ve.dtstart.value
-        end = ve.dtend.value
-        print(f"Original Start: {start}, End: {end}")
+        online_start = ve.dtstart.value
+        online_end = ve.dtend.value
+        print(f"Original Start: {online_start}, End: {online_end}")
      
-        if not hasattr(end, "hour"):
-            end = datetime.combine(end, datetime.min.time())
-        if not hasattr(start, "hour"):
-            start = datetime.combine(start, datetime.min.time())
+        if not hasattr(online_end, "hour"):
+            online_end = datetime.combine(online_end, datetime.min.time())
+        if not hasattr(online_start, "hour"):
+            online_start = datetime.combine(online_start, datetime.min.time())
 
         # 🔁 Bestehendes Event aktualisieren (auch wenn ETag fehlt)
         # Debug-Ausgabe: Online-Event vs. DB-Event
@@ -898,11 +906,9 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
         #log_msg(f"  DB: datum={termin.datum}, utc_starttime={termin.utc_starttime}, utc_endtime={termin.utc_endtime}, beschreibung={termin.beschreibung}, kommentar={termin.kommentar}")
         try:
             #log_msg(f"[DEBUG] Werte vor Assignment: start={start}, end={end}, summary={summary}, ve={ve}")
-            new_datum = start.date().isoformat()
-            start = start.astimezone(timezone.utc)
-            new_startzeit = start.time().strftime("%H:%M")
-            end = end.astimezone(timezone.utc)
-            new_endzeit = end.time().strftime("%H:%M") if end else None
+            online_datum = online_start.date().isoformat()
+            online_start = online_start.astimezone(timezone.utc).time().strftime("%H:%M")
+            online_end = online_end.astimezone(timezone.utc).time().strftime("%H:%M")
             #new_beschreibung = summary
             #new_kommentar = str(getattr(ve.description, "value", "")) if hasattr(ve, "description") else ""
             
@@ -913,18 +919,18 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
        
 
         fields_changed = (
-            termin.datum != new_datum
-            or termin.utc_starttime != new_startzeit
-            or termin.utc_endtime != new_endzeit
+            termin.datum != online_datum
+            or termin.utc_starttime != online_start
+            or termin.utc_endtime != online_end
             #or termin.beschreibung != new_beschreibung
             #or (termin.kommentar or "") != new_kommentar
         )
         
         #log_msg(f"etag_changed: {etag_changed}, fields_changed: {fields_changed}, etag in DB: {termin.caldav_etag}, etag online: {etag}")   
         if etag_changed or fields_changed or not etag:
-            termin.datum = new_datum
-            termin.utc_starttime = new_startzeit
-            termin.utc_endtime = new_endzeit
+            termin.datum = online_datum
+            termin.utc_starttime = online_start
+            termin.utc_endtime = online_end
             #termin.beschreibung = new_beschreibung
             #termin.kommentar = new_kommentar
             termin.caldav_etag = etag or termin.caldav_etag
