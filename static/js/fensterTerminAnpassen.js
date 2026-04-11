@@ -50,8 +50,8 @@ window.openfensterTerminAnpassen = async function ({
     stundensatz = "",
     beschreibung = "",
     datum = "",
-    utc_starttime = "",
-    utc_endtime = "",
+    startzeit = "",
+    endzeit = "",
     therapieform = "",
     ust = "0"
 }) {
@@ -69,29 +69,17 @@ window.openfensterTerminAnpassen = async function ({
     }
     document.getElementById("datum").value = datum;
 
-    // --- Zeitfelder: UTC aus DB -> lokale Zeit für Anzeige ---
-     function utcToLocalTime(dateStr, utcTime) {
-        if (!dateStr || !utcTime) return "";
-        const [h, m, s] = utcTime.split(":");
-        const date = new Date(Date.UTC(
-            parseInt(dateStr.slice(0, 4)),
-            parseInt(dateStr.slice(5, 7)) - 1,
-            parseInt(dateStr.slice(8, 10)),
-            h, m, s || 0
-        ));
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
 
-    if (utc_starttime === "") {
+    if (startzeit === "") {
         // ⏰ Startzeit: aktuelle Stunde abgerundet
         const jetzt = new Date();
-        document.getElementById("utc_starttime").value = `${String(jetzt.getHours()).padStart(2, "0")}:00`;
+        document.getElementById("startzeit").value = `${String(jetzt.getHours()).padStart(2, "0")}:00`;
     } else {
-        document.getElementById("utc_starttime").value = utcToLocalTime(datum, utc_starttime);
+        document.getElementById("startzeit").value = startzeit;
     }
 
-    if (utc_endtime !== "") {
-        document.getElementById("utc_endtime").value = utcToLocalTime(datum, utc_endtime);
+    if (endzeit !== "") {
+        document.getElementById("endzeit").value = endzeit;
     } else {
         berechneEndzeit(); // Automatische Berechnung
     }
@@ -156,7 +144,7 @@ window.openfensterTerminAnpassen = async function ({
     
     // 🕐 Listener für automatische Endzeit-Berechnung (nur einmal setzen)
     if (!endzeitListenerInitialized) {
-        const startzeitInput = document.getElementById("utc_starttime");
+        const startzeitInput = document.getElementById("startzeit");
         const beschreibungInput = document.getElementById("beschreibung");
         
         if (startzeitInput) {
@@ -201,13 +189,13 @@ window.closefenstertermineanpassen = function () {
 
 // ⏱️ Endzeit automatisch berechnen
 function berechneEndzeit() {
-    const startzeitInput = document.getElementById("utc_starttime");
-    const endzeitInput = document.getElementById("utc_endtime");
+    const startzeitInput = document.getElementById("startzeit");
+    const endzeitInput = document.getElementById("endzeit");
     const beschreibungInput = document.getElementById("beschreibung");
     
     if (!startzeitInput || !endzeitInput || !startzeitInput.value) return;
     
-    const utc_starttime = startzeitInput.value;
+    const startzeit = startzeitInput.value;
     const beschreibung = beschreibungInput?.value || "";
     
     let dauerMinuten = 50; // Default Einzeltherapie
@@ -224,7 +212,7 @@ function berechneEndzeit() {
         }
     }
     
-    const [stunden, minuten] = utc_starttime.split(":").map(Number);
+    const [stunden, minuten] = startzeit.split(":").map(Number);
     const ende = new Date();
     ende.setHours(stunden);
     ende.setMinutes(minuten + dauerMinuten);
@@ -448,23 +436,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = Object.fromEntries(formData);
 
         // Zeitfelder: lokale Zeit -> UTC für Speicherung
-        function localInputTimeToUTCStr(dateStr,localTime ) {
-            if (!localTime || !dateStr) return "";
-            // localTime: "HH:MM" oder "HH:MM:SS"
-            const [h, m, s] = localTime.split(":");
-            // Datum als YYYY-MM-DD
-            const year = parseInt(dateStr.slice(0, 4));
-            const month = parseInt(dateStr.slice(5, 7)) - 1;
-            const day = parseInt(dateStr.slice(8, 10));
-            // Erzeuge lokale Zeit mit Datum
-            const localDate = new Date(year, month, day, h, m, s || 0);
-            // UTC-Anteile extrahieren
-            const utcH = String(localDate.getUTCHours()).padStart(2, "0");
-            const utcM = String(localDate.getUTCMinutes()).padStart(2, "0");
-            return `${utcH}:${utcM}`;
-        }
-        data.utc_starttime = localInputTimeToUTCStr(data.datum,data.utc_starttime );
-        data.utc_endtime = localInputTimeToUTCStr(data.datum,data.utc_endtime);
+ 
+        data.startzeit = data.startzeit ;
+        data.endzeit = data.endzeit;
         data.ust = document.getElementById("terminUst").checked ? 1 : 0;
         if (data.kunde_id==""){
             delete data.kunde_id;       
@@ -490,8 +464,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const neuerTermin = { ...data };
                 neuerTermin.datum = terminDatum.toISOString().split("T")[0];
                 // UTC-Zeiten für das jeweilige Datum berechnen
-                neuerTermin.utc_starttime = localInputTimeToUTCStr(neuerTermin.datum, data.utc_starttime);
-                neuerTermin.utc_endtime = localInputTimeToUTCStr(neuerTermin.datum, data.utc_endtime);
+                neuerTermin.startzeit = localInputTimeToUTCStr(neuerTermin.datum, data.startzeit);
+                neuerTermin.endzeit = localInputTimeToUTCStr(neuerTermin.datum, data.endzeit);
                 
                 termineDaten.push(neuerTermin);
             }

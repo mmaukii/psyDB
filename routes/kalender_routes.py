@@ -59,8 +59,8 @@ def sync_offline_termine_und_gruppentermine():
             push_termin({
                 "termin_id": t.id,
                 "datum": t.datum,
-                "utc_starttime": t.utc_starttime,
-                "utc_endtime": t.utc_endtime,
+                "startzeit": t.startzeit,
+                "endzeit": t.endzeit,
                 "beschreibung": t.beschreibung,
                 "kommentar": t.kommentar,
                 "abgesagt": t.abgesagt,
@@ -78,8 +78,8 @@ def sync_offline_termine_und_gruppentermine():
             push_termin({
                 "gruppentermin_id": g.id,
                 "datum": g.datum,
-                "utc_starttime": g.utc_starttime,
-                "utc_endtime": g.utc_endtime,
+                "startzeit": g.startzeit,
+                "endzeit": g.endzeit,
                 "beschreibung": g.beschreibung,
                 "kommentar": g.kommentar,
                 "caldav_uid": g.caldav_uid,
@@ -111,8 +111,8 @@ def force_rewrite_all_termine():
             push_termin({
                 "termin_id": t.id,
                 "datum": t.datum,
-                "utc_starttime": t.utc_starttime,
-                "utc_endtime": t.utc_endtime,
+                "startzeit": t.startzeit,
+                "endzeit": t.endzeit,
                 "beschreibung": t.beschreibung,
                 "kommentar": t.kommentar,
                 "abgesagt": t.abgesagt,
@@ -129,8 +129,8 @@ def force_rewrite_all_termine():
             push_termin({
                 "gruppentermin_id": g.id,
                 "datum": g.datum,
-                "utc_starttime": g.utc_starttime,
-                "utc_endtime": g.utc_endtime,
+                "startzeit": g.startzeit,
+                "endzeit": g.endzeit,
                 "beschreibung": g.beschreibung,
                 "kommentar": g.kommentar,
                 "caldav_uid": "",  # Erzwinge Neuanlage im Kalender
@@ -153,8 +153,8 @@ def get_kalender_termine_anzuzueigen():
         db.session.query(
             Termin.id,
             Termin.datum,
-            Termin.utc_starttime,
-            Termin.utc_endtime,
+            Termin.startzeit,
+            Termin.endzeit,
             Termin.betrag,
             Termin.beschreibung,
             Termin.kunde_id,
@@ -172,8 +172,8 @@ def get_kalender_termine_anzuzueigen():
         db.session.query(
             Gruppentermin.id,
             Gruppentermin.datum,
-            Gruppentermin.utc_starttime,
-            Gruppentermin.utc_endtime,
+            Gruppentermin.startzeit,
+            Gruppentermin.endzeit,
             Gruppentermin.betrag,
             Gruppentermin.beschreibung,
             Gruppentermin.gruppe_id,
@@ -190,8 +190,8 @@ def get_kalender_termine_anzuzueigen():
         {
             "id": r.id,
             "datum": r.datum,
-            "utc_starttime": r.utc_starttime,
-            "utc_endtime": r.utc_endtime,
+            "startzeit": r.startzeit,
+            "endzeit": r.endzeit,
             "betrag": r.betrag,
             "kunde_id": getattr(r, "kunde_id", None),
             "kunde_kuerzel": getattr(r, "kunde_kuerzel", None),
@@ -447,11 +447,11 @@ def push_termin(termin: dict, delete_from_db=False):
 
         # Wenn nicht abgesagt → normales Push/Update
         dtstart = datetime.fromisoformat(
-            f"{termin['datum']}T{termin.get('utc_starttime') or '00:00'}"
+            f"{termin['datum']}T{termin.get('startzeit') or '00:00'}"
         ).replace(tzinfo=timezone.utc)
 
         dtend = datetime.fromisoformat(
-            f"{termin['datum']}T{termin.get('utc_endtime') or '00:00'}"
+            f"{termin['datum']}T{termin.get('endzeit') or '00:00'}"
         ).replace(tzinfo=timezone.utc)
 
         terminkalender_var = Programmvariable.query.filter_by(name='termine_kalender').first()
@@ -565,7 +565,7 @@ END:VCALENDAR
                             if len(dt) >= 15:
                                 new_endzeit = f"{dt[9:11]}:{dt[11:13]}"
                     db.session.execute(
-                        text(f"UPDATE {table} SET datum=:datum, utc_starttime=:start, utc_endtime=:end, caldav_etag=:etag WHERE id=:id"),
+                        text(f"UPDATE {table} SET datum=:datum, startzeit=:start, endzeit=:end, caldav_etag=:etag WHERE id=:id"),
                         {"datum": new_datum, "start": new_startzeit, "end": new_endzeit, "etag": get_event_etag(event), "id": id}
                     )
                     db.session.commit()
@@ -824,8 +824,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                 neu = Termin(
                     kunde_id=kunde.id,
                     datum=start.date().isoformat(),
-                    utc_starttime=start.time().strftime("%H:%M"),
-                    utc_endtime=end.time().strftime("%H:%M"),
+                    startzeit=start.time().strftime("%H:%M"),
+                    endzeit=end.time().strftime("%H:%M"),
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(kunde.stundensatz) if kunde.stundensatz is not None else 0,
@@ -845,8 +845,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                         "termin_id": neu.id,
                         "kuerzel": kunde.kuerzel,
                         "datum": neu.datum,
-                        "utc_starttime": neu.utc_starttime,
-                        "utc_endtime": neu.utc_endtime,
+                        "startzeit": neu.startzeit,
+                        "endzeit": neu.endzeit,
                         "beschreibung": neu.beschreibung,
                         "caldav_uid": neu.caldav_uid,
                         "caldav_etag": neu.caldav_etag,
@@ -860,8 +860,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                 neu = Gruppentermin(
                     gruppe_id=gruppe.id,
                     datum=start.date().isoformat(),
-                    utc_starttime=start.time().strftime("%H:%M"),
-                    utc_endtime=end.time().strftime("%H:%M") if end else None,
+                    startzeit=start.time().strftime("%H:%M"),
+                    endzeit=end.time().strftime("%H:%M") if end else None,
                     beschreibung=beschreibung,
                     kommentar="",
                     betrag=float(gruppe.standardbetrag) if gruppe.standardbetrag is not None else 0,
@@ -880,8 +880,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                         "gruppentermin_id": neu.id,
                         "kuerzel": gruppe.gruppenkuerzel,
                         "datum": neu.datum,
-                        "utc_starttime": neu.utc_starttime,
-                        "utc_endtime": neu.utc_endtime,
+                        "startzeit": neu.startzeit,
+                        "endzeit": neu.endzeit,
                         "beschreibung": neu.beschreibung,
                         "caldav_uid": neu.caldav_uid,
                         "caldav_etag": neu.caldav_etag,
@@ -920,8 +920,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
 
         fields_changed = (
             termin.datum != online_datum
-            or termin.utc_starttime != online_start
-            or termin.utc_endtime != online_end
+            or termin.startzeit != online_start
+            or termin.endzeit != online_end
             #or termin.beschreibung != new_beschreibung
             #or (termin.kommentar or "") != new_kommentar
         )
@@ -929,8 +929,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
         #log_msg(f"etag_changed: {etag_changed}, fields_changed: {fields_changed}, etag in DB: {termin.caldav_etag}, etag online: {etag}")   
         if etag_changed or fields_changed or not etag:
             termin.datum = online_datum
-            termin.utc_starttime = online_start
-            termin.utc_endtime = online_end
+            termin.startzeit = online_start
+            termin.endzeit = online_end
             #termin.beschreibung = new_beschreibung
             #termin.kommentar = new_kommentar
             termin.caldav_etag = etag or termin.caldav_etag

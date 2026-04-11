@@ -17,7 +17,7 @@
 {% for d in alle_dokus %}
   <div class="doku-block">
     <div class="doku-header">
-      {{ d.datum }} {% if d.utc_starttime %}{{ d.utc_starttime }} – {{ d.utc_endtime }}{% endif %} {{ d.anzeigeName }}
+      {{ d.datum }} {% if d.startzeit %}{{ d.startzeit }} – {{ d.endzeit }}{% endif %} {{ d.anzeigeName }}
       {% if d.beschreibung %}, {{ d.beschreibung }}{% endif %}
       {% if d.abgesagt %} – abgesagt{% endif %}
       {% if d.entfallen %} – entfallen{% endif %}

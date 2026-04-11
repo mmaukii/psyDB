@@ -133,8 +133,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 stundensatz: selectedEvent.extendedProps?.betrag || "",
                 beschreibung: selectedEvent.extendedProps?.beschreibung || "",
                 datum: selectedEvent.startStr.split("T")[0],
-                utc_starttime: toUtcTimeString(selectedEvent.start),
-                utc_endtime: toUtcTimeString(selectedEvent.end),
+                startzeit: toUtcTimeString(selectedEvent.start),
+                endzeit: toUtcTimeString(selectedEvent.end),
                 stundeId: selectedEvent.id || "",
                 kundeId: selectedEvent.extendedProps?.kunde_id || "",
                 gruppeId: selectedEvent.extendedProps?.gruppe_id || ""
@@ -176,8 +176,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     stundensatz:  "",
                     beschreibung: "",
                     datum: info.dateStr,
-                    utc_starttime: aktuelleStunde,
-                    utc_endtime: ""
+                    startzeit: aktuelleStunde,
+                    endzeit: ""
                 });
             }
 
@@ -266,8 +266,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     datum: event.startStr.split("T")[0],
-                    utc_starttime: toUtcTimeString(event.start),
-                    utc_endtime: toUtcTimeString(event.end),
+                    startzeit: toUtcTimeString(event.start),
+                    endzeit: toUtcTimeString(event.end),
                     beschreibung: event.summary,
                     betrag: event.extendedProps?.betrag ?? null,
                     push_termin : 1, //um Kalender zu aktualisieren
@@ -287,8 +287,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     datum: event.startStr.split("T")[0],
-                    utc_starttime: toUtcTimeString(event.start),
-                    utc_endtime: toUtcTimeString(event.end),
+                    startzeit: toUtcTimeString(event.start),
+                    endzeit: toUtcTimeString(event.end),
                     beschreibung: event.title,
                     betrag: event.extendedProps?.betrag ?? null,
                     push_termin: 1 // Damit der Push an CalDAV erfolgt
@@ -333,8 +333,8 @@ async function loadLocalEvents() {
         return {
             id: s.id,
             title: s.gruppe_id ? `👥 ${s.gruppen_kuerzel || "Gruppe"}` : (s.kunde_kuerzel || "–"),
-            start: utcToLocalTime(s.datum, s.utc_starttime),
-            end: utcToLocalTime(s.datum, s.utc_endtime),
+            start: utcToLocalTime(s.datum, s.startzeit),
+            end: utcToLocalTime(s.datum, s.endzeit),
             backgroundColor: s.gruppe_id ? "#4f46e5" : "#16a34a",
             borderColor: s.gruppe_id ? "#4338ca" : "#15803d",
             textColor: "#ffffff",

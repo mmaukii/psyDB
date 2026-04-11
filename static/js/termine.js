@@ -27,9 +27,7 @@ async function ladeTermine() {
 
         const abgesagt = st.abgesagt && st.abgesagt !== "null" && st.abgesagt !== "0";
 
-        // Zeitumwandlung UTC → Lokalzeit
-        const startLocal = utcToLocalTime(st.datum, st.utc_starttime);
-        const endLocal = utcToLocalTime(st.datum, st.utc_endtime);
+      
 
         // Wenn abgesagt, alles durchstreichen
         function sWrap(val) {
@@ -57,8 +55,8 @@ async function ladeTermine() {
             <td>${sWrap(st.vorname)}</td>
             <td>${sWrap(st.nachname)}</td>
             <td>${sWrap(st.kuerzel)}</td>
-            <td align="center">${sWrap(startLocal)}</td>
-            <td align="center">${sWrap(endLocal)}</td>
+            <td align="center">${sWrap(st.startzeit)}</td>
+            <td align="center">${sWrap(st.endzeit)}</td>
             <td>${sWrap(st.beschreibung)}</td>
             <td>${sWrap(st.gruppenkuerzel)}</td>
             <td align="right">${sWrap(betragFormatted)}&nbsp;€</td>
@@ -72,18 +70,7 @@ async function ladeTermine() {
         `;
     }).join("");
     filterTabelle(); // Tabelle nach dem Laden filtern
-// Funktion zur Umwandlung von UTC-Zeit in Lokalzeit
-function utcToLocalTime(dateStr, utcTime) {
-    if (!dateStr || !utcTime) return "";
-    const [h, m, s] = utcTime.split(":");
-    const date = new Date(Date.UTC(
-        parseInt(dateStr.slice(0, 4)),
-        parseInt(dateStr.slice(5, 7)) - 1,
-        parseInt(dateStr.slice(8, 10)),
-        h, m, s || 0
-    ));
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+
 }
 
 
@@ -155,8 +142,8 @@ offeneTermineTabelle.addEventListener("click", async (e) => {
                 stundensatz: stunde.betrag || "",
                 beschreibung: stunde.beschreibung || "",
                 datum: stunde.datum || "",
-                utc_starttime: stunde.utc_starttime || "",
-                utc_endtime: stunde.utc_endtime || "",
+                startzeit: stunde.startzeit || "",
+                endzeit: stunde.endzeit || "",
                 stundeId: stunde.id || "",
                 kundeId: stunde.kunde_id || ""
             });

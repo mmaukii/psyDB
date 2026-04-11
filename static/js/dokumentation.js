@@ -204,8 +204,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
         beschreibung: s.beschreibung,
         pers_doku: s.pers_doku,
         datum: s.datum,
-        utc_starttime: s.utc_starttime,
-        utc_endtime: s.utc_endtime,
+        startzeit: s.startzeit,
+        endzeit: s.endzeit,
         anzeigeName: `${kunde.vorname} ${kunde.nachname}`,
         type: "kunde",
         abgesagt: s.abgesagt || false
@@ -234,8 +234,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
           beschreibung: s.beschreibung,
           pers_doku: s.pers_doku,
           datum: s.datum,
-          utc_starttime: s.utc_starttime,
-          utc_endtime: s.utc_endtime,
+          startzeit: s.startzeit,
+          endzeit: s.endzeit,
           anzeigeName: gruppe.gruppenname,
           type: "gruppe",
           abgesagt: s.abgesagt || false,
@@ -258,17 +258,7 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
     // 5️⃣ Rendern
     console.log("Alle Dokus:", dokuListe);
 
-     function utcToLocalTime(dateStr, utcTime) {
-          if (!dateStr || !utcTime) return "";
-          const [h, m, s] = utcTime.split(":");
-          const date = new Date(Date.UTC(
-              parseInt(dateStr.slice(0, 4)),
-              parseInt(dateStr.slice(5, 7)) - 1,
-              parseInt(dateStr.slice(8, 10)),
-              h, m, s || 0
-          ));
-          return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
+ 
 
     
 
@@ -279,7 +269,7 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
     dokuListe.innerHTML = alleDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">
       <div class="doku-header">
-          <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
+          <div class="doku-datum">${formatDatum(d.datum)} ${d.startzeit ? `${d.startzeit} – ${d.endzeit}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
           <button class="doku-edit-btn table-btn" data-id="${d.dokuId}" title="Datensatz editieren">🛠️</button>
       </div>
       <div class="doku-text">
@@ -334,8 +324,8 @@ async function ladeDokusFuerGruppe(gruppeId) {
         doku: s.doku,
         pers_doku: s.pers_doku,
         datum: s.datum,
-        utc_starttime: s.utc_starttime,
-        utc_endtime: s.utc_endtime,
+        startzeit: s.startzeit,
+        endzeit: s.endzeit,
         beschreibung: s.beschreibung,
         entfallen: s.entfallen || false,
         anzeigeName: gruppe.gruppenname,
@@ -349,22 +339,12 @@ async function ladeDokusFuerGruppe(gruppeId) {
       dokuListe.innerHTML = "<p>Keine Dokumentation vorhanden.</p>";
       return;
     }
-    function utcToLocalTime(dateStr, utcTime) {
-          if (!dateStr || !utcTime) return "";
-          const [h, m, s] = utcTime.split(":");
-          const date = new Date(Date.UTC(
-              parseInt(dateStr.slice(0, 4)),
-              parseInt(dateStr.slice(5, 7)) - 1,
-              parseInt(dateStr.slice(8, 10)),
-              h, m, s || 0
-          ));
-          return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }
+ 
 
     dokuListe.innerHTML = alleDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">
         <div class="doku-header">
-          <div class="doku-datum">${formatDatum(d.datum)} ${d.utc_starttime ? `${utcToLocalTime(d.datum, d.utc_starttime)} – ${utcToLocalTime(d.datum, d.utc_endtime)}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
+          <div class="doku-datum">${formatDatum(d.datum)} ${d.startzeit ? `${d.startzeit} – ${d.endzeit}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
           <button class="doku-edit-btn table-btn" data-id="${d.dokuId}">🛠️</button>
         </div>
         <div class="doku-text">

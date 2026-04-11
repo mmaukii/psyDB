@@ -163,8 +163,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 const kundenMitRechnung = kundenMitRechnungMap[st.id] || new Set();
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}"
-                    data-utc_starttime="${utcToLocalTime(st.datum, st.utc_starttime)}" 
-                    data-utc_endtime="${utcToLocalTime(st.datum, st.utc_endtime)}" 
+                    data-startzeit="${utcToLocalTime(st.datum, st.startzeit)}" 
+                    data-endzeit="${utcToLocalTime(st.datum, st.endzeit)}" 
                     data-betrag="${st.betrag}">
                     <th align="center">${datumDeutsch}</td>
                     <td>${st.beschreibung}</td>
@@ -218,8 +218,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 }
 
-                const localStart = utcToLocalTime(st.datum, st.utc_starttime);
-                const localEnd = utcToLocalTime(st.datum, st.utc_endtime);
+                const localStart = utcToLocalTime(st.datum, st.startzeit);
+                const localEnd = utcToLocalTime(st.datum, st.endzeit);
 
                 // Buttons je nach Status anzeigen
                 const hatTermine = alleTermine.some(t => t.gruppentermin_id === st.id);
@@ -240,8 +240,8 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 return `
                 <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</td>
-                    <td align="center">${utcToLocalTime(st.datum, st.utc_starttime)}</td>
-                    <td align="center">${utcToLocalTime(st.datum, st.utc_endtime)}</td>
+                    <td align="center">${utcToLocalTime(st.datum, st.startzeit)}</td>
+                    <td align="center">${utcToLocalTime(st.datum, st.endzeit)}</td>
                     <td>${st.beschreibung}</td>
                     <td align="right">${betragFormatted} €</td>
                     <td>${buttons}</td>
@@ -422,8 +422,8 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
                 stundensatz: stunde.betrag || "",
                 beschreibung: stunde.beschreibung || "",
                 datum: stunde.datum || "",
-                utc_starttime: stunde.utc_starttime || "",
-                utc_endtime: stunde.utc_endtime || "",
+                startzeit: stunde.startzeit || "",
+                endzeit: stunde.endzeit || "",
                 stundeId: stunde.id || "",
                 gruppeId: stunde.gruppe_id || "",
                 therapieform: stunde.therapieform || "",
@@ -536,7 +536,7 @@ async function aktualisiereTermin(button, termineId, datum) {
     const selectedDivs = tr.querySelectorAll(".anwesenheit-tag.selected");
     const selectedIds = Array.from(selectedDivs).map(div => div.dataset.kundenId);
 
-    const { utc_starttime, utc_endtime } = tr.dataset;
+    const { startzeit, endzeit } = tr.dataset;
 
     try {
         // 1️⃣ vorhandene Termine laden
@@ -588,8 +588,8 @@ async function aktualisiereTermin(button, termineId, datum) {
                 console.log("POST /api/termine/", {
                     kundeId,
                     datum,
-                    utc_starttime,
-                    utc_endtime,
+                    startzeit,
+                    endzeit,
                     betrag
                 });
 
@@ -598,8 +598,8 @@ async function aktualisiereTermin(button, termineId, datum) {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         datum,
-                        utc_starttime,
-                        utc_endtime,
+                        startzeit,
+                        endzeit,
                         betrag,
                         gruppentermin_id: termineId,
                         therapieform,

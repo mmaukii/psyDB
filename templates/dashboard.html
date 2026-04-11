@@ -21,7 +21,7 @@
             {% if termine_heute %}
                 <ul>
                     {% for t in termine_heute %}
-                        <li>{{ t.utc_starttime }} - {{ t.utc_endtime }}:  {{ t.kunde.kuerzel }}</li>
+                        <li>{{ t.startzeit }} - {{ t.endzeit }}:  {{ t.kunde.kuerzel }}</li>
                     {% endfor %}
                 </ul>
             {% else %}
@@ -35,7 +35,7 @@
             {% if termine_morgen %}
                 <ul>
                     {% for t in termine_morgen %}
-                        <li>{{ t.utc_starttime }} - {{ t.utc_endtime }}: {{ t.kunde.kuerzel }}</li>
+                        <li>{{ t.startzeit }} - {{ t.endzeit }}: {{ t.kunde.kuerzel }}</li>
                     {% endfor %}
                 </ul>
             {% else %}
@@ -49,7 +49,7 @@
             {% if overlapping_termine %}
                 <ul>
                     {% for current, next_t in overlapping_termine %}
-                        <li>{{ current.datum[8:10] }}.{{ current.datum[5:7] }}.{{ current.datum[0:4] }}: {{ current.utc_starttime }}-{{ current.utc_endtime }} {{ current.kunde.kuerzel }} überschneidet mit {{ next_t.utc_starttime }}-{{ next_t.utc_endtime }} {{ next_t.kunde.kuerzel }}</li>
+                        <li>{{ current.datum[8:10] }}.{{ current.datum[5:7] }}.{{ current.datum[0:4] }}: {{ current.startzeit }}-{{ current.endzeit }} {{ current.kunde.kuerzel }} überschneidet mit {{ next_t.startzeit }}-{{ next_t.endzeit }} {{ next_t.kunde.kuerzel }}</li>
                     {% endfor %}
                 </ul>
             {% else %}

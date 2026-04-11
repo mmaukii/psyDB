@@ -147,15 +147,15 @@ def generate_mahnung_pdf(mahnung_id):
         db.session.query(Termin)
         .join(TermineRechnung, TermineRechnung.termin_id == Termin.id)
         .filter(TermineRechnung.rechnung_id == rechnung.id)
-        .order_by(Termin.datum.desc(), Termin.utc_starttime)
+        .order_by(Termin.datum.desc(), Termin.startzeit)
         .all()
     )
     termine_json = [{
         "termine_id": s.id,
         "kunde_id": s.kunde_id,
         "datum": s.datum,
-        "utc_starttime": s.utc_starttime,
-        "utc_endtime": s.utc_endtime,
+        "startzeit": s.startzeit,
+        "endzeit": s.endzeit,
         "beschreibung": s.beschreibung,
         "kommentar": s.kommentar,
         "betrag": s.betrag
