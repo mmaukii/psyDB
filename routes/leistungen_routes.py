@@ -18,6 +18,20 @@ def get_leistungen():
         } for l in leistungen
     ])
 
+
+# Neue Route: Einzelne Leistung per ID abfragen
+@leistungen_bp.route('/leistungen/<int:id>', methods=['GET'])
+def get_leistung_by_id(id):
+    leistung = Leistung.query.get_or_404(id)
+    return jsonify({
+        'id': leistung.id,
+        'value': leistung.value,
+        'bezeichnung': leistung.bezeichnung,
+        'dauer_min': leistung.dauer_min,
+        'betrag': leistung.betrag,
+        'gruppe': leistung.gruppe
+    })
+
 @leistungen_bp.route('/leistungen', methods=['POST'])
 def add_leistung():
     data = request.json

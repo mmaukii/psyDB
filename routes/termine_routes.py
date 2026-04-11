@@ -15,13 +15,13 @@ termine_bp = Blueprint("termine", __name__)
 # --- Alle Termine die nicht nur offline gelöscht wurden ---
 @termine_bp.get("/termine")
 def get_all_termine():
-    termine = Termin.query.filter(Termin.nur_offline_geloescht == 0).order_by(Termin.datum.desc(), Termin.utc_starttime).all()
+    termine = Termin.query.filter(Termin.nur_offline_geloescht == 0).order_by(Termin.datum.desc(), Termin.startzeit).all()
     return jsonify([{
         "id": s.id,
         "kunde_id": s.kunde_id,
         "datum": s.datum,
-        "utc_starttime": s.utc_starttime,
-        "utc_endtime": s.utc_endtime,
+        "startzeit": s.startzeit,
+        "endzeit": s.endzeit,
         "beschreibung": s.beschreibung,
         "kommentar": s.kommentar,
         "betrag": s.betrag,
@@ -38,13 +38,13 @@ def get_all_termine():
 # --- Alle Termine die  nur offline gelöscht wurden ---
 @termine_bp.get("/termine_nur_offline_geloescht")
 def get_all_termine_nur_offline_geloescht():
-    termine = Termin.query.filter(Termin.nur_offline_geloescht == 1).order_by(Termin.datum.desc(), Termin.utc_starttime).all()
+    termine = Termin.query.filter(Termin.nur_offline_geloescht == 1).order_by(Termin.datum.desc(), Termin.startzeit).all()
     return jsonify([{
         "id": s.id,
         "kunde_id": s.kunde_id,
         "datum": s.datum,
-        "utc_starttime": s.utc_starttime,
-        "utc_endtime": s.utc_endtime,
+        "startzeit": s.startzeit,
+        "endzeit": s.endzeit,
         "beschreibung": s.beschreibung,
         "kommentar": s.kommentar,
         "betrag": s.betrag,
@@ -61,13 +61,13 @@ def get_all_termine_nur_offline_geloescht():
 # --- Termine nach Kunde die nicht nur_offline_geloescht---
 @termine_bp.get("/termine/kunde/<int:kunde_id>")
 def get_termine_by_kunde(kunde_id):
-    termine = Termin.query.filter_by(kunde_id=kunde_id).filter(Termin.nur_offline_geloescht == 0).order_by(Termin.datum.desc(), Termin.utc_starttime).all()
+    termine = Termin.query.filter_by(kunde_id=kunde_id).filter(Termin.nur_offline_geloescht == 0).order_by(Termin.datum.desc(), Termin.startzeit).all()
     return jsonify([{
         "id": s.id,
         "kunde_id": s.kunde_id,
         "datum": s.datum,
-        "utc_starttime": s.utc_starttime,
-        "utc_endtime": s.utc_endtime,
+        "startzeit": s.startzeit,
+        "endzeit": s.endzeit,
         "beschreibung": s.beschreibung,
         "kommentar": s.kommentar,
         "betrag": s.betrag,
@@ -89,8 +89,8 @@ def get_stunde(id):
         "id": s.id,
         "kunde_id": s.kunde_id,
         "datum": s.datum,
-        "utc_starttime": s.utc_starttime,
-        "utc_endtime": s.utc_endtime,
+        "startzeit": s.startzeit,
+        "endzeit": s.endzeit,
         "beschreibung": s.beschreibung,
         "kommentar": s.kommentar,
         "betrag": s.betrag,
@@ -113,8 +113,8 @@ def add_stunde():
     s = Termin(
         kunde_id=data["kunde_id"],
         datum=data["datum"],
-        utc_starttime=data.get("utc_starttime"),
-        utc_endtime=data.get("utc_endtime"),
+        startzeit=data.get("startzeit"),
+        endzeit=data.get("endzeit"),
         beschreibung=data.get("beschreibung"),
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
@@ -139,8 +139,8 @@ def add_stunde_mit_kunde(kunde_id):
     s = Termin(
         kunde_id=kunde_id,
         datum=data["datum"],
-        utc_starttime=data.get("utc_starttime"),
-        utc_endtime=data.get("utc_endtime"),
+        startzeit=data.get("startzeit"),
+        endzeit=data.get("endzeit"),
         beschreibung=data.get("beschreibung"),
         kommentar=data.get("kommentar"),
         betrag=data["betrag"],
@@ -158,8 +158,8 @@ def add_stunde_mit_kunde(kunde_id):
     event = {
         "id": s.id,
         "title": f"{s.kunde.kuerzel}",
-        "start": f"{s.datum}T{s.utc_starttime}",
-        "end": f"{s.datum}T{s.utc_endtime}",
+        "start": f"{s.datum}T{s.startzeit}",
+        "end": f"{s.datum}T{s.endzeit}",
         "beschreibung": s.beschreibung,
         "kommentar": s.kommentar,
         "abgesagt": s.abgesagt,
@@ -170,8 +170,8 @@ def add_stunde_mit_kunde(kunde_id):
         push_termin({
             "termin_id": s.id,
             "datum": s.datum,
-            "utc_starttime": s.utc_starttime,
-            "utc_endtime": s.utc_endtime,
+            "startzeit": s.startzeit,
+            "endzeit": s.endzeit,
             "beschreibung": s.beschreibung,
             "kommentar": s.kommentar,
             "abgesagt": s.abgesagt,
@@ -193,7 +193,7 @@ def update_stunde(id):
     data = request.get_json()
     print(f"Received data for updating Termin ID {id}: {data}")
     for field in [
-        "kunde_id", "datum", "utc_starttime", "utc_endtime",
+        "kunde_id", "datum", "startzeit", "endzeit",
         "beschreibung", "kommentar", "betrag", "caldav_uid", 
         "abgesagt", "timestamp", "changestamp", "gruppentermin_id","doku","pers_doku", "therapieform", "ust"
     ]:
@@ -216,8 +216,8 @@ def update_stunde(id):
         push_termin({
             "termin_id": s.id,
             "datum": s.datum,
-            "utc_starttime": s.utc_starttime,
-            "utc_endtime": s.utc_endtime,
+            "startzeit": s.startzeit,
+            "endzeit": s.endzeit,
             "beschreibung": s.beschreibung,
             "kommentar": s.kommentar,
             "abgesagt": s.abgesagt,
@@ -260,8 +260,8 @@ def get_termine_nicht_in_rechnung_nicht_abgesagt_kunde_aktiv():
         db.session.query(
             Termin.id,
             Termin.datum,
-            Termin.utc_starttime,
-            Termin.utc_endtime,
+            Termin.startzeit,
+            Termin.endzeit,
             Termin.betrag,
             Termin.gruppentermin_id,
             Termin.beschreibung,
@@ -285,7 +285,7 @@ def get_termine_nicht_in_rechnung_nicht_abgesagt_kunde_aktiv():
         .filter(Kunde.aktiv == 1)
         .filter((Termin.abgesagt == 0) | (Termin.abgesagt.is_(None)))
         .filter(TermineRechnung.id.is_(None))
-        .order_by(Termin.datum.desc(), Termin.utc_starttime)
+        .order_by(Termin.datum.desc(), Termin.startzeit)
         .all()
     )
 
@@ -293,8 +293,8 @@ def get_termine_nicht_in_rechnung_nicht_abgesagt_kunde_aktiv():
         {
             "id": r.id,
             "datum": r.datum,
-            "utc_starttime": r.utc_starttime,
-            "utc_endtime": r.utc_endtime,
+            "startzeit": r.startzeit,
+            "endzeit": r.endzeit,
             "betrag": r.betrag,
             "vorname": r.vorname,
             "nachname": r.nachname,
@@ -315,8 +315,8 @@ def get_termine_nicht_in_rechnung_kunde_aktiv():
         db.session.query(
             Termin.id,
             Termin.datum,
-            Termin.utc_starttime,
-            Termin.utc_endtime,
+            Termin.startzeit,
+            Termin.endzeit,
             Termin.betrag,
             Termin.gruppentermin_id,
             Termin.beschreibung,
@@ -341,7 +341,7 @@ def get_termine_nicht_in_rechnung_kunde_aktiv():
 
         .filter(Kunde.aktiv == 1)
         .filter(TermineRechnung.id.is_(None))
-        .order_by(Termin.datum.desc(), Termin.utc_starttime)
+        .order_by(Termin.datum.desc(), Termin.startzeit)
         .all()
     )
 
@@ -349,8 +349,8 @@ def get_termine_nicht_in_rechnung_kunde_aktiv():
         {
             "id": r.id,
             "datum": r.datum,
-            "utc_starttime": r.utc_starttime,
-            "utc_endtime": r.utc_endtime,
+            "startzeit": r.startzeit,
+            "endzeit": r.endzeit,
             "betrag": r.betrag,
             "vorname": r.vorname,
             "nachname": r.nachname,
@@ -373,8 +373,8 @@ def get_termine_nicht_abgesagt_kunde_aktiv():
         db.session.query(
             Termin.id,
             Termin.datum,
-            Termin.utc_starttime,
-            Termin.utc_endtime,
+            Termin.startzeit,
+            Termin.endzeit,
             Termin.betrag,
             Termin.beschreibung,
             Termin.gruppentermin_id,
@@ -390,7 +390,7 @@ def get_termine_nicht_abgesagt_kunde_aktiv():
         )
         .filter(Kunde.aktiv == 1)
         .filter((Termin.abgesagt == 0) | (Termin.abgesagt.is_(None)))
-        .order_by(desc(Termin.datum), desc(Termin.utc_starttime))
+        .order_by(desc(Termin.datum), desc(Termin.startzeit))
         .all()
     )
 
@@ -398,8 +398,8 @@ def get_termine_nicht_abgesagt_kunde_aktiv():
         {
             "id": r.id,
             "datum": r.datum,
-            "utc_starttime": r.utc_starttime,
-            "utc_endtime": r.utc_endtime,
+            "startzeit": r.startzeit,
+            "endzeit": r.endzeit,
             "betrag": r.betrag,
             "beschreibung": r.beschreibung,
             "vorname": r.vorname,
@@ -418,8 +418,8 @@ def get_termine_kunde_rnr(kunde_id):
         db.session.query(
             Termin.id,
             Termin.datum,
-            Termin.utc_starttime,
-            Termin.utc_endtime,
+            Termin.startzeit,
+            Termin.endzeit,
             Termin.betrag,
             Termin.beschreibung,
             Termin.gruppentermin_id,
@@ -437,7 +437,7 @@ def get_termine_kunde_rnr(kunde_id):
         .outerjoin(Rechnung, Rechnung.id == TermineRechnung.rechnung_id)
         .filter(Termin.kunde_id == kunde_id)
         .filter(Termin.nur_offline_geloescht == 0)
-        .order_by(desc(Termin.datum), desc(Termin.utc_starttime))
+        .order_by(desc(Termin.datum), desc(Termin.startzeit))
         .all()
     )
 
@@ -446,8 +446,8 @@ def get_termine_kunde_rnr(kunde_id):
             "id": r.id,
             "kundeId": r.kundeId,
             "datum": r.datum,
-            "utc_starttime": r.utc_starttime,
-            "utc_endtime": r.utc_endtime,
+            "startzeit": r.startzeit,
+            "endzeit": r.endzeit,
             "betrag": r.betrag,
             "abgesagt": r.abgesagt,
             "changesstamp": r.changestamp,

@@ -9,8 +9,8 @@ class Termin(db.Model):
     gruppentermin_id = db.Column(db.Integer, db.ForeignKey("gruppentermine.id"))
 
     datum = db.Column(db.String)
-    utc_starttime = db.Column(db.String)
-    utc_endtime = db.Column(db.String)
+    startzeit = db.Column(db.String)
+    endzeit = db.Column(db.String)
 
     beschreibung = db.Column(db.String)
     kommentar = db.Column(db.String)

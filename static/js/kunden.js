@@ -995,62 +995,12 @@ neuTerminBtn.addEventListener("click", async () => {
 
     let beschreibung = "";
     // Beachte: kunde.therapieform kann als String ("1") oder Zahl (1) kommen
-    switch (String(kunde.therapieform)) {
-        case "1": {
-            const res = await fetch(`/api/kunden/${id}`);
-            const kunde = await res.json();
-            const dauer = await ladeProgrammvariableNachName("einzel_zeit");
-            beschreibung = "Einzeltherapie á " + dauer + " min";
-            // Betrag kann jetzt verwendet werden, z.B. für ein Feld: betrag
-            break;
-        }
-        case "2": {
-            const dauer = await ladeProgrammvariableNachName("paar_zeit");
-            beschreibung = "Paartherapie á " + dauer + " min";
-            break;
-        }
-        case "3": {
-            const dauer = await ladeProgrammvariableNachName("familie_zeit");
-            beschreibung = "Familientherapie á " + dauer + " min";
-            break;
-        }
-        case "4": {
-            const dauer = await ladeProgrammvariableNachName("gruppe_zeit");
-            beschreibung = "Gruppentherapie á " + dauer + " min";
-            break;
-        }
-        case "5": {
-            const dauer = await ladeProgrammvariableNachName("einzelsupervision_zeit");
-            beschreibung = "Einzelsupervision á " + dauer + " min";
-            break;
-        }
-        case "6": {
-            const dauer = await ladeProgrammvariableNachName("gruppensupervision_zeit");
-            beschreibung = "Gruppensupervision á " + dauer + " min";
-            break;
-        }
-        case "7": {
-            const dauer = await ladeProgrammvariableNachName("einzelselbesterfahrung_zeit");
-            beschreibung = "Einzelselbsterfahrung á " + dauer + " min";
-            break;
-        }
-        case "8": {
-            const dauer = await ladeProgrammvariableNachName("gruppenselbsterfahrung_zeit");
-            beschreibung = "Gruppenselbsterfahrung á " + dauer + " min";
-            break;
-        }
-        case "9": {
-            const dauer = await ladeProgrammvariableNachName("coaching_zeit");
-            beschreibung = "Coaching á " + dauer + " min";
-            break;
-        }
-        case "10": {
-            beschreibung = "Vortrag/Seminar/Workshop";
-            break;
-        }
-        default:
-            beschreibung = "";
-    }
+    const res1 = await fetch(`/api/leistungen/${1}`);
+    const leistung = await res1.json();
+    console.log("Geladene Leistung für Einzeltherapie:", leistung);
+    beschreibung = leistung.bezeichnung +" á " + leistung.dauer_min + " min";
+    
+    
 
     openfensterTerminAnpassen({
         kundeId: id,
