@@ -192,15 +192,18 @@ function berechneEndzeit() {
     const startzeitInput = document.getElementById("startzeit");
     const endzeitInput = document.getElementById("endzeit");
     const beschreibungInput = document.getElementById("beschreibung");
-    
+    const dauerMinInput = document.getElementById("dauer_min");
+
     if (!startzeitInput || !endzeitInput || !startzeitInput.value) return;
-    
+
     const startzeit = startzeitInput.value;
     const beschreibung = beschreibungInput?.value || "";
-    
+
+    // Dauer zuerst aus dem Feld dauer_min nehmen, falls vorhanden und gültig
     let dauerMinuten = 50; // Default Einzeltherapie
-    
-    if (beschreibung.includes("Paartherapie") || beschreibung.includes("Paar")) {
+    if (dauerMinInput && dauerMinInput.value && !isNaN(parseInt(dauerMinInput.value))) {
+        dauerMinuten = parseInt(dauerMinInput.value);
+    } else if (beschreibung.includes("Paartherapie") || beschreibung.includes("Paar")) {
         dauerMinuten = 90;
     } else if (beschreibung.includes("Gruppentherapie") || beschreibung.includes("Gruppe")) {
         // Dauer wird aus der Beschreibung extrahiert, z.B. "Gruppentherapie á 60 min"
@@ -211,12 +214,12 @@ function berechneEndzeit() {
             dauerMinuten = 60; // Default für Gruppe
         }
     }
-    
+
     const [stunden, minuten] = startzeit.split(":").map(Number);
     const ende = new Date();
     ende.setHours(stunden);
     ende.setMinutes(minuten + dauerMinuten);
-    
+
     const endeStr = `${String(ende.getHours()).padStart(2,"0")}:${String(ende.getMinutes()).padStart(2,"0")}`;
     endzeitInput.value = endeStr;
 }

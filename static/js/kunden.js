@@ -998,7 +998,7 @@ neuTerminBtn.addEventListener("click", async () => {
     const res1 = await fetch(`/api/leistungen/${1}`);
     const leistung = await res1.json();
     console.log("Geladene Leistung für Einzeltherapie:", leistung);
-    beschreibung = leistung.bezeichnung +" á " + leistung.dauer_min + " min";
+    beschreibung = leistung.bezeichnung +" á " + kunde.dauer_min + " min";
     
     
 
@@ -1007,7 +1007,8 @@ neuTerminBtn.addEventListener("click", async () => {
         stundensatz: kunde.stundensatz || "",
         beschreibung,
         therapieform: kunde.therapieform || "",
-        ust: kunde.ust || "0"
+        ust: kunde.ust || "0",
+        dauer_min: kunde.dauer_min || ""
     });
 });
 
