@@ -120,21 +120,21 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (selectedEvent.extendedProps?.readonly) {
                 return; // Fenster nicht öffnen
             }
-
-            function toUtcTimeString(date) {
+            function toTimeString(date) {
                 if (!date) return "00:00";
-                const utcHours = String(date.getUTCHours()).padStart(2, "0");
-                const utcMinutes = String(date.getUTCMinutes()).padStart(2, "0");
-                return `${utcHours}:${utcMinutes}`;
+                const hours = String(date.getHours()).padStart(2, "0");
+                const minutes = String(date.getMinutes()).padStart(2, "0");
+                return `${hours}:${minutes}`;
             }
+
             
 
             openfensterTerminAnpassen({
                 stundensatz: selectedEvent.extendedProps?.betrag || "",
                 beschreibung: selectedEvent.extendedProps?.beschreibung || "",
                 datum: selectedEvent.startStr.split("T")[0],
-                startzeit: toUtcTimeString(selectedEvent.start),
-                endzeit: toUtcTimeString(selectedEvent.end),
+                startzeit: toTimeString(selectedEvent.start),
+                endzeit: toTimeString(selectedEvent.end),
                 stundeId: selectedEvent.id || "",
                 kundeId: selectedEvent.extendedProps?.kunde_id || "",
                 gruppeId: selectedEvent.extendedProps?.gruppe_id || ""
@@ -252,14 +252,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 🔄 Event aktualisieren (Drag)
     function updateEvent(event) {
         console.log(event);
-        if (event._def.extendedProps.kunde_id) {
-            // Zeit in UTC umrechnen
-            function toUtcTimeString(date) {
+        function toTimeString(date) {
                 if (!date) return "00:00";
-                const utcHours = String(date.getUTCHours()).padStart(2, "0");
-                const utcMinutes = String(date.getUTCMinutes()).padStart(2, "0");
-                return `${utcHours}:${utcMinutes}`;
+                const hours = String(date.getHours()).padStart(2, "0");
+                const minutes = String(date.getMinutes()).padStart(2, "0");
+                return `${hours}:${minutes}`;
             }
+
+        if (event._def.extendedProps.kunde_id) {
+         
             console.log("aktualisiere Termin ID", event.id);
 
             fetch('/api/termine/' + event.id, {
@@ -267,8 +268,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     datum: event.startStr.split("T")[0],
-                    startzeit: toUtcTimeString(event.start),
-                    endzeit: toUtcTimeString(event.end),
+                    startzeit: toTimeString(event.start),
+                    endzeit: toTimeString(event.end),
                     beschreibung: event.summary,
                     betrag: event.extendedProps?.betrag ?? null,
                     push_termin : 1, //um Kalender zu aktualisieren
@@ -288,8 +289,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     datum: event.startStr.split("T")[0],
-                    startzeit: toUtcTimeString(event.start),
-                    endzeit: toUtcTimeString(event.end),
+                    startzeit: toTimeString(event.start),
+                    endzeit: toTimeString(event.end),
                     beschreibung: event.title,
                     betrag: event.extendedProps?.betrag ?? null,
                     push_termin: 1 // Damit der Push an CalDAV erfolgt
@@ -313,20 +314,12 @@ async function loadLocalEvents() {
     const res = await fetch('/api/kalender/termine_anzuzeigen');
     const data = await res.json();
     console.log("Lokale Termine geladen:", data);
-    function utcToLocalTime(dateStr, utcTime) {
-        if (!dateStr || !utcTime) return "";
-        const [h, m, s] = utcTime.split(":");
-        // Erzeuge UTC-Date
-        const utcDate = new Date(Date.UTC(
-            parseInt(dateStr.slice(0, 4)),
-            parseInt(dateStr.slice(5, 7)) - 1,
-            parseInt(dateStr.slice(8, 10)),
-            h, m, s || 0
-        ));
-        // In lokale Zeit umwandeln und als ISO-String zurückgeben
-        const localDate = new Date(utcDate.getTime() + (utcDate.getTimezoneOffset() * 60000 * -1));
-        // FullCalendar erwartet ISO-String (ohne Offset)
-        return localDate.toISOString().slice(0, 16);
+    function zeitKalenderformat(dateStr, timeStr) {
+    if (!dateStr || !timeStr) return "";
+    const [h, m, s] = timeStr.split(":");
+    // Füge Sekunden nur hinzu, wenn vorhanden
+    const timePart = s !== undefined ? `${h}:${m}:${s}` : `${h}:${m}`;
+    return `${dateStr}T${timePart}`;
     }
     return data.map(s => {
         // caldav_uid ggf. aus s holen, falls vorhanden
@@ -334,8 +327,8 @@ async function loadLocalEvents() {
         return {
             id: s.id,
             title: s.gruppe_id ? `👥 ${s.gruppen_kuerzel || "Gruppe"}` : (s.kunde_kuerzel || "–"),
-            start: utcToLocalTime(s.datum, s.startzeit),
-            end: utcToLocalTime(s.datum, s.endzeit),
+            start: zeitKalenderformat(s.datum, s.startzeit),
+            end: zeitKalenderformat(s.datum, s.endzeit),
             backgroundColor: s.gruppe_id ? "#4f46e5" : "#16a34a",
             borderColor: s.gruppe_id ? "#4338ca" : "#15803d",
             textColor: "#ffffff",
