@@ -439,12 +439,12 @@ PRODID:-//{terminkalender_name}//termine Sync//DE
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
 UID:{uid}
-DTSTAMP:{datetime.now().strftime('%Y%m%dT%H%M%SZ')}
+DTSTAMP:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}
 DTSTART:{dtstart.strftime('%Y%m%dT%H%M%S')}
 DTEND:{dtend.strftime('%Y%m%dT%H%M%S')}
 SUMMARY:{title}
 DESCRIPTION:{termin.get('beschreibung') or ''}
-LAST-MODIFIED:{datetime.now().strftime('%Y%m%dT%H%M%SZ')}
+LAST-MODIFIED:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}
 END:VEVENT
 END:VCALENDAR
 """
@@ -488,6 +488,7 @@ END:VCALENDAR
             # Vergleiche changestamp (DB) und modified (Kalender) als Strings (ISO-Format bevorzugt)
             db_dt = db_changestamp
             cal_dt = caldav_modified
+            print(f"DEBUG: db_dt={db_dt} (type={type(db_dt)}), cal_dt={cal_dt} (type={type(cal_dt)})")
             update_calendar = False
             update_db = False
             if db_dt and cal_dt:
