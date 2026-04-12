@@ -66,9 +66,23 @@ def dashboard():
     overdue_mahnungen.sort(key=lambda x: x.datum, reverse=True)
     mahnungen = overdue_mahnungen[:10]
     
-    # 3. Termine heute und morgen
+    # 3. Termine heute und morgen (inkl. Gruppentermine)
+    from models.gruppentermine import Gruppentermin
     termine_heute = Termin.query.filter(Termin.datum == today.isoformat(), (Termin.abgesagt == None) | (Termin.abgesagt == "") ).order_by(Termin.startzeit).all()
+    gruppentermine_heute = Gruppentermin.query.filter(
+        Gruppentermin.datum == today.isoformat(),
+        (Gruppentermin.entfallen == None) | (Gruppentermin.entfallen == ""),
+        Gruppentermin.nur_offline_geloescht == 0
+    ).order_by(Gruppentermin.startzeit).all()
+    termine_heute = sorted(list(termine_heute) + list(gruppentermine_heute), key=lambda t: t.startzeit)
+
     termine_morgen = Termin.query.filter(Termin.datum == tomorrow.isoformat(), (Termin.abgesagt == None) | (Termin.abgesagt == "") ).order_by(Termin.startzeit).all()
+    gruppentermine_morgen = Gruppentermin.query.filter(
+        Gruppentermin.datum == tomorrow.isoformat(),
+        (Gruppentermin.entfallen == None) | (Gruppentermin.entfallen == ""),
+        Gruppentermin.nur_offline_geloescht == 0
+    ).order_by(Gruppentermin.startzeit).all()
+    termine_morgen = sorted(list(termine_morgen) + list(gruppentermine_morgen), key=lambda t: t.startzeit)
     
     # 4. Prüfung Rechnungsnummern durchgängig
     all_rechnungen = Rechnung.query.order_by(Rechnung.rechnungsnr).all()
@@ -83,7 +97,14 @@ def dashboard():
     
     # 5. Überschneidende Termine
     overlapping_termine = []
-    all_termine = Termin.query.filter(Termin.datum >= today.isoformat()).order_by(Termin.datum, Termin.startzeit).all()
+    all_termine = list(Termin.query.filter(Termin.datum >= today.isoformat()).order_by(Termin.datum, Termin.startzeit).all())
+    gruppentermine_ab_heute = list(Gruppentermin.query.filter(
+        Gruppentermin.datum >= today.isoformat(),
+        (Gruppentermin.entfallen == None) | (Gruppentermin.entfallen == ""),
+        Gruppentermin.nur_offline_geloescht == 0
+    ).order_by(Gruppentermin.datum, Gruppentermin.startzeit).all())
+    all_termine += gruppentermine_ab_heute
+    all_termine.sort(key=lambda t: (t.datum, t.startzeit))
     grouped_by_date = {}
     for t in all_termine:
         if t.datum not in grouped_by_date:
