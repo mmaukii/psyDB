@@ -253,7 +253,10 @@ async function reloadTermineFuerKunde(kundeId) {
                 buttons += `<button class="deleteBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
             } else {
                 if (st.rechnungsnr) {
-                    buttons = `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
+                    buttons = `
+                        <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
+                        <span style="margin-right: 0.5em; ">ReNr ${st.rechnungsnr}</span>
+                    `;
                 } else {
                     buttons = `
                         <button class="editBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>

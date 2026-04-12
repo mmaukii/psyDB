@@ -474,7 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (typeof calendar !== "undefined" && calendar && typeof calendar.refetchEvents === "function") {
                     calendar.refetchEvents(); // neu zeichnen
                 }
-                alert("✅ Termin wurde gelöscht");
+                showToast("✅ Termin wurde gelöscht");
             } catch (err) {
                 console.error("🗑️ Fehler beim Löschen:", err);
                 alert(`❌ ${err.message}`);

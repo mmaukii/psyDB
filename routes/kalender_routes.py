@@ -686,6 +686,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                 online_uids.add(uid_value)
         except Exception as e:
             log_msg(f"⚠ Überspringe Event ohne UID: {e}")
+            
 
     
     # DB-Events mit caldav_uid
@@ -732,6 +733,8 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
         except Exception as e:
             log_msg(f"⚠ Überspringe fehlerhaftes Event (kein VEVENT/UID): {e}")
             continue
+
+        
 
         etag = get_event_etag(event)
         summary = getattr(ve.summary, "value", "").strip()
