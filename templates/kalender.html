@@ -29,16 +29,14 @@
 </head>
 <body>
     
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-        <label style="display:flex; align-items:center; gap:6px;">
-            <span>Aktualisieren:</span>
-            <button id="syncButton">Praxiskalender</button>
-            <button id="syncExterneButton">Externe Events</button>
-        </label>
+    <div class="button-row" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="display:flex; align-items:center; gap:6px;">
+            <button id="syncButton" class="table-btn" title="Praxiskalender synchronisieren">🛋️📅↩️</button>
+            <button id="syncExterneButton" class="table-btn" title="Externe Kalender synchronisieren">🎉📅↩️</button>
+        </div>
         <div style="display:flex; align-items:center; gap:12px;">
             <input type="checkbox" id="toggleExterne" checked>
             Externe Events anzeigen
-            
         </div>
     </div>
     <div id="calendar"></div>
