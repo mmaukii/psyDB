@@ -169,6 +169,9 @@ tr:hover { background: #f9f9f9; cursor: pointer; }
 tr.selected {
     background: #d0f0d0 !important;
 }
+tr.selected th {
+    background: #d0f0d0 !important;
+}
 
 input[type="text"],
 input[type="email"],

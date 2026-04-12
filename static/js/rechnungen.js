@@ -182,32 +182,32 @@ async function ladeRechnungen() {
     let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
 
     return `
-    <tr data-id="${r.rechnung_id}"${istUeberfaellig ? ' style="background:#d66767;"' : ''}>
-      <th align="center"><span style="color:#000;">${r.rechnungsnr}</span></td>
+    <tr data-id="${r.rechnung_id}">
+      <th align="center"><span style="color:${istUeberfaellig ? '#d60000' : '#000'};">${r.rechnungsnr}</span></th>
       <td align="center">${r.kuerzel}</td>
       <td align="center">${r.vorname || ""}</td>
       <td align="center">${r.nachname || ""}</td>
       <td align="center">${datumDeutsch}</td>
       <td align="right">${betragFormatted} €</td>
       <td align="center">
-        <span${istUeberfaellig ? ' style="text-decoration: underline double; font-weight: bold;"' : ''}>
-          ${zahlungsziel_datum} (${r.zahlungsziel_tage || ''} d)
-        </span>
+      <span${istUeberfaellig ? ' style="color:#d60000;text-decoration: underline double; font-weight: bold;"' : ''}>
+        ${zahlungsziel_datum} (${r.zahlungsziel_tage || ''} d)
+      </span>
       </td>
       <td>
-        <select class="status-select" data-id="${r.rechnung_id}">
-          <option value="0" ${r.bezahlt === 0 ? "selected" : ""}>offen</option>
-          <option value="1" ${r.bezahlt === 1 ? "selected" : ""}>bezahlt</option>
-        </select>
+      <select class="status-select" data-id="${r.rechnung_id}">
+        <option value="0" ${r.bezahlt === 0 ? "selected" : ""}>offen</option>
+        <option value="1" ${r.bezahlt === 1 ? "selected" : ""}>bezahlt</option>
+      </select>
       </td>
       <td>
-        <button class="mail-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung per E-Mail senden">📧</button>
-        <button class="pdf-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung als PDF herunterladen">🗂️</button>
-        <button class="mahnung-btn table-btn" data-id="${r.rechnung_id}" title="Mahnung erstellen">⏰</button>
-        <button class="delete-btn table-btn" data-id="${r.rechnung_id}" title="Datensatz löschen">🗑️</button>
+      <button class="mail-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung per E-Mail senden">📧</button>
+      <button class="pdf-btn table-btn" data-id="${r.rechnung_id}" title="Rechnung als PDF herunterladen">🗂️</button>
+      <button class="mahnung-btn table-btn" data-id="${r.rechnung_id}" title="Mahnung erstellen">⏰</button>
+      <button class="delete-btn table-btn" data-id="${r.rechnung_id}" title="Datensatz löschen">🗑️</button>
       </td>
     </tr>
-  `}).join("");
+    `}).join("");
 
   // 🔹 Status ändern
   document.querySelectorAll('.status-select').forEach(select => {
