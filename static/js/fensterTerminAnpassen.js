@@ -24,6 +24,72 @@ async function ladeTherapieformen() {
     }
 }
 // ===============================
+
+// Automatisches Befüllen der Felder bei Kundenauswahl
+document.addEventListener('DOMContentLoaded', () => {
+    const kundeSelect = document.getElementById("kunde");
+    if (kundeSelect) {
+        kundeSelect.addEventListener("change", async function() {
+            const kundeId = this.value;
+            if (!kundeId) return;
+            try {
+                const res = await fetch(`/api/kunden/${kundeId}`);
+                if (!res.ok) throw new Error("Fehler beim Laden der Kundendaten");
+                const kunde = await res.json();
+                console.log("Geladene Kundendaten für automatische Befüllung:", kunde);
+                // Betrag (stundensatz)
+                if (kunde.stundensatz !== undefined && kunde.stundensatz !== null) {
+                    document.getElementById("betrag").value = new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(kunde.stundensatz);
+                }
+                // USt
+                document.getElementById("terminUst").checked = kunde.ust === 1 ? true : false;
+                // Therapieform
+                if (kunde.therapieform !== undefined && kunde.therapieform !== null) {
+                    document.getElementById("terminTherapieform").value = kunde.therapieform;
+                }
+                //Beschreibung
+                console.log("Lade Beschreibung basierend auf Therapieform:", kunde.therapieform);
+                const res1 = await fetch(`/api/leistungen/${kunde.therapieform}`);
+                const leistung = await res1.json();
+                beschreibung = leistung.bezeichnung +" á " + kunde.dauer_min + " min";
+                document.getElementById("beschreibung").value = beschreibung;
+                console.log("Automatisch befüllte Beschreibung:", beschreibung);
+
+
+                // Dauer (für Endzeit)
+                if (kunde.dauer_min !== undefined && kunde.dauer_min !== null) {
+                    let dauerMinInput = document.getElementById("dauer_min");
+                    if (dauerMinInput) {
+                        dauerMinInput.value = kunde.dauer_min;
+                    } else {
+                        // Falls kein Feld vorhanden, Endzeit direkt berechnen
+                        berechneEndzeitMitDauer(kunde.dauer_min);
+                        return;
+                    }
+                    berechneEndzeit();
+                }
+                
+
+            } catch (err) {
+                console.error("Fehler beim automatischen Befüllen der Kundendaten:", err);
+            }
+        });
+    }
+});
+
+// Hilfsfunktion: Endzeit direkt mit gegebener Dauer berechnen
+function berechneEndzeitMitDauer(dauerMin) {
+    const startzeitInput = document.getElementById("startzeit");
+    const endzeitInput = document.getElementById("endzeit");
+    if (!startzeitInput || !endzeitInput || !startzeitInput.value) return;
+    const startzeit = startzeitInput.value;
+    let [stunden, minuten] = startzeit.split(":").map(Number);
+    let ende = new Date();
+    ende.setHours(stunden);
+    ende.setMinutes(minuten + parseInt(dauerMin));
+    const endeStr = `${String(ende.getHours()).padStart(2,"0")}:${String(ende.getMinutes()).padStart(2,"0")}`;
+    endzeitInput.value = endeStr;
+}
 // === TERMIN MODAL (ZENTRAL) ===
 // ===============================
 // console.log("definiere openNeufensterermineanpassen");
