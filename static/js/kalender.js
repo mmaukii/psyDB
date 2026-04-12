@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    // 🔄 Event aktualisieren (Drag)
+    //  🔁 Event aktualisieren (Drag)
     function updateEvent(event) {
         console.log(event);
         function toTimeString(date) {

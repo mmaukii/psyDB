@@ -170,7 +170,8 @@ window.openfensterTerminAnpassen = async function ({
 
     terminForm.reset();
     await ladeTherapieformen();
-    // console.log("🆕 Neuer Termin für Kunde:", kundeId);
+    console.log("🆕 Neuer Termin für Kunde:");
+    console.log(beschreibung);
 
     if (datum === "") {
         // 📅 Datum: heute + 6 Tage
@@ -564,7 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
         data.push_termin = 1;
         data.betrag = parseFloat(data.betrag.replace(/\./g, "").replace(",", "."));
 
-        // 🔄 Serientermine verarbeiten
+        //  🔁 Serientermine verarbeiten
         const istSerie = document.getElementById("istSerie").checked;
         let termineDaten = [data];
         if (istSerie) {
@@ -578,8 +579,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const neuerTermin = { ...data };
                 neuerTermin.datum = terminDatum.toISOString().split("T")[0];
                 // UTC-Zeiten für das jeweilige Datum berechnen
-                neuerTermin.startzeit = localInputTimeToUTCStr(neuerTermin.datum, data.startzeit);
-                neuerTermin.endzeit = localInputTimeToUTCStr(neuerTermin.datum, data.endzeit);
+                neuerTermin.startzeit =  data.startzeit;
+                neuerTermin.endzeit =data.endzeit;
                 
                 termineDaten.push(neuerTermin);
             }
@@ -590,11 +591,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const gruppeId = data.gruppeId || data.gruppe_id || null;
         console.log("Verarbeite Termin mit Daten:", data);
         if (data.terminId && data.kundeId) { //wenn termine und kunde vorhanden
-            // console.log("🔄 Update Termin ID:", data.terminId);
+            // console.log(" 🔁 Update Termin ID:", data.terminId);
             url = `/api/termine/${data.terminId}`;
             method = "PUT";
         }else if  (data.terminId && data.gruppeId) { //gruppentermin bearbeiten
-            // console.log("🔄 Update Termin ID:", data.terminId);
+            // console.log(" 🔁 Update Termin ID:", data.terminId);
             url = `/api/gruppentermine/${data.terminId}`;
             method = "PUT"; 
         } else if (gruppeId) { //gruppentermin erstellen

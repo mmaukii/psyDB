@@ -251,6 +251,7 @@ async function reloadTermineFuerKunde(kundeId) {
             if (st.abgesagt) {
                 buttons = `<button class="restoreBtntermineproKunde table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️</button>`;
                 buttons += `<button class="deleteBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
+                buttons += `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
             } else {
                 if (st.rechnungsnr) {
                     buttons = `

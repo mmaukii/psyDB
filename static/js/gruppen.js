@@ -227,6 +227,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 if (st.entfallen) {
                     buttons = `<button class="restoreBtnTermineProGruppe table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️</button>`;
                     buttons += `<button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
+                    buttons += `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
                 } else {
                     if (!hatTermine) {
                         buttons += `<button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>`;
@@ -1023,7 +1024,7 @@ neuTerminBtn.addEventListener("click", async () => {
         return;
     }
     const termine = await response.json();
-    const res1 = await fetch(`/api/leistungen/${1}`);
+    const res1 = await fetch(`/api/leistungen/${termine.therapieform}`);
     const leistung = await res1.json();
     console.log("Geladene Leistung für Einzeltherapie:", leistung);
     console.log("Geladene Gruppendaten für Termin:", termine);
@@ -1035,7 +1036,7 @@ neuTerminBtn.addEventListener("click", async () => {
                 therapieform: termine.therapieform || "",
                 ust: termine.ust || 0,
                 gruppeId: gruppen_id || "",
-                dauer_min: termine.dauer_min || ""
+                dauer_min: termine.dauer_min || "",
             });
     
     // Modal anzeigen
