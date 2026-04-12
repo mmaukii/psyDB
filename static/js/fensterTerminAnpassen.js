@@ -1,3 +1,48 @@
+// Automatisches Befüllen der Felder bei Gruppenauswahl
+document.addEventListener('DOMContentLoaded', () => {
+    const gruppeSelect = document.getElementById("gruppe");
+    if (gruppeSelect) {
+        gruppeSelect.addEventListener("change", async function() {
+            const gruppeId = this.value;
+            if (!gruppeId) return;
+            try {
+                const res = await fetch(`/api/gruppen/${gruppeId}`);
+                if (!res.ok) throw new Error("Fehler beim Laden der Gruppendaten");
+                const gruppe = await res.json();
+                // Betrag (stundensatz)
+                if (gruppe.stundensatz !== undefined && gruppe.stundensatz !== null) {
+                    document.getElementById("betrag").value = new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(gruppe.stundensatz);
+                }
+                // USt
+                document.getElementById("terminUst").checked = gruppe.ust === 1 ? true : false;
+                // Therapieform
+                if (gruppe.therapieform !== undefined && gruppe.therapieform !== null) {
+                    document.getElementById("terminTherapieform").value = gruppe.therapieform;
+                }
+                // Beschreibung
+                if (gruppe.therapieform !== undefined && gruppe.therapieform !== null) {
+                    const res1 = await fetch(`/api/leistungen/${gruppe.therapieform}`);
+                    const leistung = await res1.json();
+                    const beschreibung = leistung.bezeichnung + " á " + gruppe.dauer_min + " min";
+                    document.getElementById("beschreibung").value = beschreibung;
+                }
+                // Dauer (für Endzeit)
+                if (gruppe.dauer_min !== undefined && gruppe.dauer_min !== null) {
+                    let dauerMinInput = document.getElementById("dauer_min");
+                    if (dauerMinInput) {
+                        dauerMinInput.value = gruppe.dauer_min;
+                    } else {
+                        berechneEndzeitMitDauer(gruppe.dauer_min);
+                        return;
+                    }
+                    berechneEndzeit();
+                }
+            } catch (err) {
+                console.error("Fehler beim automatischen Befüllen der Gruppendaten:", err);
+            }
+        });
+    }
+});
 // === LEISTUNGEN/THERAPIEFORMEN DYNAMISCH LADEN ===
 async function ladeTherapieformen() {
     const select = document.getElementById("terminTherapieform");
