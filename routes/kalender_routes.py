@@ -675,15 +675,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
 
     einzel_var = Programmvariable.query.filter_by(name='einzel_zeit').first()
     paar_var = Programmvariable.query.filter_by(name='paar_zeit').first()
-    try:
-        einzel_min = int(einzel_var.wert) if einzel_var and str(einzel_var.wert).strip() else 50
-    except Exception:
-        einzel_min = 50
-    try:
-        paar_min = int(paar_var.wert) if paar_var and str(paar_var.wert).strip() else 90
-    except Exception:
-        paar_min = 90
-
+  
 
     # Online-UIDs sammeln (robust gegen fehlerhafte Events)
     online_uids = set()
@@ -807,24 +799,42 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                 db.session.commit()
                 db_uids[uid] = neu
                 log_msg(f"✅ Neuer Einzeltermin übernommen: UID={uid}")
-                # Nach dem Anlegen: Kürzel online und Kunde case-sensitiv abgleichen
-                if summary == kunde.kuerzel:
-                    push_termin({
-                        "termin_id": neu.id,
-                        "kuerzel": kunde.kuerzel,
-                        "datum": neu.datum,
-                        "startzeit": neu.startzeit,
-                        "endzeit": neu.endzeit,
-                        "beschreibung": neu.beschreibung,
-                        "caldav_uid": neu.caldav_uid,
-                        "caldav_etag": neu.caldav_etag,
-                        "abgesagt": None
-                    })
+                # Nach dem Anlegen Werte in Kalender schreiben
+                push_termin({
+                    "termin_id": neu.id,
+                    "kuerzel": kunde.kuerzel,
+                    "datum": neu.datum,
+                    "startzeit": neu.startzeit,
+                    "endzeit": neu.endzeit,
+                    "beschreibung": neu.beschreibung,
+                    "caldav_uid": neu.caldav_uid,
+                    "caldav_etag": neu.caldav_etag,
+                    "abgesagt": None
+                })
             elif summary.lower() in gruppen_by_kuerzel_low:
                 gruppe = gruppen_by_kuerzel_low[summary.lower()]
-                dauer_min = gruppe.dauer_min or 60
-                beschreibung = "Gruppentherapie á " + str(dauer_min) + " min"
+                # Dauer individuell vom Kunden, sonst Standard
+                dauer_min = getattr(gruppe, "dauer_min", None)
+                if not dauer_min:
+                    dauer_min = ""
+
+                 # Therapieform/Bezeichnung aus Leistung holen
+                leistung_bezeichnung = None
+                try:
+                    from models import Leistung
+                    if hasattr(gruppe, "therapieform") and gruppe.therapieform:
+                        leistung = Leistung.query.get(gruppe.therapieform)
+                        if leistung:
+                            leistung_bezeichnung = leistung.bezeichnung
+                except Exception as e:
+                    log_msg(f"⚠ Fehler beim Laden der Leistung: {e}")
+
+                if leistung_bezeichnung:
+                    beschreibung = f"{leistung_bezeichnung} á {dauer_min} min"
+                else:
+                    beschreibung = f"Leistung á {dauer_min} min"
                 end = start + timedelta(minutes=dauer_min)
+
                 neu = Gruppentermin(
                     gruppe_id=gruppe.id,
                     datum=start.date().isoformat(),
@@ -842,18 +852,17 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                 db.session.commit()
                 db_uids[uid] = neu
                 log_msg(f"✅ Neuer Gruppentermin übernommen: UID={uid}")
-                # Nach dem Anlegen: Kürzel online und Gruppenkuerzel case-sensitiv abgleichen
-                if summary != gruppe.gruppenkuerzel:
-                    push_termin({
-                        "gruppentermin_id": neu.id,
-                        "kuerzel": gruppe.gruppenkuerzel,
-                        "datum": neu.datum,
-                        "startzeit": neu.startzeit,
-                        "endzeit": neu.endzeit,
-                        "beschreibung": neu.beschreibung,
-                        "caldav_uid": neu.caldav_uid,
-                        "caldav_etag": neu.caldav_etag,
-                        "entfallen": None
+                # Nach dem Anlegen Werte in Kalender schreiben
+                push_termin({
+                    "gruppentermin_id": neu.id,
+                    "kuerzel": gruppe.gruppenkuerzel,
+                    "datum": neu.datum,
+                    "startzeit": neu.startzeit,
+                    "endzeit": neu.endzeit,
+                    "beschreibung": neu.beschreibung,
+                    "caldav_uid": neu.caldav_uid,
+                    "caldav_etag": neu.caldav_etag,
+                    "entfallen": None
                     })
             continue
 
