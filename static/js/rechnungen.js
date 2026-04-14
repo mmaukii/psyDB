@@ -215,20 +215,39 @@ async function ladeRechnungen() {
     select.addEventListener('change', async (e) => {
       const id = e.target.dataset.id;
       const neuerStatus = e.target.value;
-
-      // Prompt für Zahlungsverweis
-      let zahlungsverweis = prompt("Optional: Zahlungsverweis für diese Rechnung eingeben (z.B. Zahlungsreferenz, Bank, Verwendungszweck etc.):", "");
-      // Wenn Abbrechen gedrückt, prompt gibt null zurück → trotzdem Status speichern, aber kein Zahlungsverweis
       const body = { bezahlt: neuerStatus };
-      if (zahlungsverweis !== null && zahlungsverweis.trim() !== "") {
-        body.zahlungsverweis = zahlungsverweis.trim();
-      }
 
-      await fetch(`api/rechnungen/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
+      if (neuerStatus === "1") { // auf bezahlt gestellt
+        let zahlungsverweis = prompt("Optional: Zahlungsverweis für diese Rechnung eingeben (z.B. Zahlungsreferenz, Bank, Verwendungszweck etc.):", "");
+        if (zahlungsverweis !== null && zahlungsverweis.trim() !== "") {
+          body.zahlungsverweis = zahlungsverweis.trim();
+        }
+        // Wenn Abbrechen gedrückt, prompt gibt null zurück → trotzdem Status speichern, aber kein Zahlungsverweis
+        await fetch(`api/rechnungen/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        ladeRechnungen();
+      } else if (neuerStatus === "0") { // auf offen gestellt
+        if (confirm("Der Zahlungsverweis wird gelöscht, wenn Sie den Status auf 'offen' setzen. Fortfahren?")) {
+          body.zahlungsverweis = null;
+          await fetch(`api/rechnungen/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          ladeRechnungen();
+        } else {
+          // Status zurücksetzen auf vorherigen Wert
+          // Hole aktuelle Rechnung aus Backend, um Wert zu setzen
+          const response = await fetch(`/api/rechnungen/${id}`);
+          if (response.ok) {
+            const rechnung = await response.json();
+            select.value = rechnung.bezahlt;
+          }
+        }
+      }
     });
   });
 
