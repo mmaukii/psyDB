@@ -45,30 +45,37 @@ rechnungsTabelle.addEventListener("click", async (e) => {
         //const thFirst = termineproRechnungTabelle.querySelector("thead th:first-child");
         //const isHidden = thFirst.hidden;
 
-        // Tabelle neu aufbauen
+        // Prüfen, ob mindestens ein gruppenkuerzel vorhanden ist
+        const hatGruppenkuerzel = data.termine.some(st => st.gruppenkuerzel && st.gruppenkuerzel !== "");
+        // Tabellenkopf dynamisch anpassen
+        const thGruppenkuerzel = document.getElementById("thGruppenkuerzel");
+        if (thGruppenkuerzel) {
+          thGruppenkuerzel.style.display = hatGruppenkuerzel ? "" : "none";
+        }
         if (data.termine.length === 0) {
-            termineproRechnungBody.innerHTML = `<tr><td colspan="5">Keine Termine vorhanden.</td></tr>`;
+          termineproRechnungBody.innerHTML = `<tr><td colspan="${hatGruppenkuerzel ? 5 : 4}">Keine Termine vorhanden.</td></tr>`;
         } else {
-            termineproRechnungBody.innerHTML = data.termine.map(st => {
+          termineproRechnungBody.innerHTML = data.termine.map(st => {
             // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
             const datumParts = st.datum.split("-");
             const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
             let betragNum = parseFloat(st.betrag);
             let betragFormatted = isNaN(betragNum) ? "" : betragNum.toFixed(2).replace(".", ",");
 
-             const abgesagt = st.abgesagt && st.abgesagt !== "null" && st.abgesagt !== "0"; 
-             const datumHtml = abgesagt
-                ? `<s>${datumDeutsch}</s>` // <s> = durchgestrichen
-                : datumDeutsch;
+            const abgesagt = st.abgesagt && st.abgesagt !== "null" && st.abgesagt !== "0"; 
+            const datumHtml = abgesagt
+              ? `<s>${datumDeutsch}</s>` // <s> = durchgestrichen
+              : datumDeutsch;
 
             return `
             <tr data-termine-id="${st.termine_id}">
               <th align="center">${datumHtml}</th>
               <td>${st.beschreibung}</td>
-              <td>${st.gruppenkuerzel ? st.gruppenkuerzel : ''}</td>
+              ${hatGruppenkuerzel ? `<td>${st.gruppenkuerzel ? st.gruppenkuerzel : ''}</td>` : ''}
               <td align="right">${betragFormatted} €</td>
             </tr>
-            `}).join("");
+            `;
+          }).join("");
         }
             const datumParts = data.rechnung.datum.split("-");
             const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
