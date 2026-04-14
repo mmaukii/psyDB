@@ -189,16 +189,30 @@ async function ladeRechnungen() {
     let betragNum = parseFloat(r.betrag);
     let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
 
+    // Farb-Logik: bezahlt = grün, sonst überfällig = rot, sonst schwarz
+    let farbe = '#000';
+    let zielFarbe = '';
+    let zielStyle = '';
+    if (r.bezahlt === 1) {
+      farbe = '#009900';
+      zielFarbe = '#009900';
+      zielStyle = 'font-weight: bold;';
+    } else if (istUeberfaellig) {
+      farbe = '#d60000';
+      zielFarbe = '#d60000';
+      zielStyle = 'text-decoration: underline double; font-weight: bold;';
+    }
+
     return `
     <tr data-id="${r.rechnung_id}">
-      <th align="center"><span style="color:${istUeberfaellig ? '#d60000' : '#000'};">${r.rechnungsnr}</span></th>
+      <th align="center"><span style="color:${farbe};">${r.rechnungsnr}</span></th>
       <td align="center">${r.kuerzel}</td>
       <td align="center">${r.vorname || ""}</td>
       <td align="center">${r.nachname || ""}</td>
       <td align="center">${datumDeutsch}</td>
       <td align="right">${betragFormatted} €</td>
       <td align="center">
-      <span${istUeberfaellig ? ' style="color:#d60000;text-decoration: underline double; font-weight: bold;"' : ''}>
+      <span style="color:${zielFarbe};${zielStyle}">
         ${zahlungsziel_datum} (${r.zahlungsziel_tage || ''} d)
       </span>
       </td>
@@ -393,23 +407,23 @@ async function ladeMahnungen(rechnungId) {
         // "wie vielte Mahnung": 1 = erste, 2 = zweite, ...
         const mahnungNr = index + 1;
         return `
-          <tr data-mahnung-id="${m.id}"${istUeberfaellig ? ' style="background:#d66767;"' : ''}>
-                <th align="center">${datumDeutsch}</th>
-                 <td align="center">${m.mahnungsnr}</td>     
-                <td contenteditable="true" class="kommentar-cell">${m.kommentar || ""}</td>
-                <td align="center" contenteditable="true" class="verzugszinsen-cell">${formatDE(m.verzugszinsenProz) || ""}</td>
-                <td align="center" contenteditable="true" class="mahnspesen-cell">${formatDE(m.mahnspesen) || ""} €</td>
-                <td align="center" contenteditable="true" class="verzugszinsen-cell">${formatDE(m.verzugszinsen) || ""} €</td>
-                <td align="center" contenteditable="true" >
-                  <span${istUeberfaellig ? ' style="text-decoration: underline double; font-weight: bold;"' : ''}>
-                    ${zahlungsziel_datum} (${m.zahlungsziel_tage|| ""} d)
-                  </span>
-                </td>
-                <td>    
-                <button class="mail-mahnung-btn table-btn" data-id="${m.id}" title="Mahnung per E-Mail senden">📧</button>
-                      <button class="pdf-mahnung-btn table-btn" data-id="${m.id}" title="Mahnung als PDF herunterladen">🗂️</button>
-                      <button class="delete-mahnung-btn table-btn" data-id="${m.id}"title="Datensatz löschen">🗑️</button>
-                  </td>
+          <tr data-mahnung-id="${m.id}">
+          <th align="center"${istUeberfaellig ? ' style="color:#d60000;font-weight:bold;"' : ''}>${datumDeutsch}</th>
+          <td align="center">${m.mahnungsnr}</td>     
+          <td contenteditable="true" class="kommentar-cell">${m.kommentar || ""}</td>
+          <td align="center" contenteditable="true" class="verzugszinsen-cell">${formatDE(m.verzugszinsenProz) || ""}</td>
+          <td align="center" contenteditable="true" class="mahnspesen-cell">${formatDE(m.mahnspesen) || ""} €</td>
+          <td align="center" contenteditable="true" class="verzugszinsen-cell">${formatDE(m.verzugszinsen) || ""} €</td>
+          <td align="center" contenteditable="true">
+            <span${istUeberfaellig ? ' style="color:#d60000;font-weight:bold;text-decoration: underline double;"' : ''}>
+              ${zahlungsziel_datum} (${m.zahlungsziel_tage|| ""} d)
+            </span>
+          </td>
+          <td>    
+          <button class="mail-mahnung-btn table-btn" data-id="${m.id}" title="Mahnung per E-Mail senden">📧</button>
+                <button class="pdf-mahnung-btn table-btn" data-id="${m.id}" title="Mahnung als PDF herunterladen">🗂️</button>
+                <button class="delete-mahnung-btn table-btn" data-id="${m.id}"title="Datensatz löschen">🗑️</button>
+            </td>
               </tr>
             `;
       }).join("");
