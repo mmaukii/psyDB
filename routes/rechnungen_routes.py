@@ -196,8 +196,18 @@ def get_termine_fuer_rechnung(rechnung_id):
  
 
     # 3️⃣ Termine serialisieren
-    termine_json = [
-        {
+    termine_json = []
+    for s in termine:
+        gruppenkuerzel = None
+        if getattr(s, "gruppentermin_id", None):
+            from models.gruppentermine import Gruppentermin
+            gruppentermin = Gruppentermin.query.get(s.gruppentermin_id)
+            if gruppentermin and gruppentermin.gruppe_id:
+                from models.gruppen import Gruppe
+                gruppe = Gruppe.query.get(gruppentermin.gruppe_id)
+                if gruppe:
+                    gruppenkuerzel = gruppe.gruppenkuerzel
+        termine_json.append({
             "termine_id": s.id,
             "kunde_id": s.kunde_id,
             "datum": s.datum,
@@ -208,10 +218,9 @@ def get_termine_fuer_rechnung(rechnung_id):
             "betrag": s.betrag,
             "abgesagt": s.abgesagt,
             "timestamp": s.timestamp,
-            "changestamp": s.changestamp
-        }
-        for s in termine
-    ]
+            "changestamp": s.changestamp,
+            "gruppenkuerzel": gruppenkuerzel
+        })
 
     # 4️⃣ Antwort
     # Zahlungsziel-Datum berechnen

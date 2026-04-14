@@ -47,7 +47,7 @@ rechnungsTabelle.addEventListener("click", async (e) => {
 
         // Tabelle neu aufbauen
         if (data.termine.length === 0) {
-            termineproRechnungBody.innerHTML = `<tr><td colspan="4">Keine Termine vorhanden.</td></tr>`;
+            termineproRechnungBody.innerHTML = `<tr><td colspan="5">Keine Termine vorhanden.</td></tr>`;
         } else {
             termineproRechnungBody.innerHTML = data.termine.map(st => {
             // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
@@ -65,8 +65,9 @@ rechnungsTabelle.addEventListener("click", async (e) => {
             <tr data-termine-id="${st.termine_id}">
               <th align="center">${datumHtml}</th>
               <td>${st.beschreibung}</td>
+              <td>${st.gruppenkuerzel ? st.gruppenkuerzel : ''}</td>
               <td align="right">${betragFormatted} €</td>
-			     	</tr>
+            </tr>
             `}).join("");
         }
             const datumParts = data.rechnung.datum.split("-");
