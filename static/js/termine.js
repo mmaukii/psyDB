@@ -18,7 +18,63 @@ async function ladeTermine() {
     const termine = await response.json();
     console.log("Geladene Termine:", termine);
 
-    offeneTermineTabelle.innerHTML = termine.map(st => {
+    // Filterfunktion für die Werte, wie in filterTabelle
+    function parseGermanDateToISO(dateStr) {
+        if (!dateStr) return null;
+        const [d,m,y] = dateStr.split(".");
+        return `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
+    }
+    const fVorname = document.getElementById("filterVorname").value.toLowerCase();
+    const fNachname = document.getElementById("filterNachname").value.toLowerCase();
+    const fKuerzel = document.getElementById("filterKuerzel").value.toLowerCase();
+    const fGruppe = document.getElementById("filterGruppe").value.toLowerCase();
+    const fStatusVal = document.getElementById("filterTermineStatus").value;
+    const fStatus = fStatusVal === "" ? null : Number(fStatusVal);
+    const fDateFromVal = document.getElementById("RechnungsDatumVon").value;
+    const fDateToVal   = document.getElementById("RechnungsDatumBis").value;
+    const fromDate = fDateFromVal ? new Date(fDateFromVal).toISOString().slice(0,10) : null;
+    const toDate   = fDateToVal   ? new Date(fDateToVal).toISOString().slice(0,10) : null;
+
+    // Filter anwenden wie in filterTabelle
+    const gefilterteTermine = termine.filter(st => {
+        // Datum
+        const datumParts = st.datum.split("-");
+        const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
+        const rowDate  = parseGermanDateToISO(datumDeutsch);
+        const vorname  = (st.vorname || "").toLowerCase();
+        const nachname = (st.nachname || "").toLowerCase();
+        const kuerzel  = (st.kuerzel || "").toLowerCase();
+        const gruppe   = (st.gruppenkuerzel || "").toLowerCase();
+        const abgesagtText = (st.abgesagt || "").toString().trim().toLowerCase();
+        const istAbgesagt = abgesagtText !== "" && abgesagtText !== "null" && abgesagtText !== "0";
+        // Datumsfilter
+        let dateMatch = true;
+        if (fromDate && toDate) dateMatch = rowDate >= fromDate && rowDate <= toDate;
+        else if (fromDate)      dateMatch = rowDate >= fromDate;
+        else if (toDate)        dateMatch = rowDate <= toDate;
+        // Statusfilter
+        let statusMatch = true;
+        if (fStatus !== null) {
+            statusMatch = fStatus === 1 ? istAbgesagt : !istAbgesagt;
+        }
+        return (
+            vorname.includes(fVorname) &&
+            nachname.includes(fNachname) &&
+            kuerzel.includes(fKuerzel) &&
+            gruppe.includes(fGruppe) &&
+            dateMatch &&
+            statusMatch
+        );
+    });
+
+    // Prüfen, ob mindestens ein gruppenkuerzel in den gefilterten Werten vorhanden ist
+    const hatGruppenkuerzel = gefilterteTermine.some(st => st.gruppenkuerzel && st.gruppenkuerzel !== "");
+    // Tabellenkopf dynamisch anpassen
+    const thGruppenkuerzel = document.getElementById("thGruppenkuerzel");
+    if (thGruppenkuerzel) {
+        thGruppenkuerzel.style.display = hatGruppenkuerzel ? "" : "none";
+    }
+    offeneTermineTabelle.innerHTML = gefilterteTermine.map(st => {
         // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
         const datumParts = st.datum.split("-");
         const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
@@ -26,8 +82,6 @@ async function ladeTermine() {
         let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
 
         const abgesagt = st.abgesagt && st.abgesagt !== "null" && st.abgesagt !== "0";
-
-      
 
         // Wenn abgesagt, alles durchstreichen
         function sWrap(val) {
@@ -58,7 +112,7 @@ async function ladeTermine() {
             <td align="center">${sWrap(st.startzeit)}</td>
             <td align="center">${sWrap(st.endzeit)}</td>
             <td>${sWrap(st.beschreibung)}</td>
-            <td>${sWrap(st.gruppenkuerzel)}</td>
+            ${hatGruppenkuerzel ? `<td>${sWrap(st.gruppenkuerzel)}</td>` : ''}
             <td align="right">${sWrap(betragFormatted)}&nbsp;€</td>
             <td>
                 ${buttonHtml}
@@ -69,7 +123,7 @@ async function ladeTermine() {
         </tr>
         `;
     }).join("");
-    filterTabelle(); // Tabelle nach dem Laden filtern
+    // filterTabelle() entfällt, da Filter hier angewendet
 
 }
 
@@ -284,34 +338,34 @@ function filterTabelle() {
 }
 
 
-// Event Listener für Filter
+// Event Listener für Filter: Tabelle immer neu laden, Filterlogik ist in ladeTermine()
 document.getElementById("filterVorname").addEventListener("input", () => {
     saveFilterState();
-    filterTabelle();
+    ladeTermine();
 });
 document.getElementById("filterNachname").addEventListener("input", () => {
     saveFilterState();
-    filterTabelle();
+    ladeTermine();
 });
 document.getElementById("filterKuerzel").addEventListener("input", () => {
     saveFilterState();
-    filterTabelle();
+    ladeTermine();
 });
 document.getElementById("filterGruppe").addEventListener("input", () => {
     saveFilterState();
-    filterTabelle();
+    ladeTermine();
 });
 document.getElementById("RechnungsDatumVon").addEventListener("input", () => {
     saveFilterState();
-    filterTabelle();
+    ladeTermine();
 });
 document.getElementById("RechnungsDatumBis").addEventListener("input", () => {
     saveFilterState();
-    filterTabelle();
+    ladeTermine();
 });
 document.getElementById("filterTermineStatus").addEventListener("change", () => {
     saveFilterState();
-    filterTabelle();
+    ladeTermine();
 });
 
 
@@ -529,6 +583,6 @@ document.getElementById("filterLeeren").addEventListener("click", () => {
     document.querySelectorAll(".selectRow").forEach(cb => cb.checked = false);
     document.getElementById("selectAllTermine").checked = false;
 
-    // Tabelle neu filtern
-    filterTabelle();
+    // Tabelle neu laden
+    ladeTermine();
 });
