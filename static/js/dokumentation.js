@@ -276,17 +276,15 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
       <div class="doku-text">
         ${
         filter === "allg"
-          ? formatTextWithLineBreaks(d.doku)
+          ? `<span style=\"text-decoration: underline; font-weight: bold;\">Allgemeine Dokumentation</span><br>${formatTextWithLineBreaks(d.doku)}`
 
           : filter === "pers"
-          ? formatTextWithLineBreaks(d.pers_doku)
+          ? `<span style=\"text-decoration: underline; font-weight: bold;\">Persönliche Dokumentation</span><br>${formatTextWithLineBreaks(d.pers_doku)}`
 
           : `
-            ${formatTextWithLineBreaks(d.doku)}
+            <span style=\"text-decoration: underline; font-weight: bold;\">Allgemeine Dokumentation</span><br>${formatTextWithLineBreaks(d.doku)}
             <br><br>
-            <span class="doku-trenner">.--.</span>
-            <br>
-            ${formatTextWithLineBreaks(d.pers_doku)}
+            <span style=\"text-decoration: underline; font-weight: bold;\">Persönliche Dokumentation</span><br>${formatTextWithLineBreaks(d.pers_doku)}
             `
         }
       </div>
@@ -351,17 +349,15 @@ async function ladeDokusFuerGruppe(gruppeId) {
         <div class="doku-text">
           ${
             filter === "allg"
-              ? escapeHtml(d.doku || "")
+              ? `<span style="text-decoration: underline; font-weight: bold;">Allgemeine Dokumentation</span><br>${escapeHtml(d.doku || "")}`
 
               : filter === "pers"
-                ? escapeHtml(d.pers_doku || "")
+                ? `<span style="text-decoration: underline; font-weight: bold;">Persönliche Dokumentation</span><br>${escapeHtml(d.pers_doku || "")}`
 
                 : `
-                    ${escapeHtml(d.doku || "")}
+                    <span style="text-decoration: underline; font-weight: bold;">Allgemeine Dokumentation</span><br>${escapeHtml(d.doku || "")}
                     <br><br>
-                    <span class="doku-trenner">.--.</span>
-                    <br><br>
-                    ${escapeHtml(d.pers_doku || "")}
+                    <span style="text-decoration: underline; font-weight: bold;">Persönliche Dokumentation</span><br>${escapeHtml(d.pers_doku || "")}
                   `
           }
         </div>

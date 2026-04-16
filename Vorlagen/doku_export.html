@@ -13,27 +13,35 @@
     </style>
 </head>
 <body>
-<h2>Dokumentation für {{ kunde.vorname }} {{ kunde.nachname }}</h2>
+{% if doku_filter == 'allg' %}
+  <h2>Allgemeine Dokumentation für {{ kunde.vorname }} {{ kunde.nachname }}</h2>
+{% elif doku_filter == 'pers' %}
+  <h2>Persönliche Dokumentation für {{ kunde.vorname }} {{ kunde.nachname }}</h2>
+{% else %}
+  <h2>Dokumentation für {{ kunde.vorname }} {{ kunde.nachname }}</h2>
+{% endif %}
 {% for d in alle_dokus %}
   <div class="doku-block">
     <div class="doku-header">
-      {{ d.datum }} {% if d.startzeit %}{{ d.startzeit }} – {{ d.endzeit }}{% endif %} {{ d.anzeigeName }}
+      {% set datum_parts = d.datum.split('-') %}
+      {% if datum_parts|length == 3 %}{{ datum_parts[2] }}.{{ datum_parts[1] }}.{{ datum_parts[0] }}{% else %}{{ d.datum }}{% endif %} {% if d.startzeit %}{{ d.startzeit }} – {{ d.endzeit }}{% endif %} {{ d.anzeigeName }}
       {% if d.beschreibung %}, {{ d.beschreibung }}{% endif %}
       {% if d.abgesagt %} – abgesagt{% endif %}
       {% if d.entfallen %} – entfallen{% endif %}
     </div>
     <div class="doku-content">
       {% if doku_filter == 'allg' %}
-        {% if d.doku %}<div>{{ d.doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+        {% if d.doku %}<div style="text-decoration: underline; font-weight: bold; margin-top: 12px;">Allgemeine Dokumentation</div><div>{{ d.doku|replace('\n', '<br>')|safe }}</div>{% endif %}
       {% elif doku_filter == 'pers' %}
-        {% if d.pers_doku %}<div style="margin-top:8px; color:#555;">{{ d.pers_doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+        {% if d.pers_doku %}<div style="text-decoration: underline; font-weight: bold; margin-top: 12px;">Persönliche Dokumentation</div><div style="margin-top:8px; color:#555;">{{ d.pers_doku|replace('\n', '<br>')|safe }}</div>{% endif %}
       {% else %}
-        {% if d.doku %}<div>{{ d.doku|replace('\n', '<br>')|safe }}</div>{% endif %}
-        {% if d.pers_doku %}<div style="margin-top:8px; color:#555;">{{ d.pers_doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+        {% if d.doku %}<div style="text-decoration: underline; font-weight: bold;">Allgemeine Dokumentation</div><div>{{ d.doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+
+        {% if d.pers_doku %}<div style="text-decoration: underline; font-weight: bold; margin-top: 12px;">Persönliche Dokumentation</div><div style="margin-top:8px; ">{{ d.pers_doku|replace('\n', '<br>')|safe }}</div>{% endif %}
       {% endif %}
     </div>
-    <div class="doku-trenner">.--.</div>
   </div>
+  <hr style="border: none; border-top: 1px solid #ccc; margin: 24px 0 16px 0;">
 {% endfor %}
 </body>
 </html>
