@@ -148,7 +148,60 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // 🟢 Event per Drag verschieben
         eventDrop: function(info) {
-            updateEvent(info.event);
+            // updateEvent so anpassen, dass bei Fehler revert ausgeführt wird
+            function toTimeString(date) {
+                if (!date) return "00:00";
+                const hours = String(date.getHours()).padStart(2, "0");
+                const minutes = String(date.getMinutes()).padStart(2, "0");
+                return `${hours}:${minutes}`;
+            }
+            const event = info.event;
+            if (event._def.extendedProps.kunde_id) {
+                fetch('/api/termine/' + event.id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        datum: event.startStr.split("T")[0],
+                        startzeit: toTimeString(event.start),
+                        endzeit: toTimeString(event.end),
+                        beschreibung: event.summary,
+                        betrag: event.extendedProps?.betrag ?? null,
+                        push_termin : 1,
+                        caldav_uid: event.extendedProps?.caldav_uid ?? null
+                    })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Fehler beim Aktualisieren");
+                    return res.json();
+                })
+                .then(() => calendar.refetchEvents())
+                .catch(err => {
+                    console.error(err);
+                    info.revert();
+                });
+            } else if (event._def.extendedProps.gruppe_id) {
+                fetch('/api/gruppentermine/' + event.id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        datum: event.startStr.split("T")[0],
+                        startzeit: toTimeString(event.start),
+                        endzeit: toTimeString(event.end),
+                        beschreibung: event.title,
+                        betrag: event.extendedProps?.betrag ?? null,
+                        push_termin: 1
+                    })    
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Fehler beim Aktualisieren");
+                    return res.json();
+                })
+                .then(() => calendar.refetchEvents())
+                .catch(err => {
+                    console.error(err);
+                    info.revert();
+                });
+            }
         },
 
         // 🟢 Drag-Auswahl → neuer Termin
