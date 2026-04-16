@@ -52,6 +52,8 @@ def export_dokus_kunde_pdf(kunde_id):
     # Kombinieren und sortieren
     alle_dokus = einzel_dokus + gruppen_dokus
     alle_dokus.sort(key=lambda d: d["datum"] or "", reverse=True)
+    # Filter aus Query-Parameter lesen
+    doku_filter = request.args.get("filter", "ges")
     # HTML generieren aus ../Vorlagen/
     from jinja2 import Environment, FileSystemLoader, select_autoescape
     vorlagen_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Vorlagen'))
@@ -60,7 +62,7 @@ def export_dokus_kunde_pdf(kunde_id):
         autoescape=select_autoescape(['html', 'xml'])
     )
     template = env.get_template("doku_export.html")
-    html_content = template.render(kunde=kunde, alle_dokus=alle_dokus)
+    html_content = template.render(kunde=kunde, alle_dokus=alle_dokus, doku_filter=doku_filter)
     now_str = datetime.now().strftime("%y%m%d_%H%M%S")
     pdf_filename = f"Doku_{kunde.kuerzel}_{now_str}.pdf"
     folder_path = os.path.join(os.path.dirname(__file__), "..", "Rechnungen")

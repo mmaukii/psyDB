@@ -179,7 +179,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
   if (htmlBtn) {
     htmlBtn.style.display = "inline-block";
     htmlBtn.onclick = () => {
-      window.open(`/api/doku/kunde/${kundeId}/pdf`, "_blank");
+      const filter = document.getElementById("DokuFilter")?.value || "ges";
+      window.open(`/api/doku/kunde/${kundeId}/pdf?filter=${encodeURIComponent(filter)}`, "_blank");
     };
   }
   const filter = document.getElementById("DokuFilter")?.value;
@@ -283,8 +284,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
           : `
             ${formatTextWithLineBreaks(d.doku)}
             <br><br>
-            <span class="doku-trenner">*****</span>
-            <br><br>
+            <span class="doku-trenner">.--.</span>
+            <br>
             ${formatTextWithLineBreaks(d.pers_doku)}
             `
         }
@@ -358,7 +359,7 @@ async function ladeDokusFuerGruppe(gruppeId) {
                 : `
                     ${escapeHtml(d.doku || "")}
                     <br><br>
-                    <span class="doku-trenner">*****</span>
+                    <span class="doku-trenner">.--.</span>
                     <br><br>
                     ${escapeHtml(d.pers_doku || "")}
                   `
@@ -418,17 +419,21 @@ dokuForm.addEventListener("submit", async e => {
 
   const termineId = dokuForm.querySelector("#termineId").value;
   const gruppentermineId = dokuForm.querySelector("#gruppentermineId").value;
-  const neuerText = dokuText.value;
+  // Text aufteilen wie in fensterDoku.js
+  const [doku, pers_doku] = (text => {
+    const m = text.split(/\n*\.\-\-\.\n*/);
+    return [m[0]?.trim() || "", m[1]?.trim() || ""];
+  })(dokuText.value);
 
   try {
     let url;
-    let method = "PUT"; // oder PATCH, je nach API
-    let body = { doku: neuerText };
+    let method = "PUT";
+    let body = { doku, pers_doku };
 
     if (termineId) {
-      url = `/api/termine/${termineId}`; // bestehender Kunden-Termine Endpunkt
+      url = `/api/termine/${termineId}`;
     } else if (gruppentermineId) {
-      url = `/api/gruppentermine/${gruppentermineId}`; // bestehender Gruppen-Termine Endpunkt
+      url = `/api/gruppentermine/${gruppentermineId}`;
     } else {
       throw new Error("Keine gültige Termine-ID vorhanden");
     }

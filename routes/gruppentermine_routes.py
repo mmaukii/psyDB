@@ -49,6 +49,7 @@ def get_termine_fuer_gruppe(gruppe_id):
         "timestamp": gs.timestamp,
         "changestamp": gs.changestamp,
         "doku": gs.doku,
+        "pers_doku": gs.pers_doku,
         "therapieform": gs.therapieform,
         "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None
     } for gs in termine])
@@ -158,7 +159,7 @@ def update_gruppenstunde(id):
     data = request.get_json()
 
     # 1️⃣ Gruppentermin aktualisieren
-    for field in ["datum", "startzeit", "endzeit", "beschreibung", "kommentar", "betrag", "entfallen", "doku", "therapieform"]:
+    for field in ["datum", "startzeit", "endzeit", "beschreibung", "kommentar", "betrag", "entfallen", "doku", "pers_doku","therapieform"]:
         if field in data:
             setattr(gs, field, data[field])
     gs.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -177,7 +178,7 @@ def update_gruppenstunde(id):
             "caldav_uid": None,
             "kuerzel": gs.gruppe.gruppenkuerzel
         })
-    return jsonify({"success": True, "id": gs.id})
+    return jsonify({"success": True, "id": gs.id, "doku": gs.doku, "pers_doku": gs.pers_doku})
 
 # --- Gruppenteremine mit terminen nur nicht offline gelöscht ---
 @gruppentermine_bp.get("/gruppentermine/<int:gruppe_id>/termine")

@@ -23,10 +23,16 @@
       {% if d.entfallen %} – entfallen{% endif %}
     </div>
     <div class="doku-content">
-      {% if d.doku %}<div>{{ d.doku|replace('\n', '<br>')|safe }}</div>{% endif %}
-      {% if d.pers_doku %}<div style="margin-top:8px; color:#555;">{{ d.pers_doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+      {% if doku_filter == 'allg' %}
+        {% if d.doku %}<div>{{ d.doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+      {% elif doku_filter == 'pers' %}
+        {% if d.pers_doku %}<div style="margin-top:8px; color:#555;">{{ d.pers_doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+      {% else %}
+        {% if d.doku %}<div>{{ d.doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+        {% if d.pers_doku %}<div style="margin-top:8px; color:#555;">{{ d.pers_doku|replace('\n', '<br>')|safe }}</div>{% endif %}
+      {% endif %}
     </div>
-    <div class="doku-trenner">*****</div>
+    <div class="doku-trenner">.--.</div>
   </div>
 {% endfor %}
 </body>
