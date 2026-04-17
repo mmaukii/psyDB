@@ -378,8 +378,23 @@ def push_termin(termin: dict, delete_from_db=False):
     valid_kuerzel = kunden_kuerzel | gruppen_kuerzel
     kunden_by_kuerzel = {k.kuerzel: k for k in kunden}
     gruppen_by_kuerzel = {g.gruppenkuerzel: g for g in gruppen}
-    print("Push Termin: " + termin.get("kuerzel", "") + ", ID: " + str(termin.get("termin_id") or termin.get("gruppentermin_id"))   )
- 
+    print("Push Termin: " + termin.get("kuerzel", "") + ", ID: " + str(termin.get("termin_id") or termin.get("gruppentermin_id")))
+
+    # Nur Einzeltermine pushen, wenn kein gruppentermin_id (aber erst prüfen, wenn es ein Termin ist)
+    if "termin_id" in termin:
+        # gruppentermin_id ggf. aus DB holen, falls nicht im dict
+        #
+        termin_obj = None
+        try:
+            termin_obj = Termin.query.get(termin["termin_id"])
+        except Exception:
+            pass
+        if termin_obj is not None:
+            gruppentermin_id = getattr(termin_obj, "gruppentermin_id", None)
+        if gruppentermin_id is not None:
+            print("→ Termin gehört zu Gruppentermin, Push wird übersprungen.")
+            return
+
     title = termin.get("kuerzel", "")
     if title not in valid_kuerzel:
         #print(f"⚠ Ignoriere Push für ungültiges Kürzel: {title}")
