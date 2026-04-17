@@ -140,10 +140,13 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
         } else {
 
             termineProGruppeAnwesenheitsListe.innerHTML = gruppentermine.map(st => {
-                // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
+                // Datum umformatieren von YYYY-MM-DD → Wochentag DD.MM.YY
                 console.log("Stundendaten für Anwesenheitstabelle:", st);
                 const datumParts = st.datum.split("-");
-                const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
+                const datumObj = new Date(Number(datumParts[0]), Number(datumParts[1]) - 1, Number(datumParts[2]));
+                const wochentage = ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."];
+                const wochentag = wochentage[datumObj.getDay()];
+                const datumDeutsch = `${wochentag} ${datumParts[2]}.${datumParts[1]}.${datumParts[0].slice(2)}`;
                 // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
                 const rowStyle = (st.entfallen && toggleAbgesagtBtn.dataset.show === "false") ? "display:none;" : "";
 
@@ -197,9 +200,12 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
             `}).join("");
 
             termineProGruppeListe.innerHTML = gruppentermine.map(st => {
-                // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
+                // Datum umformatieren von YYYY-MM-DD → Wochentag DD.MM.YY
                 const datumParts = st.datum.split("-");
-                const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
+                const datumObj = new Date(Number(datumParts[0]), Number(datumParts[1]) - 1, Number(datumParts[2]));
+                const wochentage = ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."];
+                const wochentag = wochentage[datumObj.getDay()];
+                const datumDeutsch = `${wochentag} ${datumParts[2]}.${datumParts[1]}.${datumParts[0].slice(2)}`;
                 let betragNum = parseFloat(st.betrag);
                 let betragFormatted = isNaN(betragNum) ? "" : new Intl.NumberFormat("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(betragNum);
                 // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv

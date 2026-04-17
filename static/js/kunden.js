@@ -232,9 +232,13 @@ async function reloadTermineFuerKunde(kundeId) {
         }
 
         termineProKundeListe.innerHTML = termine.map(st => {
-            // Datum formatieren
+
+            // Datum formatieren inkl. Wochentag
             const datumParts = st.datum.split("-");
-            const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
+            const datumObj = new Date(Number(datumParts[0]), Number(datumParts[1]) - 1, Number(datumParts[2]));
+            const wochentage = ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."];
+            const wochentag = wochentage[datumObj.getDay()];
+            const datumDeutsch = `${wochentag} ${datumParts[2]}.${datumParts[1]}.${datumParts[0].slice(2)}`;
 
             // Betrag formatieren
             let betragNum = parseFloat(st.betrag);

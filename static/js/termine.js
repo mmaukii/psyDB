@@ -102,9 +102,20 @@ async function ladeTermine() {
             `;
         }
 
+        // Vergangene Termine: Nur Checkbox-Spalte hervorheben (Datum < heute)
+        let checkboxTdStyle = "";
+        try {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const terminDate = new Date(st.datum);
+            if (terminDate < today) {
+                checkboxTdStyle = "background-color: #fff8c6;"; // sanftes Gelb
+            }
+        } catch (e) {}
+
         return `
         <tr data-termine-id="${st.id}">
-            <td>${abgesagt ? `<s style=\"color:gray;\"><input type=\"checkbox\" class=\"selectRow\" data-termine-id=\"${st.id}\"></s>` : `<input type=\"checkbox\" class=\"selectRow\" data-termine-id=\"${st.id}\">`}</td>
+            <td style="${checkboxTdStyle}">${abgesagt ? `<s style=\"color:gray;\"><input type=\"checkbox\" class=\"selectRow\" data-termine-id=\"${st.id}\"></s>` : `<input type=\"checkbox\" class=\"selectRow\" data-termine-id=\"${st.id}\">`}</td>
             <th align="center">${sWrap(datumDeutsch)}</th>            
             <td>${sWrap(st.vorname)}</td>
             <td>${sWrap(st.nachname)}</td>
