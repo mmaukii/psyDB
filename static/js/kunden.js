@@ -222,6 +222,15 @@ async function reloadTermineFuerKunde(kundeId) {
         }
 
 
+
+        // Prüfen, ob mindestens ein Termin ein Gruppenkürzel hat
+        const hatGruppenkuerzel = termine.some(st => st.gruppenkuerzel && st.gruppenkuerzel !== "");
+        // Gruppenspalte im Kopf ein-/ausblenden
+        const thGruppenkuerzel = document.getElementById("thGruppenkuerzel");
+        if (thGruppenkuerzel) {
+            thGruppenkuerzel.style.display = hatGruppenkuerzel ? "" : "none";
+        }
+
         termineProKundeListe.innerHTML = termine.map(st => {
             // Datum formatieren
             const datumParts = st.datum.split("-");
@@ -271,12 +280,19 @@ async function reloadTermineFuerKunde(kundeId) {
             // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
             const rowStyle = (st.abgesagt && toggleAbgesagtBtn.dataset.show === "false") ? "display:none;" : "";
 
+            // Gruppenkürzel anzeigen (wie in termine.js)
+            const gruppenkuerzel = st.gruppenkuerzel || "";
+
+            // Gruppenspalte in Zeile ggf. ausblenden
+            const gruppenTd = hatGruppenkuerzel ? `<td align="center">${gruppenkuerzel}</td>` : "";
+
             return `
                 <tr data-id="${st.id}" class="${st.abgesagt ? 'abgesagt' : ''}" style="${rowStyle}">
                     <th align="center">${datumDeutsch}</th>
                     <td align="center">${localStart}</td>
                     <td align="center">${localEnd}</td>
                     <td>${st.beschreibung}</td>
+                     ${gruppenTd}
                     <td align="right">${betragFormatted} €</td>
                     <td>${buttons}</td>
                 </tr>

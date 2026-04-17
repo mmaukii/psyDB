@@ -430,11 +430,14 @@ def get_termine_kunde_rnr(kunde_id):
             Kunde.nachname,
             Kunde.kuerzel,
             Kunde.id.label("kundeId"),
-            Rechnung.rechnungsnr
+            Rechnung.rechnungsnr,
+            Gruppe.gruppenkuerzel
         )
         .join(Kunde, Termin.kunde_id == Kunde.id)
         .outerjoin(TermineRechnung, TermineRechnung.termin_id == Termin.id)
         .outerjoin(Rechnung, Rechnung.id == TermineRechnung.rechnung_id)
+        .outerjoin(Gruppentermin, Termin.gruppentermin_id == Gruppentermin.id)
+        .outerjoin(Gruppe, Gruppentermin.gruppe_id == Gruppe.id)
         .filter(Termin.kunde_id == kunde_id)
         .filter(Termin.nur_offline_geloescht == 0)
         .order_by(desc(Termin.datum), desc(Termin.startzeit))
@@ -458,7 +461,8 @@ def get_termine_kunde_rnr(kunde_id):
             "kuerzel": r.kuerzel,
             "kundeId": r.kundeId,
             "gruppentermin_id": r.gruppentermin_id,
-            "rechnungsnr": r.rechnungsnr
+            "rechnungsnr": r.rechnungsnr,
+            "gruppenkuerzel": r.gruppenkuerzel or ""
         }
         for r in result
     ])
