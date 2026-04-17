@@ -463,10 +463,38 @@ document.getElementById('getSelectedButton').addEventListener('click', () => {
     });
     console.log("Ausgewählte Termine-IDs:", selectedIds);
 
+    // Termine in der Zukunft herausfiltern
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let zukunftIds = [];
+    let gueltigeIds = [];
+    selectedIds.forEach(id => {
+        const row = document.querySelector(`#offeneTermineTabelle tr[data-termine-id="${id}"]`);
+        if (!row) return;
+        // Datum aus der Tabelle holen (2. Spalte, th)
+        const datumText = row.cells[1].textContent.trim();
+        // Format DD.MM.YYYY
+        const [d,m,y] = datumText.split(".");
+        const terminDate = new Date(`${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`);
+        if (terminDate > today) {
+            zukunftIds.push(id);
+        } else {
+            gueltigeIds.push(id);
+        }
+    });
+    if (zukunftIds.length > 0) {
+        // Checkboxen für zukünftige Termine abwählen
+        zukunftIds.forEach(id => {
+            const cb = document.querySelector(`#offeneTermineTabelle input.selectRow[data-termine-id="${id}"]`);
+            if (cb) cb.checked = false;
+        });
+        alert("Achtung: Termine mit einem Datum in der Zukunft können nicht abgerechnet werden und wurden von der Auswahl entfernt.");
+    }
+
     // Prüfen, ob alle Termine pro Kunde den gleichen ust-Wert haben
     // Map: kundeId -> { ust: Set, ids: [] }
     const kundeMap = {};
-    selectedIds.forEach(id => {
+    gueltigeIds.forEach(id => {
         const row = document.querySelector(`#offeneTermineTabelle tr[data-termine-id="${id}"]`);
         if (!row) return;
         const kundeId = row.cells[13] ? row.cells[13].textContent.trim() : null;
@@ -489,7 +517,7 @@ document.getElementById('getSelectedButton').addEventListener('click', () => {
         }
     });
 
-    let filteredIds = selectedIds.filter(id => !removedIds.includes(id));
+    let filteredIds = gueltigeIds.filter(id => !removedIds.includes(id));
     if (removedIds.length > 0) {
         // Kundenkürzel der betroffenen Kunden sammeln
         const kundeKuerzel = Object.entries(kundeMap)
