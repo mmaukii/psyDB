@@ -500,7 +500,7 @@ const toggleAbgesagtBtn = document.getElementById("toggleAbgesagtBtn");
 // Startzustand: abgesagte Zeilen verstecken (auch bei dynamisch geladenen)
 function hideAbgesagteRows() {
   document.querySelectorAll("#termineProGruppeListe tr.abgesagt").forEach(row => {
-    row.style.display = "none";
+     row.style.visibility = "hidden";
   });
   console.log("Abgesagte Zeilen ausgeblendet");
 }
@@ -508,23 +508,19 @@ hideAbgesagteRows();
 
 // Klick-Event für Toggle-Button
 toggleAbgesagtBtn.addEventListener("click", () => {
-  const currentlyShown = toggleAbgesagtBtn.dataset.show === "true";
-  const rows = document.querySelectorAll("#termineProGruppeListe tr.abgesagt");
-
-  rows.forEach(row => {
-    row.style.display = currentlyShown ? "none" : "";
-  });
-
-  const rows1 = document.querySelectorAll("#termineProGruppeAnwesenheitsListe tr.abgesagt");
-
-  rows1.forEach(row => {
-    row.style.display = currentlyShown ? "none" : "";
-  });
-
-  toggleAbgesagtBtn.dataset.show = (!currentlyShown).toString();
-  toggleAbgesagtBtn.textContent = currentlyShown
-    ? "Abgesagte anzeigen"
-    : "Abgesagte ausblenden";
+    const currentlyShown = toggleAbgesagtBtn.dataset.show === "true";
+    const rows = document.querySelectorAll("#termineProGruppeListe tr.abgesagt");
+    rows.forEach(row => {
+        row.style.display = currentlyShown ? "none" : "";
+    });
+    const rows1 = document.querySelectorAll("#termineProGruppeAnwesenheitsListe tr.abgesagt");
+    rows1.forEach(row => {
+        row.style.display = currentlyShown ? "none" : "";
+    });
+    toggleAbgesagtBtn.dataset.show = (!currentlyShown).toString();
+    toggleAbgesagtBtn.textContent = currentlyShown
+        ? "Abgesagte anzeigen"
+        : "Abgesagte ausblenden";
 });
 
 // Funktion: Termin aktualisieren basierend auf ausgewählten Teilnehmern
@@ -1074,6 +1070,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (content) {
                 content.classList.add("active");
             }
+
+            // Button immer zurücksetzen
+            toggleAbgesagtBtn.style.pointerEvents = "auto";
+            toggleAbgesagtBtn.style.visibility = (tab.dataset.tab === "termine" || tab.id === "termineTabContent") ? "visible" : "hidden";
+            if (toggleAbgesagtBtn.style.visibility === "hidden") {
+                toggleAbgesagtBtn.style.pointerEvents = "none";
+            }
+
+            
         });
     });
 });
