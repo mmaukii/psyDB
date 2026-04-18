@@ -1,3 +1,40 @@
+// Utility: Felder leeren und Markierung entfernen
+function clearRechnungFields() {
+  document.getElementById("rechnungTextOben").value = "";
+  document.getElementById("rechnungTextUnten").value = "";
+  document.getElementById("rechnungsnr").value = "";
+  document.getElementById("rechnungid").value = "";
+  document.getElementById("kommentar").value = "";
+  document.getElementById("rechnungsdatum").value = "";
+  document.getElementById("rechnungsdatumid").value = "";
+  document.getElementById("zahlungsverweis").value = "";
+  const selectedRow = document.querySelector("#rechnungsTabelle tr.selected");
+  if (selectedRow) selectedRow.classList.remove("selected");
+  const termineBody = document.getElementById("termineproRechnungBody");
+  if (termineBody) termineBody.innerHTML = "";
+  const mahnungenBody = document.getElementById("mahnungenproRechnungBody");
+  if (mahnungenBody) mahnungenBody.innerHTML = "";
+}
+
+// Utility: Prüfen, ob selektierte Rechnung noch sichtbar ist
+function selectedRechnungVisible() {
+  const selectedRow = document.querySelector("#rechnungsTabelle tr.selected");
+  if (!selectedRow) return false;
+  // Versteckte Zeilen werden durch filterRechnungen() mit display:none ausgeblendet
+  return selectedRow.style.display !== "none";
+}
+
+// Nach jeder Filteränderung prüfen, ob selektierte Rechnung noch sichtbar ist
+['filterRechnungsNr', 'filterRechnungsKunde', 'filterRechnungsStatus', 'RechnungsDatumVon', 'RechnungsDatumBis'].forEach(fid => {
+  const el = document.getElementById(fid);
+  if (el) {
+    el.addEventListener('input', () => {
+      setTimeout(() => { // nach Filterung prüfen
+        if (!selectedRechnungVisible()) clearRechnungFields();
+      }, 0);
+    });
+  }
+});
 const RECHNUNG_UI_STATE_KEY = "rechnungUiState";
 
 const termineproRechnungTabelle = document.getElementById("termineproRechnungTabelle")
@@ -113,6 +150,13 @@ function getCheckedTermine() {
 }
 
 document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", async () => {
+  console.log("Speichern-Button geklickt");
+  // Prüfen, ob selektierte Rechnung noch sichtbar ist (vor dem Speichern)
+  if (!selectedRechnungVisible()) {
+    clearRechnungFields();
+    alert("Die aktuell ausgewählte Rechnung ist nicht mehr sichtbar. Bitte wählen Sie eine gültige Rechnung aus.");
+    return;
+  }
 
     // Rechnungsnummer aus dem Formular
     const rechnungsnr = document.getElementById("rechnungsnr").value.trim();
@@ -167,13 +211,18 @@ document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", asyn
     });
 
     if (response.ok) {
-        showToast("Gespeichert!");
-        // optional: Tabelle neu laden
-        if (typeof ladeRechnungen === "function") {
-            ladeRechnungen();
-        }
+      showToast("Gespeichert!");
+      // Tabelle neu laden und danach prüfen, ob selektierte Rechnung noch sichtbar ist
+      if (typeof ladeRechnungen === "function") {
+        await ladeRechnungen();
+        setTimeout(() => {
+          if (!selectedRechnungVisible()) {
+          clearRechnungFields();
+          }
+        }, 100);
+      }
     } else {
-        alert("Fehler beim Speichern!");
+      alert("Fehler beim Speichern!");
     }
 });
 
