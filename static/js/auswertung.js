@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderJahrestabelle(data) {
         let html = `<h3>Jahresübersicht</h3><table class="auswertung-table"><thead><tr>
             <th>Jahr</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-            <th>verrechnete Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+            <th>verrechnete Termine</th><th>Arbeitszeit(h)</th><th>abgesagte Termine</th>
             <th>verrechnete Gruppen</th><th>Gruppen-Stunden</th><th>abgesagte Gruppen</th>
         </tr></thead><tbody>`;
 
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function renderTherapieformTabelle(data, jahr) {
             let html = `<h3>Therapieformen-Auswertung für ${jahr}</h3><table class="auswertung-table"><thead><tr>
                 <th>Therapieform</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-                <th>verrechnete Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+                <th>verrechnete Termine</th><th>Arbeitszeit(h)</th><th>abgesagte Termine</th>
             </tr></thead><tbody>`;
             
             // Summen-Variablen initialisieren
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderGruppenTabelle(data, jahr) {
         let html = `<h3>Gruppen-Auswertung für ${jahr}</h3><table class="auswertung-table"><thead><tr>
             <th>Kürzel</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-            <th>verrechnete Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+            <th>verrechnete Termine</th><th>Arbeitszeit(h)</th><th>abgesagte Termine</th>
         </tr></thead><tbody>`;
         for (const row of data) {
             html += `<tr>
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderKundenTabelle(data, jahr) {
         let html = `<h3>Kunden-Auswertung für ${jahr}</h3><table class="auswertung-table"><thead><tr>
             <th>Kürzel</th><th>Einnahmen gesamt</th><th>USt-pflichtig</th><th>nicht USt-pflichtig</th>
-            <th>verrechnete Termine</th><th>Stunden</th><th>abgesagte Termine</th>
+            <th>verrechnete Termine</th><th>Arbeitszeit(h)</th><th>abgesagte Termine</th>
         </tr></thead><tbody>`;
 
         // Summen-Variablen initialisieren

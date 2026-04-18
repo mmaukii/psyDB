@@ -139,65 +139,66 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
             termineProGruppeAnwesenheitsListe.innerHTML = `<tr><td colspan="3">Keine Termine vorhanden.</td></tr>`;
         } else {
 
-            termineProGruppeAnwesenheitsListe.innerHTML = gruppentermine.map(st => {
-                // Datum umformatieren von YYYY-MM-DD → Wochentag DD.MM.YY
-                console.log("Stundendaten für Anwesenheitstabelle:", st);
-                const datumParts = st.datum.split("-");
-                const datumObj = new Date(Number(datumParts[0]), Number(datumParts[1]) - 1, Number(datumParts[2]));
-                const wochentage = ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."];
-                const wochentag = wochentage[datumObj.getDay()];
-                const datumDeutsch = `${wochentag} ${datumParts[2]}.${datumParts[1]}.${datumParts[0].slice(2)}`;
-                // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
-                const rowStyle = (st.entfallen && toggleAbgesagtBtn.dataset.show === "false") ? "display:none;" : "";
+            termineProGruppeAnwesenheitsListe.innerHTML = gruppentermine
+                .filter(st => !st.entfallen) // Immer abgesagte/entfallene Termine ausblenden
+                .map(st => {
+                    // Datum umformatieren von YYYY-MM-DD → Wochentag DD.MM.YY
+                    console.log("Stundendaten für Anwesenheitstabelle:", st);
+                    const datumParts = st.datum.split("-");
+                    const datumObj = new Date(Number(datumParts[0]), Number(datumParts[1]) - 1, Number(datumParts[2]));
+                    const wochentage = ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."];
+                    const wochentag = wochentage[datumObj.getDay()];
+                    const datumDeutsch = `${wochentag} ${datumParts[2]}.${datumParts[1]}.${datumParts[0].slice(2)}`;
 
-                function utcToLocalTime(dateStr, utcTime) {
-                    if (!dateStr || !utcTime) return "";
-                    const [h, m, s] = utcTime.split(":");
-                    const date = new Date(Date.UTC(
-                        parseInt(dateStr.slice(0, 4)),
-                        parseInt(dateStr.slice(5, 7)) - 1,
-                        parseInt(dateStr.slice(8, 10)),
-                        h, m, s || 0
-                    ));
-                    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                }
+                    function utcToLocalTime(dateStr, utcTime) {
+                        if (!dateStr || !utcTime) return "";
+                        const [h, m, s] = utcTime.split(":");
+                        const date = new Date(Date.UTC(
+                            parseInt(dateStr.slice(0, 4)),
+                            parseInt(dateStr.slice(5, 7)) - 1,
+                            parseInt(dateStr.slice(8, 10)),
+                            h, m, s || 0
+                        ));
+                        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
 
-                // Kunden mit Rechnung für diesen Gruppentermin
-                const kundenMitRechnung = kundenMitRechnungMap[st.id] || new Set();
-                return `
-                <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}" style="${rowStyle}"
-                    data-startzeit="${utcToLocalTime(st.datum, st.startzeit)}" 
-                    data-endzeit="${utcToLocalTime(st.datum, st.endzeit)}" 
-                    data-betrag="${st.betrag}">
-                    <th align="center">${datumDeutsch}</td>
-                    <td>${st.beschreibung}</td>
-                    <td>
-                        <div class="anwesenheit-container">
-                            ${st.teilnehmer.map(t => {
-                                // Prüfen, ob für diese Gruppentermin und diesen Kunden bereits eine Termin existiert
-                                const istSelected = alleTermine.some(s =>
-                                    s.gruppentermin_id === st.id && s.kunde_id === t.kunde_id
-                                );
-                                // Wenn der Kunde bereits in alleTermine ist, nicht toggelbar machen
-                                // NEU: Wenn Kunde in kundenMitRechnung, dann nicht toggelbar
-                                const istDisabled = kundenMitRechnung.has(t.kunde_id);
-                                const notTogglableClass = istDisabled ? ' not-togglable' : '';
-                                return `
-                                    <div class="anwesenheit-tag${istSelected ? ' selected' : ''}${istDisabled ? ' disabled' : ''}${notTogglableClass}" 
-                                        data-kunden-id="${t.kunde_id}"${istDisabled ? ' title="bereits in Rechnung"' : ''}>
-                                        ${t.kuerzel}
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </td>
-                    <td class="actions">
-                        <button class="refresh-btn table-btn" onclick="aktualisiereTermin(this, ${st.id}, '${st.datum}')" title="Speichern der Anwesenheit">
-                            🔁
-                        </button>
-                    </td>
-                </tr>
-            `}).join("");
+                    // Kunden mit Rechnung für diesen Gruppentermin
+                    const kundenMitRechnung = kundenMitRechnungMap[st.id] || new Set();
+                    return `
+                    <tr data-id="${st.id}" class="${st.entfallen ? 'abgesagt' : ''}"
+                        data-startzeit="${utcToLocalTime(st.datum, st.startzeit)}" 
+                        data-endzeit="${utcToLocalTime(st.datum, st.endzeit)}" 
+                        data-betrag="${st.betrag}">
+                        <th align="center">${datumDeutsch}</td>
+                        <td>${st.beschreibung}</td>
+                        <td>
+                            <div class="anwesenheit-container">
+                                ${st.teilnehmer.map(t => {
+                                    // Prüfen, ob für diese Gruppentermin und diesen Kunden bereits eine Termin existiert
+                                    const istSelected = alleTermine.some(s =>
+                                        s.gruppentermin_id === st.id && s.kunde_id === t.kunde_id
+                                    );
+                                    // Wenn der Kunde bereits in alleTermine ist, nicht toggelbar machen
+                                    // NEU: Wenn Kunde in kundenMitRechnung, dann nicht toggelbar
+                                    const istDisabled = kundenMitRechnung.has(t.kunde_id);
+                                    const notTogglableClass = istDisabled ? ' not-togglable' : '';
+                                    return `
+                                        <div class="anwesenheit-tag${istSelected ? ' selected' : ''}${istDisabled ? ' disabled' : ''}${notTogglableClass}" 
+                                            data-kunden-id="${t.kunde_id}"${istDisabled ? ' title="bereits in Rechnung"' : ''}>
+                                            ${t.kuerzel}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </td>
+                        <td class="actions">
+                            <button class="refresh-btn table-btn" onclick="aktualisiereTermin(this, ${st.id}, '${st.datum}')" title="Speichern der Anwesenheit">
+                                🔁
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                }).join("");
 
             termineProGruppeListe.innerHTML = gruppentermine.map(st => {
                 // Datum umformatieren von YYYY-MM-DD → Wochentag DD.MM.YY
