@@ -135,6 +135,17 @@ document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", asyn
       return;
     }
 
+
+    // Wert des Zahlungsverweis-Felds vor dem Speichern
+    const zahlungsverweisValue = document.getElementById("zahlungsverweis").value;
+    // Status bezahlt automatisch setzen
+    let bezahltStatus = null;
+    if (zahlungsverweisValue && zahlungsverweisValue.trim() !== "") {
+      bezahltStatus = 1;
+    } else {
+      bezahltStatus = 0;
+    }
+
     const data = {
       rechnungsnr: document.getElementById("rechnungsnr").value,
       rechnungTextOben: document.getElementById("rechnungTextOben").value,
@@ -142,7 +153,8 @@ document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", asyn
       rechnungId: document.getElementById("rechnungid").value,
       datum: parseGermanDateToISO(document.getElementById("rechnungsdatum").value),
       kommentar: document.getElementById("kommentar").value,
-      zahlungsverweis: document.getElementById("zahlungsverweis").value,
+      zahlungsverweis: zahlungsverweisValue,
+      bezahlt: bezahltStatus,
       termine: getCheckedTermine()  
     };
 
