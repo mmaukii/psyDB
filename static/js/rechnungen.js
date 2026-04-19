@@ -250,8 +250,71 @@ async function ladeRechnungen() {
   const rechnungen = await response.json();
 
 
+  // Sortierbare Spalten definieren
+  const columns = [
+    { key: 'rechnungsnr', label: 'Rechnungs-Nr' },
+    { key: 'kuerzel', label: 'Kürzel' },
+    { key: 'vorname', label: 'Vorname' },
+    { key: 'nachname', label: 'Nachname' },
+    { key: 'datum', label: 'Datum' },
+    { key: 'betrag', label: 'Betrag' },
+    { key: 'zahlungsziel', label: 'Zahlungsziel' },
+    { key: 'status', label: 'Status' },
+    { key: null, label: 'Aktionen', isAction: true }
+  ];
+  if (!window.rechnungSort) window.rechnungSort = { col: null, asc: true };
+  // Tabellenkopf dynamisch erzeugen (mit Sortiericons)
+  const thead = rechnungsTabelle.parentElement.querySelector("thead tr");
+  if (thead) {
+    thead.innerHTML = columns.map((col, idx) => {
+      if (!col.key) return `<th>${col.label}</th>`;
+      return `<th style=\"cursor:pointer;user-select:none;\" onclick=\"window.rechnungSortCol && window.rechnungSortCol('${col.key}')\">${col.label} <span style='font-size:0.8em;'>${window.rechnungSort.col===col.key?(window.rechnungSort.asc?'▲':'▼'):'↕'}</span></th>`;
+    }).join("");
+  }
+  // Sortierung anwenden
+  let rechnungenSorted = [...rechnungen];
+  if (window.rechnungSort.col) {
+    rechnungenSorted.sort((a, b) => {
+      let va = a[window.rechnungSort.col] || '';
+      let vb = b[window.rechnungSort.col] || '';
+      // Spezialfall: Datum
+      if (window.rechnungSort.col === 'datum') {
+        va = va || '';
+        vb = vb || '';
+        return window.rechnungSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+      }
+      // Betrag als Zahl
+      if (window.rechnungSort.col === 'betrag') {
+        va = parseFloat(va) || 0;
+        vb = parseFloat(vb) || 0;
+        return window.rechnungSort.asc ? va - vb : vb - va;
+      }
+      // Status als Zahl
+      if (window.rechnungSort.col === 'status') {
+        va = Number(a.bezahlt);
+        vb = Number(b.bezahlt);
+        return window.rechnungSort.asc ? va - vb : vb - va;
+      }
+      // Standard: Stringvergleich
+      if (typeof va === 'string' && typeof vb === 'string') {
+        return window.rechnungSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+      } else {
+        return window.rechnungSort.asc ? va - vb : vb - va;
+      }
+    });
+  }
   // Tabelle füllen
-  rechnungsTabelle.innerHTML = rechnungen.map(r => {
+  rechnungsTabelle.innerHTML = rechnungenSorted.map(r => {
+      // Globale Sortierfunktion für OnClick
+      window.rechnungSortCol = function(colKey) {
+        if (window.rechnungSort.col === colKey) {
+          window.rechnungSort.asc = !window.rechnungSort.asc;
+        } else {
+          window.rechnungSort.col = colKey;
+          window.rechnungSort.asc = true;
+        }
+        ladeRechnungen();
+      };
     // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
     const datumParts = r.datum.split("-");
     const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0].slice(-2)}`;

@@ -223,15 +223,66 @@ async function reloadTermineFuerKunde(kundeId) {
 
 
 
+        // Sortierbare Spalten definieren
+        const columns = [
+            { key: 'datum', label: 'Datum' },
+            { key: 'startzeit', label: 'Startzeit' },
+            { key: 'endzeit', label: 'Endzeit' },
+            { key: 'beschreibung', label: 'Beschreibung' },
+            { key: 'gruppenkuerzel', label: 'Gruppe', dynamic: true },
+            { key: 'betrag', label: 'Betrag' },
+            { key: null, label: 'Aktion', isAction: true }
+        ];
+        if (!window.termineKundeSort) window.termineKundeSort = { col: null, asc: true };
         // Prüfen, ob mindestens ein Termin ein Gruppenkürzel hat
         const hatGruppenkuerzel = termine.some(st => st.gruppenkuerzel && st.gruppenkuerzel !== "");
-        // Gruppenspalte im Kopf ein-/ausblenden
-        const thGruppenkuerzel = document.getElementById("thGruppenkuerzel");
-        if (thGruppenkuerzel) {
-            thGruppenkuerzel.style.display = hatGruppenkuerzel ? "" : "none";
+        // Tabellenkopf dynamisch erzeugen (mit Sortiericons)
+        const thead = document.getElementById("termineproKundeTabelle").querySelector("thead tr");
+        if (thead) {
+            thead.innerHTML = columns.map((col, idx) => {
+                if (col.dynamic && !hatGruppenkuerzel) return `<th id=\"thGruppenkuerzel\" style=\"display:none;\"></th>`;
+                if (col.dynamic && hatGruppenkuerzel) return `<th id=\"thGruppenkuerzel\" style=\"cursor:pointer;user-select:none;\" onclick=\"window.termineKundeSortCol && window.termineKundeSortCol('${col.key}')\">${col.label} <span style='font-size:0.8em;'>${window.termineKundeSort.col===col.key?(window.termineKundeSort.asc?'▲':'▼'):'↕'}</span></th>`;
+                if (!col.key) return `<th>${col.label}</th>`;
+                return `<th style=\"cursor:pointer;user-select:none;\" onclick=\"window.termineKundeSortCol && window.termineKundeSortCol('${col.key}')\">${col.label} <span style='font-size:0.8em;'>${window.termineKundeSort.col===col.key?(window.termineKundeSort.asc?'▲':'▼'):'↕'}</span></th>`;
+            }).join("");
         }
-
-        termineProKundeListe.innerHTML = termine.map(st => {
+        // Sortierung anwenden
+        let termineSorted = [...termine];
+        if (window.termineKundeSort.col) {
+            termineSorted.sort((a, b) => {
+                let va = a[window.termineKundeSort.col] || '';
+                let vb = b[window.termineKundeSort.col] || '';
+                // Spezialfall: Datum
+                if (window.termineKundeSort.col === 'datum') {
+                    va = va || '';
+                    vb = vb || '';
+                    return window.termineKundeSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+                }
+                // Betrag als Zahl
+                if (window.termineKundeSort.col === 'betrag') {
+                    va = parseFloat(va) || 0;
+                    vb = parseFloat(vb) || 0;
+                    return window.termineKundeSort.asc ? va - vb : vb - va;
+                }
+                // Standard: Stringvergleich
+                if (typeof va === 'string' && typeof vb === 'string') {
+                    return window.termineKundeSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+                } else {
+                    return window.termineKundeSort.asc ? va - vb : vb - va;
+                }
+            });
+        }
+        termineProKundeListe.innerHTML = termineSorted.map(st => {
+        // Globale Sortierfunktion für OnClick
+        window.termineKundeSortCol = function(colKey) {
+            if (window.termineKundeSort.col === colKey) {
+                window.termineKundeSort.asc = !window.termineKundeSort.asc;
+            } else {
+                window.termineKundeSort.col = colKey;
+                window.termineKundeSort.asc = true;
+            }
+            reloadTermineFuerKunde(kundeId);
+        };
 
             // Datum formatieren inkl. Wochentag
             const datumParts = st.datum.split("-");
