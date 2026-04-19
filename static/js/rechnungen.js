@@ -168,8 +168,13 @@ function getCheckedTermine() {
     return checkedIds;
 }
 
-document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", async () => {
-  console.log("Speichern-Button geklickt");
+document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", (e) => {
+  e.preventDefault();
+  document.getElementById("rechnungsFormular").requestSubmit();
+});
+
+document.getElementById("rechnungsFormular").addEventListener("submit", async (e) => {
+  e.preventDefault();
   // Prüfen, ob selektierte Rechnung noch sichtbar ist (vor dem Speichern)
   if (!selectedRechnungVisible()) {
     clearRechnungFields();
@@ -177,75 +182,70 @@ document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", asyn
     return;
   }
 
-    // Rechnungsnummer aus dem Formular
-    const rechnungsnr = document.getElementById("rechnungsnr").value.trim();
-    // Rechnungsdaten laden (dataRn)
-    const rechnungId = document.getElementById("rechnungid").value;
-    const response1 = await fetch(`/api/rechnungen`); // Annahme: liefert alle Rechnungen als Array
-    if (!response1.ok) throw new Error("Fehler beim Laden der Rechnungen");
-    const dataRn = await response1.json();
-    //console.log("Alle Rechnungen:", dataRn);
-    //console.log("Aktuelle Rechnungsnummer:", rechnungsnr, "Aktuelle Rechnung ID:", rechnungId);
+  // Rechnungsnummer aus dem Formular
+  const rechnungsnr = document.getElementById("rechnungsnr").value.trim();
+  // Rechnungsdaten laden (dataRn)
+  const rechnungId = document.getElementById("rechnungid").value;
+  const response1 = await fetch(`/api/rechnungen`); // Annahme: liefert alle Rechnungen als Array
+  if (!response1.ok) throw new Error("Fehler beim Laden der Rechnungen");
+  const dataRn = await response1.json();
 
-    // Prüfen, ob Rechnungsnummer schon vorhanden (außer für aktuelle Rechnung)
-    const exists = dataRn.some(r => {
-      const rnr = (r.rechnungsnr || "").toString().trim();
-      const rid = (r.id || r.rechnung_id || "").toString();
-      return rnr === rechnungsnr && rid !== rechnungId;
-    });
-    if (exists) {
-      alert("Diese Rechnungsnummer ist bereits vergeben. Bitte wählen Sie eine andere Nummer.");
-      return;
-    }
+  // Prüfen, ob Rechnungsnummer schon vorhanden (außer für aktuelle Rechnung)
+  const exists = dataRn.some(r => {
+    const rnr = (r.rechnungsnr || "").toString().trim();
+    const rid = (r.id || r.rechnung_id || "").toString();
+    return rnr === rechnungsnr && rid !== rechnungId;
+  });
+  if (exists) {
+    alert("Diese Rechnungsnummer ist bereits vergeben. Bitte wählen Sie eine andere Nummer.");
+    return;
+  }
 
+  // Wert des Zahlungsverweis-Felds vor dem Speichern
+  const zahlungsverweisValue = document.getElementById("zahlungsverweis").value;
+  // Status bezahlt automatisch setzen
+  let bezahltStatus = null;
+  if (zahlungsverweisValue && zahlungsverweisValue.trim() !== "") {
+    bezahltStatus = 1;
+  } else {
+    bezahltStatus = 0;
+  }
 
-    // Wert des Zahlungsverweis-Felds vor dem Speichern
-    const zahlungsverweisValue = document.getElementById("zahlungsverweis").value;
-    // Status bezahlt automatisch setzen
-    let bezahltStatus = null;
-    if (zahlungsverweisValue && zahlungsverweisValue.trim() !== "") {
-      bezahltStatus = 1;
-    } else {
-      bezahltStatus = 0;
-    }
+  const data = {
+    rechnungsnr: document.getElementById("rechnungsnr").value,
+    rechnungTextOben: document.getElementById("rechnungTextOben").value,
+    rechnungTextUnten: document.getElementById("rechnungTextUnten").value,
+    rechnungId: document.getElementById("rechnungid").value,
+    datum: document.getElementById("rechnungsdatum").value,
+    kommentar: document.getElementById("kommentar").value,
+    zahlungsverweis: zahlungsverweisValue,
+    bezahlt: bezahltStatus,
+    termine: getCheckedTermine()  
+  };
 
-    const data = {
-      rechnungsnr: document.getElementById("rechnungsnr").value,
-      rechnungTextOben: document.getElementById("rechnungTextOben").value,
-      rechnungTextUnten: document.getElementById("rechnungTextUnten").value,
-      rechnungId: document.getElementById("rechnungid").value,
-      datum: document.getElementById("rechnungsdatum").value,
-      kommentar: document.getElementById("kommentar").value,
-      zahlungsverweis: zahlungsverweisValue,
-      bezahlt: bezahltStatus,
-      termine: getCheckedTermine()  
-    };
+  const response = await fetch(`/api/rechnungen/${rechnungId}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
 
-    // rechnungId ist bereits oben deklariert, keine erneute Zuweisung nötig
-
-    const response = await fetch(`/api/rechnungen/${rechnungId}`, {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-    });
-
-    if (response.ok) {
-      showToast("Gespeichert!");
-      // Tabelle neu laden und danach prüfen, ob selektierte Rechnung noch sichtbar ist
-      if (typeof ladeRechnungen === "function") {
-        await ladeRechnungen();
-        setTimeout(() => {
-          if (!selectedRechnungVisible()) {
+  if (response.ok) {
+    showToast("Gespeichert!");
+    if (typeof ladeRechnungen === "function") {
+      ladeRechnungen();
+      setTimeout(() => {
+        if (!selectedRechnungVisible()) {
           clearRechnungFields();
-          }
-        }, 100);
-      }
-    } else {
-      alert("Fehler beim Speichern!");
+        }
+      }, 100);
     }
+  } else {
+    alert("Fehler beim Speichern!");
+  }
 });
 
 async function ladeRechnungen() {
+  console.log("ladeRechnungen aufgerufen");
   const response = await fetch('/api/rechnungen/mit-kunde');
   const rechnungen = await response.json();
 
