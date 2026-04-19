@@ -3,6 +3,8 @@ const SELECTED_STUNDEN_KEY = "selectedTermineIds";
 
 document.addEventListener("DOMContentLoaded", () => {
     restoreFilterState();
+    // Sortierstatus initialisieren
+    if (!window.termineSort) window.termineSort = { col: null, asc: true };
     ladeTermine();
 });
 
@@ -18,7 +20,20 @@ async function ladeTermine() {
     const termine = await response.json();
     console.log("Geladene Termine:", termine);
 
-    // Filterfunktion für die Werte, wie in filterTabelle
+    // Spalten-Definition für Sortierung und Header
+    const columns = [
+        { key: null, label: '<input type="checkbox" id="selectAllTermine">', isCheckbox: true },
+        { key: 'datum', label: 'Datum' },
+        { key: 'vorname', label: 'Vorname' },
+        { key: 'nachname', label: 'Nachname' },
+        { key: 'kuerzel', label: 'Kürzel' },
+        { key: 'startzeit', label: 'Startzeit' },
+        { key: 'endzeit', label: 'Endzeit' },
+        { key: 'beschreibung', label: 'Beschreibung' },
+        { key: 'gruppenkuerzel', label: 'Gruppe', dynamic: true },
+        { key: 'betrag', label: 'Betrag' },
+        { key: null, label: 'Aktionen', isAction: true }
+    ];
     function parseGermanDateToISO(dateStr) {
         if (!dateStr) return null;
         const [d,m,y] = dateStr.split(".");
@@ -36,7 +51,7 @@ async function ladeTermine() {
     const toDate   = fDateToVal   ? new Date(fDateToVal).toISOString().slice(0,10) : null;
 
     // Filter anwenden wie in filterTabelle
-    const gefilterteTermine = termine.filter(st => {
+    let gefilterteTermine = termine.filter(st => {
         // Datum
         const datumParts = st.datum.split("-");
         const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
@@ -69,10 +84,42 @@ async function ladeTermine() {
 
     // Prüfen, ob mindestens ein gruppenkuerzel in den gefilterten Werten vorhanden ist
     const hatGruppenkuerzel = gefilterteTermine.some(st => st.gruppenkuerzel && st.gruppenkuerzel !== "");
-    // Tabellenkopf dynamisch anpassen
-    const thGruppenkuerzel = document.getElementById("thGruppenkuerzel");
-    if (thGruppenkuerzel) {
-        thGruppenkuerzel.style.display = hatGruppenkuerzel ? "" : "none";
+    // Tabellenkopf dynamisch erzeugen (mit Sortiericons)
+    const thead = offeneTermineTabelle.parentElement.querySelector("thead tr");
+    if (thead) {
+        thead.innerHTML = columns.map((col, idx) => {
+            if (col.isCheckbox) return `<th><input type="checkbox" id="selectAllTermine"></th>`;
+            if (col.dynamic && !hatGruppenkuerzel) return `<th id="thGruppenkuerzel" style="display:none;"></th>`;
+            if (col.dynamic && hatGruppenkuerzel) return `<th id="thGruppenkuerzel" style="cursor:pointer;user-select:none;" onclick="window.termineSortCol && window.termineSortCol('${col.key}')">${col.label} <span style='font-size:0.8em;'>${window.termineSort.col===col.key?(window.termineSort.asc?'▲':'▼'):'↕'}</span></th>`;
+            if (!col.key) return `<th>${col.label}</th>`;
+            return `<th style="cursor:pointer;user-select:none;" onclick="window.termineSortCol && window.termineSortCol('${col.key}')">${col.label} <span style='font-size:0.8em;'>${window.termineSort.col===col.key?(window.termineSort.asc?'▲':'▼'):'↕'}</span></th>`;
+        }).join("");
+    }
+    // Sortierung anwenden
+    if (window.termineSort.col) {
+        gefilterteTermine.sort((a, b) => {
+            let va = a[window.termineSort.col] || '';
+            let vb = b[window.termineSort.col] || '';
+            // Spezialfall: Datum
+            if (window.termineSort.col === 'datum') {
+                va = va || '';
+                vb = vb || '';
+                // YYYY-MM-DD Vergleich
+                return window.termineSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+            }
+            // Betrag als Zahl
+            if (window.termineSort.col === 'betrag') {
+                va = parseFloat(va) || 0;
+                vb = parseFloat(vb) || 0;
+                return window.termineSort.asc ? va - vb : vb - va;
+            }
+            // Standard: Stringvergleich
+            if (typeof va === 'string' && typeof vb === 'string') {
+                return window.termineSort.asc ? va.localeCompare(vb) : vb.localeCompare(va);
+            } else {
+                return window.termineSort.asc ? va - vb : vb - va;
+            }
+        });
     }
     offeneTermineTabelle.innerHTML = gefilterteTermine.map(st => {
         // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
@@ -135,6 +182,16 @@ async function ladeTermine() {
         `;
     }).join("");
     // filterTabelle() entfällt, da Filter hier angewendet
+    // Globale Sortierfunktion für OnClick
+    window.termineSortCol = function(colKey) {
+        if (window.termineSort.col === colKey) {
+            window.termineSort.asc = !window.termineSort.asc;
+        } else {
+            window.termineSort.col = colKey;
+            window.termineSort.asc = true;
+        }
+        ladeTermine();
+    };
 
 }
 
