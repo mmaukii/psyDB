@@ -51,54 +51,55 @@
       </table>
 
       <!-- Bereich, den man ein- und ausblenden kann -->
-		<div id="rechnungBereich"
-			style="
-				display: none;
-				grid-column: 1 / -1;
-				width: 100%;
-				margin-top: 16px;
-			">
-			<!-- Erste Zeile: Rechnungsnr, Datum, Button -->
-			<div style="display: flex; gap: 16px; align-items: flex-end; margin-bottom: 12px;">
-				<div class="field" style="flex:1;">
-					<label>Rechnungsnr:
-						<input type="text" id="rechnungsnr">
-					</label>
-					<input type="text" id="rechnungid" style="display:none;">
-				</div>
-                <div class="field" style="flex:1;">
-                    <label>Datum:
-                        <input type="text" id="rechnungsdatum">
-                    </label>
-                    <input type="text" id="rechnungsdatumid" style="display:none;">
+        <div id="rechnungBereich"
+            style="
+                display: none;
+                grid-column: 1 / -1;
+                width: 100%;
+                margin-top: 16px;
+            ">
+            <form id="rechnungsFormular">
+                <!-- Erste Zeile: Rechnungsnr, Datum, Button -->
+                <div style="display: flex; gap: 16px; align-items: flex-end; margin-bottom: 12px;">
+                    <div class="field" style="flex:1;">
+                        <label style="font-weight:bold;">Rechnungsnr:
+                            <input type="text" id="rechnungsnr" name="rechnungsnr" required class="required-field">
+                        </label>
+                        <input type="text" id="rechnungid" style="display:none;">
+                    </div>
+                    <div class="field" style="flex:1;">
+                        <label style="font-weight:bold;">Datum:
+                            <input type="text" id="rechnungsdatum" name="rechnungsdatum" required class="required-field">
+                        </label>
+                        <input type="text" id="rechnungsdatumid" style="display:none;">
+                    </div>
+                    <div class="field" style="flex:1;">
+                        <label>Zahlungsverweis:
+                            <input type="text" id="zahlungsverweis" name="zahlungsverweis">
+                        </label>
+                    </div>
+                    <div style="flex:0 0 auto; align-self: flex-end;">
+                        <button id="saveBtnRechnungTextRnr" type="submit">Speichern</button>
+                    </div>
                 </div>
-                <div class="field" style="flex:1;">
-                    <label>Zahlungsverweis:
-                        <input type="text" id="zahlungsverweis">
-                    </label>
-                </div>
-                
-				<div style="flex:0 0 auto; align-self: flex-end;">
-					<button id="saveBtnRechnungTextRnr">Speichern</button>
-				</div>
-			</div>
 
-			<!-- Zweite Zeile: Textfelder und Kommentar nebeneinander -->
-			<div style="display: flex; gap: 16px; width: 100%;">
-				<div class="field" style="flex:1;">
-					<label for="rechnungTextOben">Text Rechnung oben:</label>
-					<textarea name="rechnungTextOben" id="rechnungTextOben" rows="5" style="width: 100%; height: 120px;"></textarea>
-				</div>
-				<div class="field" style="flex:1;">
-					<label for="rechnungTextUnten">Text Rechnung unten:</label>
-					<textarea name="rechnungTextUnten" id="rechnungTextUnten" rows="5" style="width: 100%; height: 120px;"></textarea>
-				</div>
-				<div class="field" style="flex:1;">
-					<label for="kommentar">Kommentar:</label>
-					<textarea name="kommentar" id="kommentar" rows="5" style="width: 100%; height: 120px;"></textarea>
-				</div>
-			</div>
-		</div>
+            <!-- Zweite Zeile: Textfelder und Kommentar nebeneinander -->
+            <div style="display: flex; gap: 16px; width: 100%;">
+                <div class="field" style="flex:1;">
+                    <label for="rechnungTextOben">Text Rechnung oben:</label>
+                    <textarea name="rechnungTextOben" id="rechnungTextOben" rows="5" style="width: 100%; height: 120px;"></textarea>
+                </div>
+                <div class="field" style="flex:1;">
+                    <label for="rechnungTextUnten">Text Rechnung unten:</label>
+                    <textarea name="rechnungTextUnten" id="rechnungTextUnten" rows="5" style="width: 100%; height: 120px;"></textarea>
+                </div>
+                <div class="field" style="flex:1;">
+                    <label for="kommentar">Kommentar:</label>
+                    <textarea name="kommentar" id="kommentar" rows="5" style="width: 100%; height: 120px;"></textarea>
+                </div>
+            </div>
+        </form>
+        </div>
 
       <!-- Untere Tabelle -->
        <h3 style="margin-top: 0em; margin-bottom: 0em;">Termine</h3>
