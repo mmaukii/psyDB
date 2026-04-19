@@ -11,11 +11,11 @@ class Gruppe(db.Model):
     gruppenkuerzel = db.Column(db.String, nullable=False)
     rechnungstext = db.Column(db.String)
     doku = db.Column(EncryptedString)
-    aktiv = db.Column(db.Integer, default=1)
+    aktiv = db.Column(db.Integer, nullable=False, default=1)
     timestamp = db.Column(db.String)
     changestamp = db.Column(db.String)
-    therapieform = db.Column(db.Integer)  # 4=Gruppentherapie, 6=Gruppensupervision, 8=Gruppenselbsterfahrung
-    ust = db.Column(db.Integer)  
+    therapieform = db.Column(db.Integer, nullable=False)  # 4=Gruppentherapie, 6=Gruppensupervision, 8=Gruppenselbsterfahrung
+    ust = db.Column(db.Integer, nullable=False, default=0)
     
     # ✅ FEHLTE
     gruppentermine = db.relationship(
@@ -33,4 +33,7 @@ class Gruppe(db.Model):
             "gruppenkuerzel": self.gruppenkuerzel,
             "rechnungstext": self.rechnungstext,
             "doku": self.doku,
+            "aktiv": self.aktiv,
+            "therapieform": self.therapieform,
+            "ust": self.ust,
         }

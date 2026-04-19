@@ -80,6 +80,15 @@ def add_gruppe():
     gruppenkuerzel = data.get("gruppenkuerzel")
     if not gruppenkuerzel:
         return jsonify({"success": False, "error": "Gruppenkuerzel ist erforderlich"}), 400
+    # Validation for NOT NULL fields
+    if data.get("therapieform") is None:
+        return jsonify({"success": False, "error": "therapieform ist erforderlich"}), 400
+    ust = data.get("ust")
+    if ust is None:
+        ust = 0
+    aktiv = data.get("aktiv")
+    if aktiv is None:
+        aktiv = 1
     g = Gruppe(
         gruppenname=data["gruppenname"],
         standardbetrag=data.get("standardbetrag"),
@@ -87,9 +96,9 @@ def add_gruppe():
         gruppenkuerzel=gruppenkuerzel,
         rechnungstext=data.get("rechnungstext"),
         doku=data.get("doku"),
-        aktiv=data.get("aktiv", 1),
-        therapieform=data.get("therapieform"),
-        ust=data.get("ust"),
+        aktiv=aktiv,
+        therapieform=data["therapieform"],
+        ust=ust,
         timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
     db.session.add(g)
@@ -104,9 +113,18 @@ def update_gruppe(id):
     if "gruppenkuerzel" in data:
         if not data["gruppenkuerzel"]:
             return jsonify({"success": False, "error": "Gruppenkuerzel ist erforderlich"}), 400
-    for field in ["gruppenname", "standardbetrag", "dauer_min", "gruppenkuerzel", "rechnungstext", "doku", "aktiv", "therapieform", "ust"]:
+    # Set and validate fields, enforce NOT NULL and defaults
+    for field in ["gruppenname", "standardbetrag", "dauer_min", "gruppenkuerzel", "rechnungstext", "doku"]:
         if field in data:
             setattr(g, field, data[field])
+    if "aktiv" in data:
+        g.aktiv = data["aktiv"] if data["aktiv"] is not None else 1
+    if "therapieform" in data:
+        if data["therapieform"] is None:
+            return jsonify({"success": False, "error": "therapieform ist erforderlich"}), 400
+        g.therapieform = data["therapieform"]
+    if "ust" in data:
+        g.ust = data["ust"] if data["ust"] is not None else 0
     g.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
     return jsonify({"success": True})

@@ -772,14 +772,19 @@ document.getElementById("gruppenForm").addEventListener("submit", async (e) => {
     const ustValue = document.getElementById('ust').checked ? 1 : 0;
 
     const id = document.getElementById("gruppenForm_id").value;
+    const gruppenname = document.getElementById("gruppenname").value;
+    const gruppenkuerzel = document.getElementById("gruppenkuerzel").value;
+    const dauer_min = document.getElementById("dauer_min").value;
+    const therapieform = document.getElementById("therapieform").value;
+   
     const data = {
         gruppenname: document.getElementById("gruppenname").value,
-        gruppenkuerzel: document.getElementById("gruppenkuerzel").value,
+        gruppenkuerzel: gruppenkuerzel,
         standardbetrag: standardbetrag,
         dauer_min: document.getElementById("dauer_min").value,
         doku: gruppenDokuText ? gruppenDokuText.value : "",
         rechnungstext: document.getElementById("rechnungstext").value,
-        therapieform: document.getElementById("therapieform").value,
+        therapieform: therapieform,
         ust: ustValue,
         aktiv: aktivValue
     };

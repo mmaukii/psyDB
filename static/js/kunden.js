@@ -757,14 +757,7 @@ kundenForm.addEventListener("submit", async (e) => {
     jsonData.aktiv = kundenForm.querySelector('[name="aktiv"]').checked ? "1" : "0";
     jsonData.ust = kundenForm.querySelector('[name="ust"]').checked ? "1" : "0";
 
-    // Pflichtfelder prüfen
-    const requiredFields = ["nachname", "kuerzel", "standort_id", "therapieform"];
-    const missingFields = requiredFields.filter(f => !jsonData[f] || jsonData[f].trim() === "");
-    if (missingFields.length > 0) {
-        alert("Bitte folgende Pflichtfelder ausfüllen: " + missingFields.join(", "));
-        return;
-    }
-
+   
     // Gruppen übernehmen
     const ausgewaehlteGruppenIds = ausgewaehlteGruppen.map(g => g.id);
 
