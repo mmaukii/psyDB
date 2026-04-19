@@ -1,3 +1,18 @@
+// Filter zurücksetzen für Rechnungen
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("filterLeerenRechnungen");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      document.getElementById("filterRechnungsNr").value = "";
+      document.getElementById("filterRechnungsKunde").value = "";
+      document.getElementById("filterRechnungsStatus").value = "";
+      document.getElementById("RechnungsDatumVon").value = "";
+      document.getElementById("RechnungsDatumBis").value = "";
+      filterRechnungen();
+      saveRechnungUIState("");
+    });
+  }
+});
 // Automatische Status-Umschaltung bei Zahlungsverweis-Eingabe
 document.getElementById("zahlungsverweis").addEventListener("input", function() {
   // Hole die aktuelle Rechnungs-ID aus dem Bearbeitungsbereich
