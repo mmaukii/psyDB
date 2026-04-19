@@ -1,3 +1,17 @@
+// Automatische Status-Umschaltung bei Zahlungsverweis-Eingabe
+document.getElementById("zahlungsverweis").addEventListener("input", function() {
+  // Hole die aktuelle Rechnungs-ID aus dem Bearbeitungsbereich
+  const rechnungId = document.getElementById("rechnungid").value;
+  if (!rechnungId) return;
+  // Suche das Statusfeld (select) in der Tabelle mit passender data-id
+  const statusSelect = document.querySelector('.status-select[data-id="' + rechnungId + '"]');
+  if (!statusSelect) return;
+  if (this.value.trim() !== "") {
+    statusSelect.value = "1";
+  } else {
+    statusSelect.value = "0";
+  }
+});
 // Utility: Felder leeren und Markierung entfernen
 function clearRechnungFields() {
   document.getElementById("rechnungTextOben").value = "";
@@ -114,8 +128,13 @@ rechnungsTabelle.addEventListener("click", async (e) => {
             `;
           }).join("");
         }
-            const datumParts = data.rechnung.datum.split("-");
-            const datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
+            // Für Anzeige im type=date Feld ISO-Format verwenden
+            let datumISO = data.rechnung.datum;
+            let datumDeutsch = "";
+            if (datumISO && datumISO.includes("-")) {
+              const datumParts = datumISO.split("-");
+              datumDeutsch = `${datumParts[2]}.${datumParts[1]}.${datumParts[0]}`;
+            }
           // 2️⃣ Rechnungstexte setzen
         // Annahme: Dein Endpoint `/terminerechnung/<id>` liefert auch die Felder `rechnungTextOben` und `rechnungTextUnten`       
             document.getElementById("rechnungTextOben").value = data.rechnung.rechnungTextOben || "";
@@ -123,8 +142,8 @@ rechnungsTabelle.addEventListener("click", async (e) => {
             document.getElementById("rechnungsnr").value = data.rechnung.rechnungsnr || "";
             document.getElementById("rechnungid").value = data.rechnung.id || "";
             document.getElementById("kommentar").value = data.rechnung.kommentar || "";
-            document.getElementById("rechnungsdatum").value = datumDeutsch || "";
-            document.getElementById("rechnungsdatumid").value = datumDeutsch || "";
+            document.getElementById("rechnungsdatum").value = datumISO || "";
+            document.getElementById("rechnungsdatumid").value = datumISO || "";
             document.getElementById("zahlungsverweis").value = data.rechnung.zahlungsverweis || "";
         
     } catch (err) {
@@ -195,7 +214,7 @@ document.getElementById("saveBtnRechnungTextRnr").addEventListener("click", asyn
       rechnungTextOben: document.getElementById("rechnungTextOben").value,
       rechnungTextUnten: document.getElementById("rechnungTextUnten").value,
       rechnungId: document.getElementById("rechnungid").value,
-      datum: parseGermanDateToISO(document.getElementById("rechnungsdatum").value),
+      datum: document.getElementById("rechnungsdatum").value,
       kommentar: document.getElementById("kommentar").value,
       zahlungsverweis: zahlungsverweisValue,
       bezahlt: bezahltStatus,

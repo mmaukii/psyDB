@@ -63,13 +63,13 @@
                 <div style="display: flex; gap: 16px; align-items: flex-end; margin-bottom: 12px;">
                     <div class="field" style="flex:1;">
                         <label style="font-weight:bold;">Rechnungsnr:
-                            <input type="text" id="rechnungsnr" name="rechnungsnr" required class="required-field">
+                            <input type="number" id="rechnungsnr" name="rechnungsnr" required class="required-field" inputmode="numeric" pattern="[0-9]*">
                         </label>
                         <input type="text" id="rechnungid" style="display:none;">
                     </div>
                     <div class="field" style="flex:1;">
                         <label style="font-weight:bold;">Datum:
-                            <input type="text" id="rechnungsdatum" name="rechnungsdatum" required class="required-field">
+                            <input type="date" id="rechnungsdatum" name="rechnungsdatum" required class="required-field">
                         </label>
                         <input type="text" id="rechnungsdatumid" style="display:none;">
                     </div>
