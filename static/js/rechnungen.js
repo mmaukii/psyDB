@@ -249,6 +249,8 @@ async function ladeRechnungen() {
   const response = await fetch('/api/rechnungen/mit-kunde');
   const rechnungen = await response.json();
 
+
+  // Tabelle füllen
   rechnungsTabelle.innerHTML = rechnungen.map(r => {
     // Datum umformatieren von YYYY-MM-DD → DD.MM.YYYY
     const datumParts = r.datum.split("-");
@@ -309,7 +311,32 @@ async function ladeRechnungen() {
       <button class="delete-btn table-btn" data-id="${r.rechnung_id}" title="Datensatz löschen">🗑️</button>
       </td>
     </tr>
-    `}).join("");
+    `
+  }).join("");
+  console.log(`Es wurden ${rechnungen.length} Rechnungen geladen.`);
+  // Wenn keine Rechnungen vorhanden, alles leeren
+  if (rechnungen.length === 0) {
+    console.log("Keine Rechnungen gefunden, Felder leeren");
+    // Mahnungen und Termine leeren
+    if (typeof mahnungenproRechnungBody !== 'undefined' && mahnungenproRechnungBody) {
+      mahnungenproRechnungBody.innerHTML = "";
+    }
+    if (typeof termineproRechnungBody !== 'undefined' && termineproRechnungBody) {
+      termineproRechnungBody.innerHTML = "";
+    }
+    // Bearbeitungsbereich leeren
+    clearRechnungFields();
+    // Bearbeitungsbereich schließen
+    const rechnungBereich = document.getElementById("rechnungBereich");
+    if (rechnungBereich) {
+      console.log("Keine Rechnungen - Bearbeitungsbereich ausblenden");
+      rechnungBereich.style.display = "none";
+      // Optional: Toggle-Button zurücksetzen
+      const toggleButtonRechnung = document.getElementById("toggleButtonRechnung");
+      if (toggleButtonRechnung) toggleButtonRechnung.classList.remove("active");
+    }
+    return;
+  }
 
   // 🔹 Status ändern
   document.querySelectorAll('.status-select').forEach(select => {
