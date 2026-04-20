@@ -13,6 +13,8 @@ let auswahlDaten = [];
 const auswahlTabelleBody = document.querySelector("#auswahlTabelle tbody");
 const dokuListe = document.getElementById("dokuListe");
 const searchInput = document.getElementById("search");
+const startDatumInput = document.getElementById("dokuStartDatum");
+const endDatumInput = document.getElementById("dokuEndDatum");
 
 // ===============================
 // === MODAL ELEMENTE REFERENZIEREN
@@ -157,15 +159,30 @@ document.getElementById("auswahlTabelle")
 // === SUCHE
 // ===============================
 
-searchInput.addEventListener("input", () => {
-  const term = searchInput.value.toLowerCase();
 
-  const gefiltert = auswahlDaten.filter(item =>
+function filtereUndRenderAuswahl() {
+  const term = searchInput.value.toLowerCase();
+  let gefiltert = auswahlDaten.filter(item =>
     item.label.toLowerCase().includes(term)
   );
 
+  // Datumsfilter nur auf die Doku-Liste anwenden, nicht auf die Auswahl-Liste
   renderAuswahl(gefiltert);
-});
+}
+
+searchInput.addEventListener("input", filtereUndRenderAuswahl);
+if (startDatumInput) startDatumInput.addEventListener("change", ladeDokusMitDatumFilter);
+if (endDatumInput) endDatumInput.addEventListener("change", ladeDokusMitDatumFilter);
+
+// Filtert die Doku-Liste nach Datum, wenn ein Kunde oder eine Gruppe ausgewählt ist
+function ladeDokusMitDatumFilter() {
+  if (!selected.id || !selected.typ) return;
+  if (selected.typ === "kunde") {
+    ladeDokusFuerKundenMitGruppen(selected.id);
+  } else {
+    ladeDokusFuerGruppe(selected.id);
+  }
+}
 
 // ===============================
 // === DOKU LADEN FÜR KUNDEN + GRUPPEN MIT NAMEN
@@ -184,6 +201,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
     };
   }
   const filter = document.getElementById("DokuFilter")?.value;
+  const startDatum = startDatumInput?.value;
+  const endDatum = endDatumInput?.value;
   try {
     // 1️⃣ Kundendaten holen
     const resKunde = await fetch(`/api/kunden/${kundeId}`);
@@ -250,44 +269,42 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
     alleDokus = [...kundenDokus, ...gruppenDokus];
     alleDokus.sort((a, b) => b.datum.localeCompare(a.datum));
 
-    if (!alleDokus.length) {
-      dokuListe.innerHTML = "<p>Keine Dokumentation vorhanden.</p>";
+    // Datumsfilter auf jede Einzeldoku anwenden
+    let gefilterteDokus = alleDokus.filter(d => {
+      if (startDatum && d.datum < startDatum) return false;
+      if (endDatum && d.datum > endDatum) return false;
+      return true;
+    });
+
+    if (!gefilterteDokus.length) {
+      dokuListe.innerHTML = "<p>Keine Dokumentation im gewählten Zeitraum.</p>";
       // PDF-Button trotzdem anzeigen
       return;
     }
-    console.log("filter",filter);
-    // 5️⃣ Rendern
-    console.log("Alle Dokus:", dokuListe);
-
- 
-
-    
 
     function formatTextWithLineBreaks(text) {
       return escapeHtml(text || "").replace(/\n/g, "<br>");
     }
 
-    dokuListe.innerHTML = alleDokus.map(d => `
+    dokuListe.innerHTML = gefilterteDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">
-      <div class="doku-header">
+        <div class="doku-header">
           <div class="doku-datum">${formatDatum(d.datum)} ${d.startzeit ? `${d.startzeit} – ${d.endzeit}` : ""}${d.beschreibung ? `, ${escapeHtml(d.beschreibung)}` : ""}  ${d.abgesagt ? ' – Stunde vom Klienten abgesagt' : ''} ${d.entfallen ? ' – Stunde entfallen' : ''}  </div>
           <button class="doku-edit-btn table-btn" data-id="${d.dokuId}" title="Datensatz editieren">🛠️</button>
-      </div>
-      <div class="doku-text">
-        ${
-        filter === "allg"
-          ? `<span style=\"text-decoration: underline; font-weight: bold;\">Allgemeine Dokumentation</span><br>${formatTextWithLineBreaks(d.doku)}`
-
-          : filter === "pers"
-          ? `<span style=\"text-decoration: underline; font-weight: bold;\">Persönliche Dokumentation</span><br>${formatTextWithLineBreaks(d.pers_doku)}`
-
-          : `
-            <span style=\"text-decoration: underline; font-weight: bold;\">Allgemeine Dokumentation</span><br>${formatTextWithLineBreaks(d.doku)}
-            <br><br>
-            <span style=\"text-decoration: underline; font-weight: bold;\">Persönliche Dokumentation</span><br>${formatTextWithLineBreaks(d.pers_doku)}
-            `
-        }
-      </div>
+        </div>
+        <div class="doku-text">
+          ${
+            filter === "allg"
+              ? `<span style=\"text-decoration: underline; font-weight: bold;\">Allgemeine Dokumentation</span><br>${formatTextWithLineBreaks(d.doku)}`
+              : filter === "pers"
+                ? `<span style=\"text-decoration: underline; font-weight: bold;\">Persönliche Dokumentation</span><br>${formatTextWithLineBreaks(d.pers_doku)}`
+                : `
+                    <span style=\"text-decoration: underline; font-weight: bold;\">Allgemeine Dokumentation</span><br>${formatTextWithLineBreaks(d.doku)}
+                    <br><br>
+                    <span style=\"text-decoration: underline; font-weight: bold;\">Persönliche Dokumentation</span><br>${formatTextWithLineBreaks(d.pers_doku)}
+                  `
+          }
+        </div>
       </div>
     `).join("");
 
@@ -303,6 +320,8 @@ async function ladeDokusFuerKundenMitGruppen(kundeId) {
 
 async function ladeDokusFuerGruppe(gruppeId) {
   dokuListe.innerHTML = "<p>Lade Dokumentation…</p>";
+  const startDatum = startDatumInput?.value;
+  const endDatum = endDatumInput?.value;
   const filter = document.getElementById("DokuFilter")?.value;
 
   try {
@@ -314,7 +333,7 @@ async function ladeDokusFuerGruppe(gruppeId) {
     if (!resGruppentermine.ok) throw new Error("Fehler beim Laden der Gruppentermine");
     const gruppentermine = await resGruppentermine.json();
 
-    const mitDoku = gruppentermine
+    let mitDoku = gruppentermine
       .filter(s => s.doku && s.doku.trim())
       .map(s => ({
         dokuId: s.id,
@@ -332,13 +351,20 @@ async function ladeDokusFuerGruppe(gruppeId) {
       }))
       .sort((a, b) => b.datum.localeCompare(a.datum));
 
+    // Datumsfilter anwenden
+    if (startDatum) {
+      mitDoku = mitDoku.filter(d => d.datum >= startDatum);
+    }
+    if (endDatum) {
+      mitDoku = mitDoku.filter(d => d.datum <= endDatum);
+    }
+
     alleDokus = mitDoku;
 
     if (!alleDokus.length) {
-      dokuListe.innerHTML = "<p>Keine Dokumentation vorhanden.</p>";
+      dokuListe.innerHTML = "<p>Keine Dokumentation im gewählten Zeitraum.</p>";
       return;
     }
- 
 
     dokuListe.innerHTML = alleDokus.map(d => `
       <div class="doku-item" data-id="${d.dokuId}">

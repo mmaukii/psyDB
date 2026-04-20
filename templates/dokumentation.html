@@ -19,6 +19,16 @@
         <option value="ges">Gesamte Dokumentationen</option>
     </select>
 
+    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+      <div style="display: flex; flex-direction: column; flex:0 0 45%; max-width:48%;">
+        <label for="dokuStartDatum" style="font-size: 0.9em; margin-bottom: 2px;">von:</label>
+        <input type="date" id="dokuStartDatum" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #fff;" placeholder="Anfangsdatum">
+      </div>
+      <div style="display: flex; flex-direction: column; flex:0 0 45%; max-width:48%;">
+        <label for="dokuEndDatum" style="font-size: 0.9em; margin-bottom: 2px;">bis:</label>
+        <input type="date" id="dokuEndDatum" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #fff;" placeholder="Enddatum">
+      </div>
+    </div>
     <input type="text" id="search" placeholder="Filter..." 
 				style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background-color: #fff;">
 			
