@@ -25,6 +25,7 @@
     word-break: break-word;
     box-shadow: 0 2px 12px rgba(0,0,0,0.18);
 }
+
 #toast.show {
     opacity: 1;
     pointer-events: auto;

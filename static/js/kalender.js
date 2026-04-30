@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     kunden.forEach(k => {
                         const opt = document.createElement("option");
                         opt.value = k.id;
-                        opt.textContent = `${k.vorname} ${k.nachname}`;
+                        opt.textContent = `${k.kuerzel}`;
                         kundeSelect.appendChild(opt);
                     });
                 })
@@ -537,7 +537,7 @@ async function ladeKunden() {
         kunden.forEach(k => {
             const opt = document.createElement("option");
             opt.value = k.id;
-            opt.textContent = `${k.vorname} ${k.nachname}`; // oder k.kuerzel
+            opt.textContent = `${k.kuerzel}`; // oder k.kuerzel
             select.appendChild(opt);
         });
 
