@@ -236,6 +236,7 @@ def update_stunde(id):
             print(f"❌ Fehler beim Pushen des Termins in den Kalender: {e}")
             s.nur_offline_veraendert = 1
             db.session.commit()
+ 
 
     return jsonify({"success": True, "nur_offline_veraendert": getattr(s, 'nur_offline_veraendert', 0)})
 

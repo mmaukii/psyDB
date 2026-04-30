@@ -11,6 +11,30 @@ from config import get_webdav_config
 from sqlalchemy import text
 
 def cleanup_offline_changed_termine():
+
+    from models import Termin, Gruppentermin
+    from routes.kalender_routes import push_termin
+    # Alle Termine mit nur_offline_veraendert=1 in den Kalender pushen
+    for t in Termin.query.filter_by(nur_offline_veraendert=1).all():
+        try:
+            push_termin({
+                "termin_id": t.id,
+                "datum": t.datum,
+                "startzeit": t.startzeit,
+                "endzeit": t.endzeit,
+                "beschreibung": t.beschreibung,
+                "kommentar": t.kommentar,
+                "abgesagt": t.abgesagt,
+                "caldav_uid": t.caldav_uid,
+                "kuerzel": t.kunde.kuerzel if t.kunde else None
+            })
+            t.nur_offline_veraendert = 0
+            db.session.commit()
+            print(f"✅ Termin ID {t.id} mit nur_offline_veraendert=1 erfolgreich gepusht und zurückgesetzt.")
+        except Exception as e:
+            print(f"❌ Fehler beim Pushen von Termin ID {t.id} mit nur_offline_veraendert=1: {e}")
+
+
     """
     Löscht alle Termine und Gruppentermine mit nur_offline_geloescht=1 sowohl online (CalDAV) als auch offline (DB).
     Sollte aufgerufen werden, wenn wieder eine Verbindung zum Kalender besteht.

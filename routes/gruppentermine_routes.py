@@ -148,7 +148,6 @@ def add_gruppenstunde(gruppe_id):
     except Exception as e:
         print(f"Push Gruppentermin fehlgeschlagen, nur_offline_vorhanden und nur_offline_veraendert werden auf 1 gesetzt: {e}")
         gs.nur_offline_vorhanden = 1
-        gs.nur_offline_veraendert = 1
         db.session.commit()
 
     return jsonify({"success": True, "id": gs.id}), 201
