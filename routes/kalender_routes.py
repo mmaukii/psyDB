@@ -581,57 +581,6 @@ END:VCALENDAR
 
 
 
-#--- Route zum löschen von terminen in webdav von Datenbank aus ---
-@kalender_bp.delete("/kalender/webcal/<string:typ>/<int:id>")
-def delete_webcal_event(typ, id):
-    if typ == "termin":
-        termin = Termin.query.get_or_404(id)
-    elif typ == "gruppentermin":
-        termin = Gruppentermin.query.get_or_404(id)
-    else:
-        return jsonify({"error": "Typ muss 'termin' oder 'gruppentermin' sein"}), 400
-    
-    if not termin:
-     return jsonify({"error": "Termin existiert nicht mehr in DB"}), 404
-
-    if not termin.caldav_uid:
-        return jsonify({"error": "Kein WebCal-Event verknüpft"}), 400
-
-    cal = get_termin_calendar()
-    uid = termin.caldav_uid
-    print ("termin wird gelöscht")
-
-    # 1️⃣ Löschen im WebDAV-Kalender versuchen
-    deleted_from_caldav = False
-    try:
-        event = cal.event_by_uid(uid)
-        event.delete()
-        deleted_from_caldav = True
-        print(f"✅ Event {uid} aus WebDAV gelöscht")
-    except Exception as e:
-        # Event existiert möglicherweise nicht mehr im WebDAV - das ist OK
-        print(f"⚠️ Event {uid} nicht im WebDAV gefunden (oder Fehler beim Löschen): {str(e)}")
-
-    # 2️⃣ DB aktualisieren (unabhängig vom WebDAV-Erfolg)
-    termin.caldav_uid = None
-    termin.caldav_etag = None
-    if typ == "termin":
-        termin.abgesagt = datetime.now()
-    else:
-        termin.entfallen = datetime.now()
-
-    db.session.commit()
-    print("✅ Termin in DB als gelöscht markiert")
-
-    return jsonify({
-        "success": True,
-        "message": "Termin wurde gelöscht",
-        "deleted_from_caldav": deleted_from_caldav,
-        "uid": uid
-    })
-
-
-
 
 # --- Route zum Pull der termine ---
 def pull_termine_from_caldav(delete_action="abgesagt", log=None):

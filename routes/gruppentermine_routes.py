@@ -165,19 +165,22 @@ def update_gruppenstunde(id):
     gs.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     db.session.commit()
 
-     # 🔄 Push nur, wenn data.push_termin vorhanden und == 1
+    # 🔄 Push nur, wenn data.push_termin vorhanden und == 1
     if data.get("push_termin") == 1:
         print(f"Neue Termin ID {gs.id} to calendar")
-        push_termin({
-            "gruppentermin_id": gs.id,
-            "datum": gs.datum,
-            "startzeit": gs.startzeit,
-            "endzeit": gs.endzeit,
-            "beschreibung": gs.beschreibung,
-            "kommentar": gs.kommentar,
-            "caldav_uid": None,
-            "kuerzel": gs.gruppe.gruppenkuerzel
-        })
+        try:
+            push_termin({
+                "gruppentermin_id": gs.id,
+                "datum": gs.datum,
+                "startzeit": gs.startzeit,
+                "endzeit": gs.endzeit,
+                "beschreibung": gs.beschreibung,
+                "kommentar": gs.kommentar,
+                "caldav_uid": None,
+                "kuerzel": gs.gruppe.gruppenkuerzel
+            })
+        except Exception as e:
+            print(f"❌ Fehler beim Pushen des Gruppentermins in den Kalender: {e}")
     return jsonify({"success": True, "id": gs.id, "doku": gs.doku, "pers_doku": gs.pers_doku})
 
 # --- Gruppenteremine mit terminen nur nicht offline gelöscht ---

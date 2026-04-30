@@ -453,19 +453,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 termintyp = "termin"
             }
             try {
-                // 1️⃣ WebDAV-Event löschen
-                const res1 = await fetch(`/api/kalender/webcal/${termintyp}/${terminId}`, {
-                    method: "DELETE"
-                });
-                if (res1.status >= 500) {
-                    throw new Error("Fehler beim Löschen des WebDAV-Events (Server-Fehler)");
-                }
-                // 2️⃣ Aus Datenbank löschen
+                // Nur aus Datenbank löschen
                 const res2 = await fetch(url, { method: "DELETE" });
                 if (!res2.ok) {
                     throw new Error("Fehler beim Löschen aus der Datenbank");
                 }
                 const data2 = await res2.json();
+
                 closefenstertermineanpassen();
                 document.dispatchEvent(
                     new CustomEvent("kalenderTermineAnpassung", {

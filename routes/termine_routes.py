@@ -213,17 +213,20 @@ def update_stunde(id):
      # 🔄 Push nur, wenn data.push_termin vorhanden und == 1
     if data.get("push_termin") == 1:
         print(f"Pushing updated Termin ID {s.id} to calendar")
-        push_termin({
-            "termin_id": s.id,
-            "datum": s.datum,
-            "startzeit": s.startzeit,
-            "endzeit": s.endzeit,
-            "beschreibung": s.beschreibung,
-            "kommentar": s.kommentar,
-            "abgesagt": s.abgesagt,
-            "caldav_uid": s.caldav_uid,
-            "kuerzel":s.kunde.kuerzel
-        })
+        try:
+            push_termin({
+                "termin_id": s.id,
+                "datum": s.datum,
+                "startzeit": s.startzeit,
+                "endzeit": s.endzeit,
+                "beschreibung": s.beschreibung,
+                "kommentar": s.kommentar,
+                "abgesagt": s.abgesagt,
+                "caldav_uid": s.caldav_uid,
+                "kuerzel": s.kunde.kuerzel
+            })
+        except Exception as e:
+            print(f"❌ Fehler beim Pushen des Termins in den Kalender: {e}")
 
     return jsonify({"success": True})
 
@@ -245,9 +248,13 @@ def delete_stunde(id):
             online_delete_ok = False
 
     if online_delete_ok:
-        db.session.delete(s)
-        db.session.commit()
-        return jsonify({"success": True})
+        try:
+            db.session.delete(s)
+            db.session.commit()
+            return jsonify({"success": True, "deleted_id": id})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "error": str(e)}), 500
     else:
         s.nur_offline_geloescht = 1
         db.session.commit()
