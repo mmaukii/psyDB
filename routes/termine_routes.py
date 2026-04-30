@@ -32,7 +32,8 @@ def get_all_termine():
         "doku": s.doku,
         "pers_doku": s.pers_doku,
         "therapieform": s.therapieform,
-        "ust": s.ust
+        "ust": s.ust,
+        "nur_offline_veraendert": getattr(s, 'nur_offline_veraendert', 0)
     } for s in termine])
 
 # --- Alle Termine die  nur offline gelöscht wurden ---
@@ -55,7 +56,8 @@ def get_all_termine_nur_offline_geloescht():
         "doku": s.doku,
         "pers_doku": s.pers_doku,
         "therapieform": s.therapieform,
-        "ust": s.ust
+        "ust": s.ust,
+        "nur_offline_veraendert": getattr(s, 'nur_offline_veraendert', 0)
     } for s in termine])
 
 # --- Termine nach Kunde die nicht nur_offline_geloescht---
@@ -78,7 +80,8 @@ def get_termine_by_kunde(kunde_id):
         "doku": s.doku,
         "pers_doku": s.pers_doku,
         "therapieform": s.therapieform,
-        "ust": s.ust
+        "ust": s.ust,
+        "nur_offline_veraendert": getattr(s, 'nur_offline_veraendert', 0)
     } for s in termine])
 
 # --- Einzelne Termin ---
@@ -101,7 +104,8 @@ def get_stunde(id):
         "doku": s.doku,
         "pers_doku": s.pers_doku,
         "therapieform": s.therapieform,
-        "ust": s.ust
+        "ust": s.ust,
+        "nur_offline_veraendert": getattr(s, 'nur_offline_veraendert', 0)
     })
 
 # --- Termin anlegen ---
@@ -122,7 +126,8 @@ def add_stunde():
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         gruppentermin_id=data.get("gruppentermin_id"),
         therapieform=data.get("therapieform"),
-        ust=data.get("ust")
+        ust=data.get("ust"),
+        nur_offline_veraendert=0
     )
 
     db.session.add(s)
@@ -148,7 +153,8 @@ def add_stunde_mit_kunde(kunde_id):
         gruppentermin_id=data.get("gruppentermin_id"),
         nur_offline_vorhanden=0,
         therapieform=data.get("therapieform"),
-        ust=data.get("ust")
+        ust=data.get("ust"),
+        nur_offline_veraendert=0
     )
 
     db.session.add(s)
@@ -179,8 +185,9 @@ def add_stunde_mit_kunde(kunde_id):
             "kuerzel": s.kunde.kuerzel
         })
     except Exception as e:
-        print(f"Push Termin fehlgeschlagen, nur_offline_vorhanden wird auf 1 gesetzt: {e}")
+        print(f"Push Termin fehlgeschlagen, nur_offline_vorhanden und nur_offline_veraendert werden auf 1 gesetzt: {e}")
         s.nur_offline_vorhanden = 1
+        s.nur_offline_veraendert = 1
         db.session.commit()
 
     return jsonify(event), 201
@@ -227,8 +234,10 @@ def update_stunde(id):
             })
         except Exception as e:
             print(f"❌ Fehler beim Pushen des Termins in den Kalender: {e}")
+            s.nur_offline_veraendert = 1
+            db.session.commit()
 
-    return jsonify({"success": True})
+    return jsonify({"success": True, "nur_offline_veraendert": getattr(s, 'nur_offline_veraendert', 0)})
 
 # --- Termin löschen ---
 @termine_bp.delete("/termine/<int:id>")

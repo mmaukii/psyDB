@@ -25,7 +25,8 @@ def get_all_gruppentermine():
         "changestamp": gs.changestamp,
         "doku": gs.doku,
         "therapieform": gs.therapieform,
-        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None
+        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None,
+        "nur_offline_veraendert": getattr(gs, 'nur_offline_veraendert', 0)
     } for gs in gs_list])
 
 # --- Alle termine einer bestimmten Gruppe die nicht nur offline gelöscht wurden ---
@@ -51,7 +52,8 @@ def get_termine_fuer_gruppe(gruppe_id):
         "doku": gs.doku,
         "pers_doku": gs.pers_doku,
         "therapieform": gs.therapieform,
-        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None
+        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None,
+        "nur_offline_veraendert": getattr(gs, 'nur_offline_veraendert', 0)
     } for gs in termine])
 
 # --- Einzelne Gruppentermin ---
@@ -72,7 +74,8 @@ def get_gruppenstunde(id):
         "changestamp": gs.changestamp,
         "doku": gs.doku,
         "therapieform": gs.therapieform,
-        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None
+        "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None,
+        "nur_offline_veraendert": getattr(gs, 'nur_offline_veraendert', 0)
     })
 
 #--- Gruppentermin löschen -----
@@ -122,7 +125,8 @@ def add_gruppenstunde(gruppe_id):
         betrag=data["betrag"],
         therapieform=data.get("therapieform"),
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        nur_offline_vorhanden=0
+        nur_offline_vorhanden=0,
+        nur_offline_veraendert=0
     )
     db.session.add(gs)
     db.session.flush()  # ID erzeugen, bevor commit
@@ -142,8 +146,9 @@ def add_gruppenstunde(gruppe_id):
             "kuerzel":gs.gruppe.gruppenkuerzel
         })
     except Exception as e:
-        print(f"Push Gruppentermin fehlgeschlagen, nur_offline_vorhanden wird auf 1 gesetzt: {e}")
+        print(f"Push Gruppentermin fehlgeschlagen, nur_offline_vorhanden und nur_offline_veraendert werden auf 1 gesetzt: {e}")
         gs.nur_offline_vorhanden = 1
+        gs.nur_offline_veraendert = 1
         db.session.commit()
 
     return jsonify({"success": True, "id": gs.id}), 201
@@ -181,7 +186,9 @@ def update_gruppenstunde(id):
             })
         except Exception as e:
             print(f"❌ Fehler beim Pushen des Gruppentermins in den Kalender: {e}")
-    return jsonify({"success": True, "id": gs.id, "doku": gs.doku, "pers_doku": gs.pers_doku})
+            gs.nur_offline_veraendert = 1
+            db.session.commit()
+    return jsonify({"success": True, "id": gs.id, "doku": gs.doku, "pers_doku": gs.pers_doku, "nur_offline_veraendert": getattr(gs, 'nur_offline_veraendert', 0)})
 
 # --- Gruppenteremine mit terminen nur nicht offline gelöscht ---
 @gruppentermine_bp.get("/gruppentermine/<int:gruppe_id>/termine")

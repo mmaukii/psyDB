@@ -32,3 +32,4 @@ class Termin(db.Model):
     pers_doku = db.Column(EncryptedString)
     nur_offline_vorhanden = db.Column(db.Integer, default=0)
     nur_offline_geloescht = db.Column(db.Integer, default=0)
+    nur_offline_veraendert = db.Column(db.Integer, default=0, nullable=False)

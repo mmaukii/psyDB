@@ -10,7 +10,7 @@ import time
 from config import get_webdav_config
 from sqlalchemy import text
 
-def cleanup_offline_deleted_termine():
+def cleanup_offline_changed_termine():
     """
     Löscht alle Termine und Gruppentermine mit nur_offline_geloescht=1 sowohl online (CalDAV) als auch offline (DB).
     Sollte aufgerufen werden, wenn wieder eine Verbindung zum Kalender besteht.
@@ -146,7 +146,7 @@ def force_rewrite_all_termine():
 def get_kalender_termine_anzuzueigen():
     # Vor dem Anzeigen: Offline-Termine/Gruppentermine synchronisieren
     sync_offline_termine_und_gruppentermine()
-    cleanup_offline_deleted_termine()
+    cleanup_offline_changed_termine()
 
     # Einzeltermine (kundenbezogen)
     termine = (
@@ -905,7 +905,7 @@ def sync_calendar():
     try:
         # Vor dem Sync: Offline-Termine/Gruppentermine synchronisieren
         sync_offline_termine_und_gruppentermine()
-        cleanup_offline_deleted_termine()
+        cleanup_offline_changed_termine()
         pull_termine_from_caldav(delete_action="abgesagt", log=logs)
         # Zeitstempel speichern
         pv = Programmvariable.query.filter_by(name="letzte_kalender_sync").first()
