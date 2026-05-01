@@ -10,7 +10,7 @@ import time
 from config import get_webdav_config
 from sqlalchemy import text
 
-def cleanup_offline_changed_termine():
+def cleanup_offline_changed_termine_und_abgesagte_und_entfallenen():
 
     from models import Termin, Gruppentermin
     from routes.kalender_routes import push_termin
@@ -42,8 +42,8 @@ def cleanup_offline_changed_termine():
     from models import Termin, Gruppentermin
     from routes.kalender_routes import get_termin_calendar
     deleted_count = 0
-    # Einzeltermine
-    for t in Termin.query.filter_by(nur_offline_geloescht=1).all():
+    # Einzeltermine (offline gelöscht ODER abgesagt)
+    for t in Termin.query.filter((Termin.nur_offline_geloescht==1) | (Termin.abgesagt.isnot(None))).all():
         if t.caldav_uid:
             try:
                 cal = get_termin_calendar()
@@ -54,8 +54,8 @@ def cleanup_offline_changed_termine():
                 print(f"⚠️ Event {t.caldav_uid} nicht im WebDAV gefunden (cleanup): {str(e)}")
         db.session.delete(t)
         deleted_count += 1
-    # Gruppentermine
-    for g in Gruppentermin.query.filter_by(nur_offline_geloescht=1).all():
+    # Gruppentermine (offline gelöscht ODER entfallen)
+    for g in Gruppentermin.query.filter((Gruppentermin.nur_offline_geloescht==1) | (Gruppentermin.entfallen.isnot(None))).all():
         if g.caldav_uid:
             try:
                 cal = get_termin_calendar()
@@ -170,7 +170,7 @@ def force_rewrite_all_termine():
 def get_kalender_termine_anzuzueigen():
     # Vor dem Anzeigen: Offline-Termine/Gruppentermine synchronisieren
     sync_offline_termine_und_gruppentermine()
-    cleanup_offline_changed_termine()
+    cleanup_offline_changed_termine_und_abgesagte_und_entfallenen()
 
     # Einzeltermine (kundenbezogen)
     termine = (
@@ -432,14 +432,15 @@ def push_termin(termin: dict, delete_from_db=False):
     uid = termin.get("caldav_uid") or f"{'grtermin' if is_gruppe else 'termin'}-{id}@praxis-psydb"
 
     # Prüfen ob Timestamp für abgesagt/entfallen gesetzt
-    is_abgesagt = termin.get("abgesagt_am") or termin.get("entfallen_am")
+    is_abgesagt = termin.get("abgesagt") or termin.get("entfallen")
     try:
         if is_abgesagt:
             # Event online löschen
             try:
                 event = cal.event_by_uid(uid)
                 event.delete()
-                print(f"🗑 Event online gelöscht: UID={uid}")
+                #print(f"🗑 Event online gelöscht: UID={uid}")
+                print("Abgesagt ist der Termin mit ID " + str(id))
             except Exception as e:
                 print(f"⚠ Event UID={uid} nicht gefunden online (vielleicht schon gelöscht)")
 
@@ -705,8 +706,6 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
                     if not termin.abgesagt:
                         termin.abgesagt = timestamp
                         log_msg("→ Einzeltermin als abgesagt markiert (Timestamp gesetzt)")
-                    else:
-                        log_msg("→ Einzeltermin bereits abgesagt, Timestamp bleibt")
                 elif delete_action == "löschen":
                     db.session.delete(termin)
                     log_msg("→ Einzeltermin aus DB gelöscht")
@@ -929,7 +928,7 @@ def sync_calendar():
     try:
         # Vor dem Sync: Offline-Termine/Gruppentermine synchronisieren
         sync_offline_termine_und_gruppentermine()
-        cleanup_offline_changed_termine()
+        cleanup_offline_changed_termine_und_abgesagte_und_entfallenen()
         pull_termine_from_caldav(delete_action="abgesagt", log=logs)
         # Zeitstempel speichern
         pv = Programmvariable.query.filter_by(name="letzte_kalender_sync").first()

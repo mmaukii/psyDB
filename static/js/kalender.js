@@ -18,7 +18,7 @@ function showToast(text = "Gespeichert!", durationMs = 2000) {
 async function syncPraxisKalender() {
     if (!navigator.onLine) {
         showToast("Offline: Sync nicht möglich!", 2000);
-        return;
+        // Kein return mehr: Termine aus DB trotzdem anzeigen
     }
     const startedAt = performance.now();
     showToast("Sync Termine läuft …", null);
