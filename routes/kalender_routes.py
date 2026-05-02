@@ -176,7 +176,7 @@ def get_kalender_termine_anzuzueigen():
     sync_offline_termine_und_gruppentermine()
     cleanup_offline_changed_termine_und_abgesagte_und_entfallenen()
 
-    # Einzeltermine (kundenbezogen)
+    # Einzeltermine (kundenbezogen): nur anzeigen, wenn nicht offline gelöscht und nicht abgesagt
     termine = (
         db.session.query(
             Termin.id,
@@ -191,7 +191,11 @@ def get_kalender_termine_anzuzueigen():
             Kunde.kuerzel.label("kunde_kuerzel")
         )
         .join(Kunde, Termin.kunde_id == Kunde.id)
-        .filter(((Termin.abgesagt == 0) | (Termin.abgesagt.is_(None))) & (Termin.gruppentermin_id.is_(None)))
+        .filter(
+            ((Termin.abgesagt == 0) | (Termin.abgesagt.is_(None))) &
+            (Termin.nur_offline_geloescht == 0) &
+            (Termin.gruppentermin_id.is_(None))
+        )
         .all()
     )
 
@@ -209,7 +213,8 @@ def get_kalender_termine_anzuzueigen():
             Gruppe.gruppenkuerzel
         )
         .join(Gruppe, Gruppentermin.gruppe_id == Gruppe.id)
-        .filter((Gruppentermin.entfallen == 0) | (Gruppentermin.entfallen.is_(None)))
+        .filter((Gruppentermin.entfallen == 0) | (Gruppentermin.entfallen.is_(None))&
+            (Gruppentermin.nur_offline_geloescht == 0))
         .all()
     )
 
