@@ -12,8 +12,17 @@ from sqlalchemy import text
 
 def cleanup_offline_changed_termine_und_abgesagte_und_entfallenen():
 
+
     from models import Termin, Gruppentermin
-    from routes.kalender_routes import push_termin
+    from routes.kalender_routes import push_termin, get_termin_calendar
+
+    # Teste Verbindung zum CalDAV-Server
+    try:
+        cal = get_termin_calendar()
+    except Exception as e:
+        print(f"❌ Keine Verbindung zum Kalender möglich, cleanup wird abgebrochen: {e}")
+        return
+
     # Alle Termine mit nur_offline_veraendert=1 in den Kalender pushen
     for t in Termin.query.filter_by(nur_offline_veraendert=1).all():
         try:
@@ -34,19 +43,15 @@ def cleanup_offline_changed_termine_und_abgesagte_und_entfallenen():
         except Exception as e:
             print(f"❌ Fehler beim Pushen von Termin ID {t.id} mit nur_offline_veraendert=1: {e}")
 
-
     """
     Löscht alle Termine und Gruppentermine mit nur_offline_geloescht=1 sowohl online (CalDAV) als auch offline (DB).
     Sollte aufgerufen werden, wenn wieder eine Verbindung zum Kalender besteht.
     """
-    from models import Termin, Gruppentermin
-    from routes.kalender_routes import get_termin_calendar
     deleted_count = 0
     # Einzeltermine (offline gelöscht ODER abgesagt)
     for t in Termin.query.filter((Termin.nur_offline_geloescht==1) | (Termin.abgesagt.isnot(None))).all():
         if t.caldav_uid:
             try:
-                cal = get_termin_calendar()
                 event = cal.event_by_uid(t.caldav_uid)
                 event.delete()
                 print(f"✅ Event {t.caldav_uid} aus WebDAV gelöscht (cleanup)")
@@ -58,7 +63,6 @@ def cleanup_offline_changed_termine_und_abgesagte_und_entfallenen():
     for g in Gruppentermin.query.filter((Gruppentermin.nur_offline_geloescht==1) | (Gruppentermin.entfallen.isnot(None))).all():
         if g.caldav_uid:
             try:
-                cal = get_termin_calendar()
                 event = cal.event_by_uid(g.caldav_uid)
                 event.delete()
                 print(f"✅ Event {g.caldav_uid} aus WebDAV gelöscht (cleanup)")
