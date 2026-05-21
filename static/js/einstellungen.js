@@ -273,6 +273,8 @@ function loadProgrammvariablen() {
             } else {
                 document.getElementById("logoFileInput").value = '';
             }
+            // Prüfen, ob kalender_sync aktiv ist
+            const kalenderSyncActive = !!data.find(v => v.name === "kalender_sync" && v.wert == "1");
             // Standardtexte separat sammeln
             const standardtextVars = [
                 "rechnung_text_oben", "rechnung_text_unten",
@@ -281,17 +283,26 @@ function loadProgrammvariablen() {
                 "rechnung_text_email","mahnung_text_email"
             ];
             const standardtexte = [];
+            const kalenderFelder = [
+                "kalender_sync_art",
+                "termine_kalender",
+                "andere_kalender",
+                "webdav_pfad",
+                "webdav_user"
+            ];
             data.forEach(v => {
                 if (v.name === "logo_file") return;
                 if (standardtextVars.includes(v.name)) {
                     standardtexte.push(v);
                     return;
                 }
+                // Felder nur anzeigen, wenn kalenderSyncActive oder sie nicht zu den Kalenderfeldern gehören
+                if (kalenderFelder.includes(v.name) && !kalenderSyncActive) return;
                 const tr = document.createElement("tr");
                 let tdContent = "";
                 if (v.checkbox === true || v.checkbox === 1 || v.checkbox === "1") {
                     const checked = v.wert == "1" ? "checked" : "";
-                    tdContent = `<input type="checkbox" data-field="wert" data-id="${v.id}" ${checked}>`;
+                    tdContent = `<td style="text-align:center;"><input type="checkbox" data-field="wert" data-id="${v.id}" ${checked}></td>`;
                 } else {
                     tdContent = `<td contenteditable="true" data-field="wert" data-id="${v.id}">${v.wert || ""}</td>`;
                 }
