@@ -11,8 +11,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 config = configparser.ConfigParser()
 config.read(os.path.join(BASE_DIR, "config.ini"))
 
+
 # Datenbankpfad und Backup-Maximalzahl
-DB_FILE = config.get("database", "db_file")
+_db_file_raw = config.get("database", "db_file")
+if not os.path.isabs(_db_file_raw):
+    DB_FILE = os.path.join(BASE_DIR, _db_file_raw)
+else:
+    DB_FILE = _db_file_raw
 MAX_BACKUPS = config.getint("database", "max_backups")
 
 # WebDAV - jetzt aus Programmvariablen und Keyring
