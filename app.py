@@ -82,6 +82,8 @@ with app.app_context():
         {'name': 'max_backups', 'wert': '10', 'bezeichnung': 'Maximale Backups', 'sort': 101, 'checkbox': False},
         {'name': 'auto_kuerzel_kunden', 'wert': '1', 'bezeichnung': 'Kürzel bei Kunden automatisch erstellen', 'sort': 102, 'checkbox': True},
         {'name': 'letzte_kalender_sync', 'wert': '', 'bezeichnung': None, 'sort': None, 'checkbox': False},
+        {'name': 'kalender_sync', 'wert': '0', 'bezeichnung': 'Kalender synchronisieren', 'sort': 198, 'checkbox': True},
+        {'name': 'kalender_sync_nur_zum_server', 'wert': '1', 'bezeichnung': 'Kalender nur zum Server synchronisieren', 'sort': 199, 'checkbox': True},
     ]
 
     for defaults in programmvariable_defaults:

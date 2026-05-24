@@ -284,7 +284,7 @@ function loadProgrammvariablen() {
             ];
             const standardtexte = [];
             const kalenderFelder = [
-                "kalender_sync_art",
+                "kalender_sync_nur_zum_server",
                 "termine_kalender",
                 "andere_kalender",
                 "webdav_pfad",

@@ -952,16 +952,16 @@ def sync_calendar():
             cleanup_offline_changed_termine_und_abgesagte_und_entfallenen()
         else:
             logs.append("sync_offline_termine_und_gruppentermine und cleanup_offline_changed_termine_und_abgesagte_und_entfallenen übersprungen (kalender_sync != 1)")
-        # Nur ausführen, wenn kalender_sync und kalender_sync_art == '1'
+        # Nur ausführen, wenn kalender_sync und kalender_sync_nur_zum_server == '1'
         kalender_sync = Programmvariable.query.filter_by(name="kalender_sync").first()
-        kalender_sync_art = Programmvariable.query.filter_by(name="kalender_sync_art").first()
+        kalender_sync_nur_zum_server = Programmvariable.query.filter_by(name="kalender_sync_nur_zum_server").first()
         if (
             kalender_sync and kalender_sync.wert == "1" and
-            kalender_sync_art and kalender_sync_art.wert == "1"
+            kalender_sync_nur_zum_server and kalender_sync_nur_zum_server.wert == "1"
         ):
             pull_termine_from_caldav(delete_action="abgesagt", log=logs)
         else:
-            logs.append("pull_termine_from_caldav übersprungen (kalender_sync oder kalender_sync_art != 1)")
+            logs.append("pull_termine_from_caldav übersprungen (kalender_sync oder kalender_sync_nur_zum_server != 1)")
         # Zeitstempel speichern
         pv = Programmvariable.query.filter_by(name="letzte_kalender_sync").first()
         now = datetime.now().isoformat(sep=" ", timespec="seconds")
