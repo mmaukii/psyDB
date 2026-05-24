@@ -4,8 +4,35 @@ const form = document.getElementById("gruppenForm");
 const gruppenDokuText = document.getElementById("gruppenDokuText");
 const gruppenDokuSaveBtn = document.getElementById("gruppenDokuSaveBtn");
 const mailGruppeBtn = document.getElementById("mailGruppeBtn");
+const gruppenSaveBtn = document.querySelector('button[type="submit"][form="gruppenForm"]');
+
+function getMissingRequiredFieldNames(formElement) {
+    if (!formElement) return [];
+
+    return Array.from(formElement.querySelectorAll("[required]"))
+        .filter(field => !field.checkValidity())
+        .map(field => {
+            const label = formElement.querySelector(`label[for="${field.id}"]`);
+            return (label ? label.textContent : field.name || field.id || "Pflichtfeld")
+                .replace(/\*/g, "")
+                .replace(/\s+/g, " ")
+                .replace(/:$/g, "")
+                .trim();
+        });
+}
 
 reloadGruppenTabelle();
+
+if (gruppenSaveBtn && form) {
+    gruppenSaveBtn.addEventListener("click", (e) => {
+        const missingFields = getMissingRequiredFieldNames(form);
+        if (missingFields.length > 0) {
+            e.preventDefault();
+            showToast(`Speichern nicht möglich. Bitte Pflichtfelder ausfüllen: ${missingFields.join(", ")}`, 4000, "warn");
+            form.reportValidity();
+        }
+    });
+}
 
 if (mailGruppeBtn) {
     mailGruppeBtn.addEventListener("click", async () => {
@@ -1126,14 +1153,19 @@ if (gruppenDokuSaveBtn) {
 }
 
 // Toast-Funktion für kurze Erfolgsmeldungen
-function showToast(text = "Gespeichert!") {
+function showToast(text = "Gespeichert!", duration = 2000, type = "info") {
     const toast = document.getElementById("toast");
     toast.textContent = text;
+    toast.classList.remove("toast-warn");
+    if (type === "warn") {
+        toast.classList.add("toast-warn");
+    }
     toast.classList.add("show");
 
     setTimeout(() => {
         toast.classList.remove("show");
-    }, 2000);
+        toast.classList.remove("toast-warn");
+    }, typeof duration === "number" ? duration : 2000);
 }
 
 // Dynamische Befüllung des Therapieform-Auswahlfelds aus Leistungen (nur gruppe==1)

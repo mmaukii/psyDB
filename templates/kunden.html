@@ -56,7 +56,7 @@
 
     <!-- LINKS: Neuer Termin & Bearbeiten -->
 	<div style="display:flex; gap:8px;">
-		<button id="toggleButton" class="toggleButtonBearbeiten">Bearbeiten</button>
+		<button id="toggleButton" class="toggleButtonBearbeiten">Details einblenden</button>
 		<button type="button" class="table-btn" id="mailKundeBtn" title="Mail an Kunde" style="font-size: 20px; line-height: 1;">📧</button>
 	</div>
 
@@ -97,12 +97,7 @@
 				<input type="email" name="email" id="email" required class="required-field">
 			</div>
 
-			<div class="field" style="display:flex; align-items:center; justify-self:start;">
-				<label style="margin:0;">
-					<input type="checkbox" name="aktiv" id="aktiv" value="1" checked>
-					aktiv
-				</label>
-			</div>
+			
 
 			<!-- Bereich, den man ein- und ausblenden kann -->
 			<div id="kundenBereich"
@@ -211,7 +206,12 @@
 					</div>
 
 				<input type="hidden" name="gruppen" id="gruppenHidden">
-				
+				<div class="field" style="display:flex; align-items:center; justify-self:start;">
+					<label style="margin:0;">
+						<input type="checkbox" name="aktiv" id="aktiv" value="1" checked>
+						Kunde aktiv
+					</label>
+				</div>
 				
 				
 
