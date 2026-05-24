@@ -59,59 +59,50 @@ with app.app_context():
         )
         db.session.add(dummy)
         db.session.commit()
-    if not Programmvariable.query.filter_by(name='max_backups').first():
-        db.session.add(Programmvariable(name='max_backups', bezeichnung='Maximale Backups', wert='10'))
-    if not Programmvariable.query.filter_by(name='mahnspesen').first():
-        db.session.add(Programmvariable(name='mahnspesen', bezeichnung='Mahnspesen', wert='5'))
-    if not Programmvariable.query.filter_by(name='zahlungsziel_tage_rechnung').first():
-        db.session.add(Programmvariable(name='zahlungsziel_tage_rechnung', bezeichnung='Zahlungsziel Tage', wert='14'))
-    if not Programmvariable.query.filter_by(name='zahlungsziel_tage_mahnung').first():
-        db.session.add(Programmvariable(name='zahlungsziel_tage_mahnung', bezeichnung='Zahlungsziel Tage Mahnung', wert='7'))
-    if not Programmvariable.query.filter_by(name='verzugszinsen_proz').first():
-        db.session.add(Programmvariable(name='verzugszinsen_proz', bezeichnung='Verzugszinsen Prozent', wert='4'))
-    if not Programmvariable.query.filter_by(name='webdav_user').first():
-        db.session.add(Programmvariable(name='webdav_user', bezeichnung='WebDAV Benutzer', wert=''))
-    if not Programmvariable.query.filter_by(name='webdav_pfad').first():
-        db.session.add(Programmvariable(name='webdav_pfad', bezeichnung='WebDAV Pfad', wert=''))
-    if not Programmvariable.query.filter_by(name='db_passphrase_set').first():
-        db.session.add(Programmvariable(name='db_passphrase_set', bezeichnung='DB Passwort gesetzt (0/1)', wert='0'))
-    if not Programmvariable.query.filter_by(name='db_passphrase_check').first():
-        db.session.add(Programmvariable(name='db_passphrase_check', bezeichnung='DB Passwort Prüftoken', wert=''))
-    db.session.commit()
-    # Bestehende aktualisieren, falls bezeichnung fehlen
-    max_back = Programmvariable.query.filter_by(name='max_backups').first()
-    if max_back and not max_back.bezeichnung:
-        max_back.bezeichnung = 'Maximale Backups'
-    mahn = Programmvariable.query.filter_by(name='mahnspesen').first()
-    if mahn and not mahn.bezeichnung:
-        mahn.bezeichnung = 'Mahnspesen'
-    zahlungsziel = Programmvariable.query.filter_by(name='zahlungsziel_tage_rechnung').first()
-    if zahlungsziel and not zahlungsziel.bezeichnung:
-        zahlungsziel.bezeichnung = 'Zahlungsziel Tage'
-    verzugszinsen = Programmvariable.query.filter_by(name='verzugszinsen_proz').first()
-    if verzugszinsen and not verzugszinsen.bezeichnung:
-        verzugszinsen.bezeichnung = 'Verzugszinsen Prozent'
-    webdav_user = Programmvariable.query.filter_by(name='webdav_user').first()
-    if webdav_user and not webdav_user.bezeichnung:
-        webdav_user.bezeichnung = 'WebDAV Benutzer'
-    webdav_pfad = Programmvariable.query.filter_by(name='webdav_pfad').first()
-    if webdav_pfad and not webdav_pfad.bezeichnung:
-        webdav_pfad.bezeichnung = 'WebDAV Pfad'
-    db_passphrase_set = Programmvariable.query.filter_by(name='db_passphrase_set').first()
-    if db_passphrase_set and not db_passphrase_set.bezeichnung:
-        db_passphrase_set.bezeichnung = 'DB Passwort gesetzt (0/1)'
-    db_passphrase_check = Programmvariable.query.filter_by(name='db_passphrase_check').first()
-    if db_passphrase_check and not db_passphrase_check.bezeichnung:
-        db_passphrase_check.bezeichnung = 'DB Passwort Prüftoken'
+    programmvariable_defaults = [
+        {'name': 'webdav_pfad', 'wert': '', 'bezeichnung': 'Pfad für Webdav', 'sort': 204, 'checkbox': False},
+        {'name': 'webdav_user', 'wert': '', 'bezeichnung': 'WebDAV Benutzer', 'sort': 205, 'checkbox': False},
+        {'name': 'mahnspesen', 'wert': '5', 'bezeichnung': 'Mahnspesen', 'sort': 102, 'checkbox': False},
+        {'name': 'verzugszinsen_proz', 'wert': '4', 'bezeichnung': 'Verzugszinsen in %', 'sort': 103, 'checkbox': False},
+        {'name': 'zahlungsziel_tage_rechnung', 'wert': '14', 'bezeichnung': 'Zahlungsziel Tage für Rechnungen', 'sort': 100, 'checkbox': False},
+        {'name': 'zahlungsziel_tage_mahnung', 'wert': '14', 'bezeichnung': 'Zahlungsziel Tage für Mahnungen', 'sort': 101, 'checkbox': False},
+        {'name': 'termine_kalender', 'wert': 'praxis', 'bezeichnung': 'Webdav Kalender für Termine', 'sort': 202, 'checkbox': False},
+        {'name': 'andere_kalender', 'wert': 'Personal', 'bezeichnung': 'weitere Webdav Kalender, bei mehreren mit ";" trennen', 'sort': 203, 'checkbox': False},
+        {'name': 'logo_file', 'wert': '/static/firmen_neu.png', 'bezeichnung': 'Pfad zur Logodatei', 'sort': 401, 'checkbox': False},
+        {'name': 'einzel_betrag', 'wert': '83', 'bezeichnung': 'Standardpreis Einzeltherapie €', 'sort': 80, 'checkbox': False},
+        {'name': 'paar_betrag', 'wert': '90', 'bezeichnung': 'Standardpreis Paartherapie €', 'sort': 81, 'checkbox': False},
+        {'name': 'einzel_zeit', 'wert': '50', 'bezeichnung': 'Standarddauer Einzeltherapie min', 'sort': 90, 'checkbox': False},
+        {'name': 'paar_zeit', 'wert': '90', 'bezeichnung': 'Standarddauer Paartherapie min', 'sort': 91, 'checkbox': False},
+        {'name': 'db_passphrase_set', 'wert': '0', 'bezeichnung': 'DB Passwort gesetzt (0/1)', 'sort': None, 'checkbox': False},
+        {'name': 'db_passphrase_check', 'wert': '', 'bezeichnung': 'DB Passwort Prüftoken', 'sort': None, 'checkbox': False},
+        {'name': 'rechnung_text_oben', 'wert': 'Sehr geehrte Damen und Herren,\nanbei erhalten Sie Ihre aktuelle Rechnung.', 'bezeichnung': 'Standardtext Rechnung oben', 'sort': 100, 'checkbox': False},
+        {'name': 'rechnung_text_unten', 'wert': 'Vielen Dank für Ihr Vertrauen.\nBitte überweisen Sie den Betrag innerhalb der angegebenen Frist.', 'bezeichnung': 'Standardtext Rechnung unten', 'sort': 101, 'checkbox': False},
+        {'name': 'supervision_zeit', 'wert': '55', 'bezeichnung': 'Standarddauer Supervision min', 'sort': 92, 'checkbox': False},
+        {'name': 'supervision_betrag', 'wert': '90', 'bezeichnung': 'Standardpreis Supervision €', 'sort': 82, 'checkbox': False},
+        {'name': 'max_backups', 'wert': '10', 'bezeichnung': 'Maximale Backups', 'sort': 101, 'checkbox': False},
+        {'name': 'auto_kuerzel_kunden', 'wert': '1', 'bezeichnung': 'Kürzel bei Kunden automatisch erstellen', 'sort': 102, 'checkbox': True},
+        {'name': 'letzte_kalender_sync', 'wert': '', 'bezeichnung': None, 'sort': None, 'checkbox': False},
+    ]
+
+    for defaults in programmvariable_defaults:
+        programmvariable = Programmvariable.query.filter_by(name=defaults['name']).first()
+        if not programmvariable:
+            programmvariable = Programmvariable(**defaults)
+            db.session.add(programmvariable)
+            continue
+
+        if not programmvariable.bezeichnung and defaults['bezeichnung'] is not None:
+            programmvariable.bezeichnung = defaults['bezeichnung']
+        if programmvariable.sort is None and defaults['sort'] is not None:
+            programmvariable.sort = defaults['sort']
+        if programmvariable.checkbox is None:
+            programmvariable.checkbox = defaults['checkbox']
+
     db.session.commit()
     
     # Initialisiere WebDAV-Konfiguration
     from config import init_webdav_config
     init_webdav_config()
-
-from flask_sqlalchemy import SQLAlchemy
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
 
 
 
