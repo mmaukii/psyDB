@@ -3,6 +3,7 @@ import shutil
 from datetime import datetime, timedelta,timezone
 
 def backup_sqlite_db(db_path, max_backups=10):
+    db_path = os.path.abspath(db_path)
     if not os.path.exists(db_path):
         print("❌ Datenbank nicht gefunden:", db_path)
         return
@@ -14,8 +15,8 @@ def backup_sqlite_db(db_path, max_backups=10):
     backup_dir = os.path.join(db_dir, "backups", "db")
     os.makedirs(backup_dir, exist_ok=True)
 
-    # Timestamp: yyMMdd_HHMM
-    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    # Windows-sicherer Timestamp ohne ungueltige Zeichen (z.B. ':').
+    timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
     backup_name = f"{timestamp}_{db_name}"
     backup_path = os.path.join(backup_dir, backup_name)
 

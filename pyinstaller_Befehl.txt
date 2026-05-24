@@ -1,0 +1,24 @@
+für linux
+pyinstaller --onefile \
+ --add-data "templates:templates" \
+ --add-data "static:static" \
+ --add-data "models:models" \
+ --add-data "routes:routes" \
+ --add-data "models:models" \
+ --add-data "database.py:." \
+ --add-data "config.py:." \
+ --add-data "config.ini:." \
+ app.py
+
+
+ für windows
+python -m PyInstaller  ^
+ --hidden-import=caldav.davclient ^
+ --add-data "templates;templates" ^
+ --add-data "static;static" ^
+ --add-data "models;models" ^
+ --add-data "routes;routes" ^
+ --add-data "database.py;." ^
+ --add-data "config.py;." ^
+ --add-data "config.ini;." ^
+ app.py
