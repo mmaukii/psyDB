@@ -31,7 +31,7 @@
     pointer-events: auto;
 }
 #toast.toast-warn {
-    background: rgba(0, 122, 204, 0.9);
+    background: rgba(198, 40, 40, 0.95);
     color: #fff;
     opacity: 1;
 }

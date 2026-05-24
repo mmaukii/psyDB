@@ -419,6 +419,7 @@ document.getElementById("neuBtn").addEventListener("click", () => {
 
     // ✅ Kundenbereich einblenden
     kundenBereich.style.display = "grid";
+    toggleButton.classList.add("active");
 
     reloadKundenTabelle();
 });
@@ -485,7 +486,7 @@ document.getElementById("loeschenBtn").addEventListener("click", async () => {
                 await fetch(`/api/termine/${termin.id}`, { method: "DELETE" });
             }
         } catch (err) {
-            alert("Fehler beim Löschen der Termine: " + err.message);
+            showToast("Fehler beim Löschen der Termine: " + err.message, null, "warn");
             return;
         }
     }
@@ -495,7 +496,7 @@ document.getElementById("loeschenBtn").addEventListener("click", async () => {
     const response = await fetch(`/api/kunden/${id}`, { method: "DELETE" });
 
     if (!response.ok) {
-        alert("Fehler beim Löschen");
+        showToast("Klient konnte nicht gelöscht werden.", null, "warn");
         return;
     }
     //ui anpassen
@@ -723,7 +724,7 @@ if (kundenDokuSaveBtn) {
             const data = await response.json();
 
             if (!data.success) {
-                alert(data.error || "Fehler beim Speichern");
+                showToast(data.error || "Fehler beim Speichern", null, "warn");
                 return;
             }
 
@@ -734,7 +735,7 @@ if (kundenDokuSaveBtn) {
             showToast("Gespeichert!");
         } catch (err) {
             console.error("Fehler beim Speichern:", err);
-            alert("Fehler beim Speichern. Siehe Konsole für Details.");
+            showToast("Fehler beim Speichern. Siehe Konsole für Details.", null, "warn");
         }
     });
 }
@@ -785,10 +786,31 @@ function loadDruckvorlagenDropdown(selectedId = null) {
 const kundenForm = document.getElementById("kundenForm");
 const saveBtn = document.getElementById("saveBtn");
 
+function getMissingRequiredFieldNames(formElement) {
+    if (!formElement) return [];
+
+    return Array.from(formElement.querySelectorAll("[required]"))
+        .filter(field => !field.checkValidity())
+        .map(field => {
+            const label = formElement.querySelector(`label[for="${field.id}"]`);
+            return (label ? label.textContent : field.name || field.id || "Pflichtfeld")
+                .replace(/\*/g, "")
+                .replace(/\s+/g, " ")
+                .replace(/:$/g, "")
+                .trim();
+        });
+}
+
 if (saveBtn) {
     saveBtn.addEventListener("click", (e) => {
         e.preventDefault();
         if (kundenForm) {
+            const missingFields = getMissingRequiredFieldNames(kundenForm);
+            if (missingFields.length > 0) {
+                showToast(`Speichern nicht möglich. Bitte Pflichtfelder ausfüllen: ${missingFields.join(", ")}`, null, "warn");
+                kundenForm.reportValidity();
+                return;
+            }
             kundenForm.requestSubmit();
         }
     });
@@ -856,7 +878,7 @@ kundenForm.addEventListener("submit", async (e) => {
         const data = await response.json();
 
         if (!data.success) {
-            alert(data.error || "Fehler beim Speichern");
+            showToast(data.error || "Fehler beim Speichern", null, "warn");
             return;
         }
 
@@ -876,7 +898,7 @@ kundenForm.addEventListener("submit", async (e) => {
         showToast("Gespeichert!");
     } catch (err) {
         console.error("Fehler beim Speichern:", err);
-        alert("Fehler beim Speichern. Siehe Konsole für Details.");
+        showToast("Fehler beim Speichern. Siehe Konsole für Details.", null, "warn");
     }
 });
 
