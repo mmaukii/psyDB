@@ -14,7 +14,7 @@ from routes.auswertung_routes import auswertung_bp
 from services.backup_service import backup_sqlite_db
 from config import DB_FILE, MAX_BACKUPS, set_passphrase, use_passphrase_mode, is_encryption_ready, verify_passphrase, is_passphrase_initialized, set_new_passphrase, should_force_passphrase_prompt, mark_passphrase_prompt_done  # <-- import aus ini
 import time
-from models import Rechnung, Mahnung, Termin, Kunde, Leistung
+from models import Rechnung, Mahnung, Termin, Kunde, Leistung, Druckvorlage
 
 app = Flask(__name__)
 
@@ -111,6 +111,36 @@ with app.app_context():
             {'id': 9, 'value': 9, 'bezeichnung': 'Coaching', 'dauer_min': 60, 'betrag': 100, 'gruppe': None},
         ]
         db.session.add_all(Leistung(**leistung) for leistung in standard_leistungen)
+
+    if not Druckvorlage.query.first():
+        erstellungszeit = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        standard_druckvorlagen = [
+            {
+                'id': 3,
+                'name': 'Standard',
+                'pfad': 'Vorlagen/DruckvorlageRechnungPsychotherapie.html',
+                'kuerzel': 'Stand',
+                'timestamp': erstellungszeit,
+                'changestamp': '2026-05-24 22:01:01',
+            },
+            {
+                'id': 4,
+                'name': 'TherapieKK',
+                'pfad': 'Vorlagen/DruckvorlageRechnungPsychotherapieKrankenkasse.html',
+                'kuerzel': 'KK',
+                'timestamp': erstellungszeit,
+                'changestamp': None,
+            },
+            {
+                'id': 5,
+                'name': 'Supervision',
+                'pfad': 'Vorlagen/DruckvorlageRechnungSupervision.html',
+                'kuerzel': 'Sup',
+                'timestamp': erstellungszeit,
+                'changestamp': None,
+            },
+        ]
+        db.session.add_all(Druckvorlage(**druckvorlage) for druckvorlage in standard_druckvorlagen)
 
     db.session.commit()
     
