@@ -98,6 +98,20 @@ with app.app_context():
         if programmvariable.checkbox is None:
             programmvariable.checkbox = defaults['checkbox']
 
+    if not Leistung.query.first():
+        standard_leistungen = [
+            {'id': 1, 'value': 1, 'bezeichnung': 'Einzeltherapie', 'dauer_min': 52, 'betrag': 80, 'gruppe': 0},
+            {'id': 2, 'value': 2, 'bezeichnung': 'Paartherapie', 'dauer_min': 60, 'betrag': 120, 'gruppe': 0},
+            {'id': 3, 'value': 3, 'bezeichnung': 'Familientherapie', 'dauer_min': 75, 'betrag': 140, 'gruppe': None},
+            {'id': 4, 'value': 4, 'bezeichnung': 'Gruppentherapie', 'dauer_min': 90, 'betrag': 50, 'gruppe': 1},
+            {'id': 5, 'value': 5, 'bezeichnung': 'Einzelsupervision', 'dauer_min': 55, 'betrag': 90, 'gruppe': None},
+            {'id': 6, 'value': 6, 'bezeichnung': 'Gruppensupervision', 'dauer_min': 90, 'betrag': 60, 'gruppe': 1},
+            {'id': 7, 'value': 7, 'bezeichnung': 'Einzelselbsterfahrung', 'dauer_min': 50, 'betrag': 80, 'gruppe': None},
+            {'id': 8, 'value': 8, 'bezeichnung': 'Gruppenselbsterfahrung', 'dauer_min': 90, 'betrag': 50, 'gruppe': 1},
+            {'id': 9, 'value': 9, 'bezeichnung': 'Coaching', 'dauer_min': 60, 'betrag': 100, 'gruppe': None},
+        ]
+        db.session.add_all(Leistung(**leistung) for leistung in standard_leistungen)
+
     db.session.commit()
     
     # Initialisiere WebDAV-Konfiguration
