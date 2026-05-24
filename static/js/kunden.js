@@ -366,18 +366,16 @@ async function reloadTermineFuerKunde(kundeId) {
 const toggleButton = document.getElementById("toggleButton");
 const kundenBereich = document.getElementById("kundenBereich");
 
+function setDetailsVisibility(isVisible) {
+    kundenBereich.style.display = isVisible ? "grid" : "none";
+    toggleButton.textContent = isVisible ? "Details ausblenden" : "Details einblenden";
+    toggleButton.classList.toggle("active", isVisible);
+}
+
 toggleButton.addEventListener("click", () => {
     const isHidden = kundenBereich.style.display === "none" || kundenBereich.style.display === "";
 
-    if (isHidden) {
-        // Bereich einblenden
-        kundenBereich.style.display = "grid";
-        toggleButton.classList.add("active"); // Rahmen aktiv
-    } else {
-        // Bereich ausblenden
-        kundenBereich.style.display = "none";
-        toggleButton.classList.remove("active"); // Rahmen weg
-    }
+    setDetailsVisibility(isHidden);
 });
 
 // Neuer Kunde
@@ -418,8 +416,7 @@ document.getElementById("neuBtn").addEventListener("click", () => {
     termineProKundeListe.innerHTML = "";
 
     // ✅ Kundenbereich einblenden
-    kundenBereich.style.display = "grid";
-    toggleButton.classList.add("active");
+    setDetailsVisibility(true);
 
     reloadKundenTabelle();
 });

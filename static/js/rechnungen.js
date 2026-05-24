@@ -408,10 +408,7 @@ async function ladeRechnungen() {
     const rechnungBereich = document.getElementById("rechnungBereich");
     if (rechnungBereich) {
       console.log("Keine Rechnungen - Bearbeitungsbereich ausblenden");
-      rechnungBereich.style.display = "none";
-      // Optional: Toggle-Button zurücksetzen
-      const toggleButtonRechnung = document.getElementById("toggleButtonRechnung");
-      if (toggleButtonRechnung) toggleButtonRechnung.classList.remove("active");
+      setRechnungDetailsVisibility(false);
     }
     return;
   }
@@ -707,16 +704,24 @@ function filterRechnungen() {
 // Rechnungen beim Laden der Seite füllen
 ladeRechnungen();
 
+function setRechnungDetailsVisibility(isVisible) {
+  const toggleButtonRechnung = document.getElementById("toggleButtonRechnung");
+  const rechnungBereich = document.getElementById("rechnungBereich");
+
+  if (!toggleButtonRechnung || !rechnungBereich) return;
+
+  rechnungBereich.style.display = isVisible ? "grid" : "none";
+  toggleButtonRechnung.textContent = isVisible ? "Details ausblenden" : "Details einblenden";
+  toggleButtonRechnung.classList.toggle("active", isVisible);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const toggleButtonRechnung = document.getElementById("toggleButtonRechnung");
   const rechnungBereich = document.getElementById("rechnungBereich");
 
   toggleButtonRechnung.addEventListener("click", () => {
-    // Button optisch toggeln
-    toggleButtonRechnung.classList.toggle("active");
-
     const current = window.getComputedStyle(rechnungBereich).display;
-    rechnungBereich.style.display = current === "none" ? "grid" : "none";
+    setRechnungDetailsVisibility(current === "none");
   });
 });
 

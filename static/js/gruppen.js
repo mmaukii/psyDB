@@ -680,20 +680,17 @@ const toggleButton = document.getElementById("toggleButton");
 const gruppenBereich = document.getElementById("gruppenBereich");
 const kundenAuswahl = document.getElementById("kundenAuswahl");
 
+function setDetailsVisibility(isVisible) {
+    gruppenBereich.style.display = isVisible ? "grid" : "none";
+    kundenAuswahl.style.display = isVisible ? "grid" : "none";
+    toggleButton.textContent = isVisible ? "Details ausblenden" : "Details einblenden";
+    toggleButton.classList.toggle("active", isVisible);
+}
+
 toggleButton.addEventListener("click", () => {
     const isHidden = gruppenBereich.style.display === "none" || gruppenBereich.style.display === "";
 
-    if (isHidden) {
-        // Bereiche einblenden
-        gruppenBereich.style.display = "grid";
-        kundenAuswahl.style.display = "grid";
-        toggleButton.classList.add("active");  // roter Rahmen
-    } else {
-        // Bereiche ausblenden
-        gruppenBereich.style.display = "none";
-        kundenAuswahl.style.display = "none";
-        toggleButton.classList.remove("active");  // Rahmen weg
-    }
+    setDetailsVisibility(isHidden);
 });
 
 // Initial aktivieren
@@ -763,7 +760,7 @@ document.getElementById("neuBtnGruppe").addEventListener("click", () => {
     }
 
     // Ausblendbaren Bereich einblenden
-    document.getElementById("gruppenBereich").style.display = "grid";
+    setDetailsVisibility(true);
 
     // Optional: scrollen zum Formular
     document.getElementById("gruppenBereich").scrollIntoView({ behavior: "smooth", block: "start" });

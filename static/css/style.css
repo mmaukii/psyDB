@@ -271,13 +271,13 @@ button#loeschenBtn, button#loeschenBtnGruppe {
     /* optionaler Basisstil */
     background-color: #007bff;
     color: white;
-    border: 2px solid transparent; /* Standard: kein sichtbarer Rahmen */
+    border: none;
     padding: 6px 12px;
     cursor: pointer;
 }
 
 .toggleButtonBearbeiten.active {
-    border: 4px solid #b30000;  /* roter Rahmen, wenn aktiv */
+    box-shadow: inset 0 0 0 2px transparent;
 }
 
 .multi-container {
