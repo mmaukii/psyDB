@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from urllib.parse import quote
 import qrcode
 import pdfkit
@@ -269,14 +270,15 @@ def generate_mahnung_pdf(mahnung_id):
         logo_filename = logo_filename[7:]  # Entferne "static/"
     
     logo_absolute_path = os.path.join(app.root_path, 'static', logo_filename)
-    
-    # Übergebe absoluten Pfad an Template
-    logo_path = f"file://{logo_absolute_path}"
+
+    # Übergebe absoluten Pfad als file-URI an Template (wkhtmltopdf-kompatibel)
+    logo_path = Path(logo_absolute_path).resolve().as_uri()
     
     # QR-Code erstellen BEVOR Template gerendert wird
     rechnungs_nr = rechnung.rechnungsnr
     qr_filename = f"girocode_{mahnung.mahnungsnr}Mahnung_{rechnungs_nr}.png"
     qr_absolute_path = os.path.join(app.root_path, 'static/girocode', qr_filename)
+    os.makedirs(os.path.dirname(qr_absolute_path), exist_ok=True)
     
     # Alten QR-Code löschen falls vorhanden
     if os.path.exists(qr_absolute_path):
@@ -298,7 +300,7 @@ ReNR:{rechnungs_nr}{mahnung.mahnungsnr}.Mahnung
     qrcode.make(qr_data).save(qr_absolute_path)
     
     # QR-Code-Pfad zu absoluter URL konvertieren (NACH Erstellung)
-    qr_path_file_url = f"file://{qr_absolute_path}" if os.path.exists(qr_absolute_path) else ""
+    qr_path_file_url = Path(qr_absolute_path).resolve().as_uri() if os.path.exists(qr_absolute_path) else ""
 
     # HTML rendern (analog zu Rechnungen: Template aus /Vorlagen laden, falls nicht im templates-Ordner)
     from flask import render_template_string
