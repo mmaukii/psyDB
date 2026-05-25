@@ -293,7 +293,7 @@ SCT
 {standort.kontoName}
 {standort.iban}
 EUR{gesamtbetragMahnung}
-ReNR:{rechnungs_nr}{mahnung.mahnungsnr}.Mahnung
+ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
 """
     
     # QR-Code erstellen

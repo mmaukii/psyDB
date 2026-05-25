@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 //offene Termine Tabelle
-
-const offeneTermineTabelle = document.getElementById("offeneTermineTabelle").querySelector("tbody");
+const offeneTermineTable = document.getElementById("offeneTermineTabelle");
+const offeneTermineTabelle = offeneTermineTable.querySelector("tbody");
 
 
 
@@ -463,18 +463,20 @@ offeneTermineTabelle.addEventListener("click", (e) => {
     }
 });
 
-// Checkbox „Alle auswählen“
-// Select All Checkbox
-const selectAll = document.getElementById("selectAllTermine");
-
-selectAll.addEventListener("change", () => {
-    const checked = selectAll.checked;
+function toggleAllVisibleTermineCheckboxes(checked) {
     offeneTermineTabelle.querySelectorAll("tr").forEach(row => {
         if (row.style.display === "none") return;
         const cb = row.querySelector(".selectRow");
         if (cb) cb.checked = checked;
     });
     saveSelectedTermine();
+}
+
+// Header-Checkbox wird dynamisch neu gerendert, daher Event-Delegation auf der Tabelle.
+offeneTermineTable.addEventListener("change", (e) => {
+    if (e.target && e.target.id === "selectAllTermine") {
+        toggleAllVisibleTermineCheckboxes(e.target.checked);
+    }
 });
 
 
@@ -484,16 +486,6 @@ offeneTermineTabelle.addEventListener("click", (e) => {
     if (e.target.classList.contains("selectRow")) {
         console.log("Checkbox geändert:", e.target.dataset.termineId, e.target.checked);
     }
-});
-
-// Select All Event
-selectAll.addEventListener("change", () => {
-    const checked = selectAll.checked;
-    offeneTermineTabelle.querySelectorAll("tr").forEach(row => {
-        if (row.style.display === "none") return;
-        const cb = row.querySelector(".selectRow");
-        if (cb) cb.checked = checked;
-    });
 });
 
 // Tabelle beim Laden füllen
