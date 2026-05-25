@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+from urllib.parse import quote
 import qrcode
 import pdfkit
 
@@ -50,6 +51,53 @@ def get_wkhtmltopdf_configuration():
             return pdfkit.configuration(wkhtmltopdf=candidate)
 
     return None
+
+
+def _ps_single_quote(value):
+    """Escapes text for PowerShell single-quoted string literals."""
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def open_windows_mail_with_attachment(recipient, subject, body, attachment_path):
+    """Öffnet unter Windows eine neue Outlook-Mail mit Anhang."""
+    abs_attachment = os.path.abspath(attachment_path)
+
+    # 1) Bevorzugt: pywin32, falls verfügbar
+    try:
+        import win32com.client  # type: ignore
+
+        outlook = win32com.client.Dispatch("Outlook.Application")
+        mail = outlook.CreateItem(0)
+        mail.To = recipient
+        mail.Subject = subject
+        mail.Body = body
+        mail.Attachments.Add(abs_attachment)
+        mail.Display()
+        return True
+    except Exception:
+        pass
+
+    # 2) Fallback ohne zusätzliche Python-Abhängigkeit: Outlook COM via PowerShell
+    try:
+        ps_script = (
+            "$ol = New-Object -ComObject Outlook.Application; "
+            "$mail = $ol.CreateItem(0); "
+            f"$mail.To = {_ps_single_quote(recipient)}; "
+            f"$mail.Subject = {_ps_single_quote(subject)}; "
+            f"$mail.Body = {_ps_single_quote(body)}; "
+            f"$mail.Attachments.Add({_ps_single_quote(abs_attachment)}); "
+            "$mail.Display()"
+        )
+        subprocess.Popen([
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy", "Bypass",
+            "-Command",
+            ps_script,
+        ])
+        return True
+    except Exception:
+        return False
 
 
 rechnungen_bp = Blueprint("rechnungen", __name__)
@@ -535,13 +583,15 @@ def rechnung_mail(rechnung_id):
 
         if sys.platform.startswith("darwin"):
             # macOS: Mail.app via open
-            mailto = f"mailto:{recipient}?subject={subject}&body={body}"
+            mailto = f"mailto:{quote(recipient)}?subject={quote(subject)}&body={quote(body)}"
             subprocess.Popen(["open", mailto])
             subprocess.Popen(["open", "-a", "Mail", pdf_path])
         elif sys.platform.startswith("win"):
-            # Windows: Standard-Mailclient via mailto
-            mailto = f"mailto:{recipient}?subject={subject}&body={body}"
-            subprocess.Popen(["cmd", "/c", "start", "", mailto])
+            # Windows: Outlook mit echtem PDF-Anhang, mailto nur als Fallback
+            opened = open_windows_mail_with_attachment(recipient, subject, body, pdf_path)
+            if not opened:
+                mailto = f"mailto:{quote(recipient)}?subject={quote(subject)}&body={quote(body)}"
+                subprocess.Popen(["cmd", "/c", "start", "", mailto])
         else:
             # Linux: xdg-email
             cmd = [
