@@ -2,11 +2,87 @@ from flask import Blueprint, request, jsonify, render_template, current_app as a
 from database import db
 from models import Mahnung, Rechnung, Termin, TermineRechnung, Kunde, Programmvariable  # Mahnung muss als Model existieren
 import os
+import shutil
 import subprocess
+import sys
+from urllib.parse import quote
 import qrcode
 import pdfkit
 from datetime import date, datetime, timedelta, timezone
 import math
+
+
+def get_wkhtmltopdf_configuration():
+    """Ermittelt optional den wkhtmltopdf-Pfad für pdfkit."""
+    env_path = os.getenv("WKHTMLTOPDF_PATH")
+    if env_path and os.path.exists(env_path):
+        return pdfkit.configuration(wkhtmltopdf=env_path)
+
+    candidates = []
+
+    if sys.platform.startswith("win"):
+        if getattr(sys, "frozen", False):
+            meipass = getattr(sys, "_MEIPASS", None)
+            if meipass:
+                candidates.append(os.path.join(meipass, "wkhtmltopdf.exe"))
+            candidates.append(os.path.join(os.path.dirname(sys.executable), "wkhtmltopdf.exe"))
+
+        candidates.append(r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
+
+    which_path = shutil.which("wkhtmltopdf.exe") or shutil.which("wkhtmltopdf")
+    if which_path:
+        candidates.append(which_path)
+
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            return pdfkit.configuration(wkhtmltopdf=candidate)
+
+    return None
+
+
+def _ps_single_quote(value):
+    """Escapes text for PowerShell single-quoted string literals."""
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def open_windows_mail_with_attachment(recipient, subject, body, attachment_path):
+    """Öffnet unter Windows eine neue Outlook-Mail mit Anhang."""
+    abs_attachment = os.path.abspath(attachment_path)
+
+    try:
+        import win32com.client  # type: ignore
+
+        outlook = win32com.client.Dispatch("Outlook.Application")
+        mail = outlook.CreateItem(0)
+        mail.To = recipient
+        mail.Subject = subject
+        mail.Body = body
+        mail.Attachments.Add(abs_attachment)
+        mail.Display()
+        return True
+    except Exception:
+        pass
+
+    try:
+        ps_script = (
+            "$ol = New-Object -ComObject Outlook.Application; "
+            "$mail = $ol.CreateItem(0); "
+            f"$mail.To = {_ps_single_quote(recipient)}; "
+            f"$mail.Subject = {_ps_single_quote(subject)}; "
+            f"$mail.Body = {_ps_single_quote(body)}; "
+            f"$mail.Attachments.Add({_ps_single_quote(abs_attachment)}); "
+            "$mail.Display()"
+        )
+        subprocess.Popen([
+            "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy", "Bypass",
+            "-Command",
+            ps_script,
+        ])
+        return True
+    except Exception:
+        return False
 
 def get_mahnung_config():
     """Holt Mahnungskonfiguration aus Programmvariablen"""
@@ -297,7 +373,11 @@ ReNR:{rechnungs_nr}{mahnung.mahnungsnr}.Mahnung
         options['footer-html'] = "file:///" + temp_footer_path.replace("\\", "/")
         options['footer-spacing'] = '5'
 
-    pdfkit.from_string(html_content, pdf_path, options=options)
+    wkhtml_config = get_wkhtmltopdf_configuration()
+    if wkhtml_config:
+        pdfkit.from_string(html_content, pdf_path, options=options, configuration=wkhtml_config)
+    else:
+        pdfkit.from_string(html_content, pdf_path, options=options)
 
     return pdf_path, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnung.mahnungsnr
 
@@ -325,12 +405,22 @@ def mahnung_mail(mahnung_id):
         else:
             body = anrede
 
-        cmd = [
-            "thunderbird",
-            "-compose",
-            f"to='{kunde.email}',subject='{subject}',body='{body}',attachment='{pdf_path}'"
-        ]
-        subprocess.Popen(cmd)
+        if sys.platform.startswith("darwin"):
+            mailto = f"mailto:{quote(kunde.email)}?subject={quote(subject)}&body={quote(body)}"
+            subprocess.Popen(["open", mailto])
+            subprocess.Popen(["open", "-a", "Mail", pdf_path])
+        elif sys.platform.startswith("win"):
+            opened = open_windows_mail_with_attachment(kunde.email, subject, body, pdf_path)
+            if not opened:
+                mailto = f"mailto:{quote(kunde.email)}?subject={quote(subject)}&body={quote(body)}"
+                subprocess.Popen(["cmd", "/c", "start", "", mailto])
+        else:
+            cmd = [
+                "thunderbird",
+                "-compose",
+                f"to='{kunde.email}',subject='{subject}',body='{body}',attachment='{pdf_path}'"
+            ]
+            subprocess.Popen(cmd)
 
     return jsonify({"success": True, "pdf_path": pdf_path})
 
