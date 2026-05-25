@@ -1,6 +1,8 @@
+import os
 from flask import Blueprint, render_template
 from datetime import date, timedelta
 from models import Rechnung, Mahnung, Termin, Kunde
+from config import DB_FILE
 
 def time_to_minutes(time_str):
     """Konvertiert HH:MM in Minuten seit Mitternacht"""
@@ -143,6 +145,8 @@ def dashboard():
         except Exception:
             letzte_kalender_sync_diff = None
 
+    praxis_db_pfad = os.path.abspath(DB_FILE)
+
     return render_template("dashboard.html",
                           overdue_rechnungen=overdue_rechnungen,
                           mahnungen=mahnungen,
@@ -151,4 +155,5 @@ def dashboard():
                           missing_numbers=missing_numbers,
                           overlapping_termine=overlapping_termine,
                           letzte_kalender_sync=letzte_kalender_sync,
-                          letzte_kalender_sync_diff=letzte_kalender_sync_diff)
+                          letzte_kalender_sync_diff=letzte_kalender_sync_diff,
+                          praxis_db_pfad=praxis_db_pfad)

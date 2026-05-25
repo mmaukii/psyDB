@@ -74,7 +74,7 @@ with app.app_context():
         {'name': 'einzel_zeit', 'wert': '50', 'bezeichnung': 'Standarddauer Einzeltherapie min', 'sort': 90, 'checkbox': False},
         {'name': 'paar_zeit', 'wert': '90', 'bezeichnung': 'Standarddauer Paartherapie min', 'sort': 91, 'checkbox': False},
         {'name': 'db_passphrase_set', 'wert': '0', 'bezeichnung': 'DB Passwort gesetzt (0/1)', 'sort': None, 'checkbox': False},
-        {'name': 'db_passphrase_check', 'wert': '', 'bezeichnung': 'DB Passwort Prüftoken', 'sort': None, 'checkbox': False},
+        #{'name': 'db_passphrase_check', 'wert': '', 'bezeichnung': 'DB Passwort Prüftoken', 'sort': None, 'checkbox': False},
         {'name': 'rechnung_text_oben', 'wert': 'Sehr geehrte Damen und Herren,\nanbei erhalten Sie Ihre aktuelle Rechnung.', 'bezeichnung': 'Standardtext Rechnung oben', 'sort': 100, 'checkbox': False},
         {'name': 'rechnung_text_unten', 'wert': 'Vielen Dank für Ihr Vertrauen.\nBitte überweisen Sie den Betrag innerhalb der angegebenen Frist.', 'bezeichnung': 'Standardtext Rechnung unten', 'sort': 101, 'checkbox': False},
         {'name': 'supervision_zeit', 'wert': '55', 'bezeichnung': 'Standarddauer Supervision min', 'sort': 92, 'checkbox': False},

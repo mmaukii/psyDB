@@ -153,6 +153,12 @@
             <span style="color: #888; font-size: 0.98em;"> ({{ letzte_kalender_sync }})</span>
         </div>
         {% endif %}
+        {% if praxis_db_pfad %}
+        <div style="margin-bottom: 2px; color: #555; font-size: 1.05em;">
+            <strong>Praxis-DB Pfad:</strong>
+            <span style="color: #888; font-size: 0.98em;"> {{ praxis_db_pfad }}</span>
+        </div>
+        {% endif %}
 </div>
 
 <style>
