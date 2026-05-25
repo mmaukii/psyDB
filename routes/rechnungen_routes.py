@@ -3,6 +3,7 @@ from database import db
 from models import Rechnung, Termin, TermineRechnung, Kunde, Mahnung, Programmvariable, Druckvorlage
 from datetime import date, datetime, timedelta, timezone
 import os
+import shutil
 import subprocess
 import sys
 import qrcode
@@ -14,6 +15,41 @@ def get_zahlungsziel_tage():
     """Holt Zahlungsziel-Tage aus Programmvariablen"""
     zahlungsziel_var = Programmvariable.query.filter_by(name='zahlungsziel_tage_rechnung').first()
     return int(zahlungsziel_var.wert) if zahlungsziel_var else 14
+
+
+def get_wkhtmltopdf_configuration():
+    """Ermittelt optional den wkhtmltopdf-Pfad für pdfkit.
+
+    Unterstützt beim Windows-Build:
+    - gebündelte Datei via PyInstaller --add-binary "...\\wkhtmltopdf.exe;."
+    - lokale Standard-Installation unter C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe
+    - PATH-Fallback
+    Unter Linux/macOS bleibt das bisherige Verhalten via PATH erhalten.
+    """
+    env_path = os.getenv("WKHTMLTOPDF_PATH")
+    if env_path and os.path.exists(env_path):
+        return pdfkit.configuration(wkhtmltopdf=env_path)
+
+    candidates = []
+
+    if sys.platform.startswith("win"):
+        if getattr(sys, "frozen", False):
+            meipass = getattr(sys, "_MEIPASS", None)
+            if meipass:
+                candidates.append(os.path.join(meipass, "wkhtmltopdf.exe"))
+            candidates.append(os.path.join(os.path.dirname(sys.executable), "wkhtmltopdf.exe"))
+
+        candidates.append(r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
+
+    which_path = shutil.which("wkhtmltopdf.exe") or shutil.which("wkhtmltopdf")
+    if which_path:
+        candidates.append(which_path)
+
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            return pdfkit.configuration(wkhtmltopdf=candidate)
+
+    return None
 
 
 rechnungen_bp = Blueprint("rechnungen", __name__)
@@ -405,7 +441,9 @@ def generate_rechnung_pdf(rechnung_id):
 
     # QR-Code
     qr_filename = f"girocode_{rechnungs_nr}.png"
-    qr_path = os.path.join(app.root_path, "static/girocode", qr_filename)
+    qr_dir = os.path.join(app.root_path, "static", "girocode")
+    os.makedirs(qr_dir, exist_ok=True)
+    qr_path = os.path.join(qr_dir, qr_filename)
     if os.path.exists(qr_path):
         os.remove(qr_path)
 
@@ -421,6 +459,7 @@ ReNR:{rechnungs_nr}
 """
     img = qrcode.make(data)
     img.save(qr_path)
+    qr_path_file_url = "file:///" + qr_path.replace("\\", "/")
 
   
    # Footer HTML-Datei laden
@@ -454,7 +493,11 @@ ReNR:{rechnungs_nr}
 }
 
 
-    pdfkit.from_string(html_content, pdf_path, options=options)
+    wkhtml_config = get_wkhtmltopdf_configuration()
+    if wkhtml_config:
+        pdfkit.from_string(html_content, pdf_path, options=options, configuration=wkhtml_config)
+    else:
+        pdfkit.from_string(html_content, pdf_path, options=options)
 
     return pdf_path, kunde, rechnungs_nr, kunde.nachname if kunde else ""
 

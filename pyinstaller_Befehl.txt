@@ -13,6 +13,7 @@ pyinstaller --onefile \
 
  für windows
 python -m PyInstaller  ^
+ --add-binary "C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe;." ^
  --hidden-import=caldav.davclient ^
  --add-data "templates;templates" ^
  --add-data "static;static" ^
