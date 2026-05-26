@@ -12,7 +12,8 @@ pyinstaller --onefile \
 
 
  für windows
-python -m PyInstaller  ^
+python -m PyInstaller ^
+ --name psyDB ^
  --add-binary "C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe;." ^
  --hidden-import=caldav.davclient ^
  --add-data "templates;templates" ^
