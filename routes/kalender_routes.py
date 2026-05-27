@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Termin, Gruppentermin, Kunde, Gruppe,Programmvariable
-from sqlalchemy import union_all, literal
+from sqlalchemy import union_all, literal, or_
 from caldav import DAVClient
 from caldav.elements import dav
 from datetime import datetime, timedelta
@@ -142,6 +142,85 @@ def sync_offline_termine_und_gruppentermine():
     print(f"🔄 {synced} offline-Termine/Gruppentermine synchronisiert.")
 
 
+def sync_termine_und_gruppentermine_ohne_caldav_uid():
+    """
+    Synchronisiert alle aktiven Termine und Gruppentermine in den Kalender,
+    deren `caldav_uid` noch leer ist.
+    """
+    from models import Termin, Gruppentermin
+    from routes.kalender_routes import push_termin, get_termin_calendar
+
+    try:
+        get_termin_calendar()
+    except Exception as e:
+        print(f"❌ Keine Verbindung zum Kalender möglich, sync ohne caldav_uid wird abgebrochen: {e}")
+        return
+
+    synced = 0
+
+    termine_ohne_caldav = (
+        Termin.query
+        .filter(
+            or_(Termin.caldav_uid.is_(None), Termin.caldav_uid == ""),
+            Termin.gruppentermin_id.is_(None),
+            Termin.nur_offline_geloescht == 0,
+            or_(Termin.abgesagt == 0, Termin.abgesagt.is_(None))
+        )
+        .all()
+    )
+
+    for t in termine_ohne_caldav:
+        try:
+            push_termin({
+                "termin_id": t.id,
+                "datum": t.datum,
+                "startzeit": t.startzeit,
+                "endzeit": t.endzeit,
+                "beschreibung": t.beschreibung,
+                "kommentar": t.kommentar,
+                "abgesagt": t.abgesagt,
+                "caldav_uid": t.caldav_uid,
+                "kuerzel": t.kunde.kuerzel if t.kunde else None
+            })
+            db.session.refresh(t)
+            if t.caldav_uid:
+                synced += 1
+                print(f"✅ Termin ID {t.id} ohne caldav_uid erfolgreich in den Kalender geschrieben.")
+        except Exception as e:
+            print(f"❌ Fehler beim Pushen von Termin ID {t.id} ohne caldav_uid: {e}")
+
+    gruppentermine_ohne_caldav = (
+        Gruppentermin.query
+        .filter(
+            or_(Gruppentermin.caldav_uid.is_(None), Gruppentermin.caldav_uid == ""),
+            Gruppentermin.nur_offline_geloescht == 0,
+            or_(Gruppentermin.entfallen == 0, Gruppentermin.entfallen.is_(None))
+        )
+        .all()
+    )
+
+    for g in gruppentermine_ohne_caldav:
+        try:
+            push_termin({
+                "gruppentermin_id": g.id,
+                "datum": g.datum,
+                "startzeit": g.startzeit,
+                "endzeit": g.endzeit,
+                "beschreibung": g.beschreibung,
+                "kommentar": g.kommentar,
+                "caldav_uid": g.caldav_uid,
+                "kuerzel": g.gruppe.gruppenkuerzel if g.gruppe else None
+            })
+            db.session.refresh(g)
+            if g.caldav_uid:
+                synced += 1
+                print(f"✅ Gruppentermin ID {g.id} ohne caldav_uid erfolgreich in den Kalender geschrieben.")
+        except Exception as e:
+            print(f"❌ Fehler beim Pushen von Gruppentermin ID {g.id} ohne caldav_uid: {e}")
+
+    print(f"🔄 {synced} Termine/Gruppentermine ohne caldav_uid synchronisiert.")
+
+
 
 
 
@@ -194,6 +273,7 @@ def force_rewrite_all_termine():
 @kalender_bp.get("/kalender/termine_anzuzeigen")
 def get_kalender_termine_anzuzueigen():
     # Vor dem Anzeigen: Offline-Termine/Gruppentermine synchronisieren
+    sync_termine_und_gruppentermine_ohne_caldav_uid()
     sync_offline_termine_und_gruppentermine()
     cleanup_offline_changed_termine_und_abgesagte_und_entfallenen()
 
@@ -971,10 +1051,11 @@ def sync_calendar():
         # Vor dem Sync: Offline-Termine/Gruppentermine synchronisieren, nur wenn kalender_sync == '1'
         kalender_sync = Programmvariable.query.filter_by(name="kalender_sync").first()
         if kalender_sync and kalender_sync.wert == "1":
+            sync_termine_und_gruppentermine_ohne_caldav_uid()
             sync_offline_termine_und_gruppentermine()
             cleanup_offline_changed_termine_und_abgesagte_und_entfallenen()
         else:
-            logs.append("sync_offline_termine_und_gruppentermine und cleanup_offline_changed_termine_und_abgesagte_und_entfallenen übersprungen (kalender_sync != 1)")
+            logs.append("sync_termine_und_gruppentermine_ohne_caldav_uid, sync_offline_termine_und_gruppentermine und cleanup_offline_changed_termine_und_abgesagte_und_entfallenen übersprungen (kalender_sync != 1)")
         # Nur ausführen, wenn kalender_sync und kalender_sync_nur_zum_server == '1'
         kalender_sync = Programmvariable.query.filter_by(name="kalender_sync").first()
         kalender_sync_nur_zum_server = Programmvariable.query.filter_by(name="kalender_sync_nur_zum_server").first()
