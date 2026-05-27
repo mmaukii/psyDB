@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from models import Programmvariable
-from config import use_passphrase_mode, verify_passphrase, set_passphrase, set_new_passphrase
+from config import use_passphrase_mode, verify_passphrase, set_passphrase, set_new_passphrase, refresh_webdav_config
 import keyring
 from datetime import datetime, timezone
 import os
@@ -69,6 +69,8 @@ def update_programmvariable(id):
     else:
         print(f"Programmvariable '{v.name}' keine Änderung: wert={v.wert}, checkbox={v.checkbox}")
     db.session.commit()
+    if v.name in {"webdav_user", "webdav_pfad"}:
+        refresh_webdav_config()
     return jsonify({"message": "Aktualisiert"})
 
 
@@ -142,6 +144,7 @@ def set_webdav_password():
     password = data.get('password')
     if password:
         keyring.set_password("webdav", "user", password)
+        refresh_webdav_config()
         return jsonify({"message": "Passwort gespeichert"})
     return jsonify({"error": "Kein Passwort angegeben"}), 400
 

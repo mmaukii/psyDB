@@ -170,16 +170,22 @@ def get_encryption_key():
         return ""
 
 def get_webdav_config():
-    """Gibt WebDAV-Konfiguration zurück, lädt sie bei Bedarf"""
+    """Gibt WebDAV-Konfiguration zurück und lädt sie bei jedem Aufruf neu."""
     global _webdav_config_loaded, WEBDAV_USER, WEBDAV_PASSWORD, WEBDAV_URL
-    if not _webdav_config_loaded:
-        init_webdav_config()
-        _webdav_config_loaded = True
+    init_webdav_config()
+    _webdav_config_loaded = True
     return {
-        'user': WEBDAV_USER,
-        'password': WEBDAV_PASSWORD,
-        'url': WEBDAV_URL
+        'user': (WEBDAV_USER or "").strip(),
+        'password': WEBDAV_PASSWORD or "",
+        'url': (WEBDAV_URL or "").strip()
     }
+
+
+def refresh_webdav_config():
+    """Lädt die aktuelle WebDAV-Konfiguration sofort neu."""
+    global _webdav_config_loaded
+    init_webdav_config()
+    _webdav_config_loaded = True
 
 def init_webdav_config():
     """Initialisiert WebDAV-Konfiguration aus DB und Keyring"""

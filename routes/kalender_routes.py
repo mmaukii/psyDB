@@ -9,6 +9,27 @@ from datetime import datetime, timedelta
 import time
 from config import get_webdav_config
 from sqlalchemy import text
+from urllib.parse import urlparse
+
+
+def _create_webdav_client():
+    config = get_webdav_config()
+    url = config.get('url', '')
+    parsed_url = urlparse(url)
+
+    if not url:
+        raise ValueError("WebDAV-URL fehlt. Bitte in den Einstellungen hinterlegen.")
+
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+        raise ValueError(
+            f"WebDAV-URL ist ungültig: '{url}'. Bitte eine vollständige URL mit Host angeben."
+        )
+
+    return DAVClient(
+        url=url,
+        username=config['user'],
+        password=config['password']
+    )
 
 def cleanup_offline_changed_termine_und_abgesagte_und_entfallenen():
 
@@ -247,14 +268,13 @@ def kalender_extern():
     if not (kalender_sync and kalender_sync.wert == "1"):
         return jsonify([])
 
-    config = get_webdav_config()
-    client = DAVClient(
-        url=config['url'],
-        username=config['user'],
-        password=config['password']
-    )
+    try:
+        client = _create_webdav_client()
+        principal = client.principal()
+    except Exception as e:
+        print(f"⚠ Externer Kalender konnte nicht geladen werden: {e}")
+        return jsonify([])
 
-    principal = client.principal()
     calendars = principal.calendars()
 
     events_json = []
@@ -382,12 +402,7 @@ def kalender_extern():
 
 # -- für synchronisierung Pusch und pull des Kalenders ---
 def get_termin_calendar():
-    config = get_webdav_config()
-    client = DAVClient(
-        url=config['url'],
-        username=config['user'],
-        password=config['password']
-    )
+    client = _create_webdav_client()
 
     terminkalender_var = Programmvariable.query.filter_by(name='termine_kalender').first()
     terminkalender_name =terminkalender_var.wert
@@ -650,12 +665,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
     Nur Events mit Summary = Kunden- oder Gruppenkuerzel werden bearbeitet.
     delete_action: "abgesagt" oder "löschen" für online gelöschte Termine
     """
-    config = get_webdav_config()
-    client = DAVClient(
-        url=config['url'],
-        username=config['user'],
-        password=config['password']
-    )
+    client = _create_webdav_client()
 
     principal = client.principal()
     calendars = principal.calendars()
