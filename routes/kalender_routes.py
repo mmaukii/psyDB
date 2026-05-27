@@ -243,6 +243,10 @@ caldav_bp = Blueprint("caldav", __name__)
 
 @kalender_bp.route("/kalender/extern")
 def kalender_extern():
+    kalender_sync = Programmvariable.query.filter_by(name="kalender_sync").first()
+    if not (kalender_sync and kalender_sync.wert == "1"):
+        return jsonify([])
+
     config = get_webdav_config()
     client = DAVClient(
         url=config['url'],
