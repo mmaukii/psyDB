@@ -38,6 +38,7 @@ SQLAlchemy==2.0.47
 typing_extensions==4.15.0
 tzdata==2025.3
 urllib3-future==2.16.900
+vobject==0.9.9
 wassima==2.0.5
 Werkzeug==3.1.6
 WTForms==3.2.1
