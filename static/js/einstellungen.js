@@ -35,6 +35,35 @@ document.getElementById("changeDbPassphraseBtn").addEventListener("click", () =>
         alert("Fehler beim Ändern des Passworts!");
     });
 });
+
+document.getElementById("saveWebdavPasswordBtn").addEventListener("click", () => {
+    const passwordInput = document.getElementById("webdavPassword");
+    const password = passwordInput.value.trim();
+
+    if (!password) {
+        showToast("Bitte ein WebDAV Passwort eingeben!", 2500);
+        return;
+    }
+
+    fetch("/api/webdav-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+    })
+    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok) {
+            passwordInput.value = "";
+            showToast("WebDAV Passwort gespeichert!", 2000);
+        } else {
+            showToast(`Fehler beim Speichern: ${data.error || "Unbekannter Fehler"}`, 3500);
+        }
+    })
+    .catch(err => {
+        console.error("Fehler beim Speichern des WebDAV Passworts:", err);
+        showToast("Fehler beim Speichern des WebDAV Passworts!", 3500);
+    });
+});
 // Kopie von standorte.js, angepasst auf einstellungen
 function loadEinstellungen() {
     fetch('/api/standorte')
