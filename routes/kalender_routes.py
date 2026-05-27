@@ -396,6 +396,15 @@ def get_termin_calendar():
 
     raise Exception("Kalender '"+terminkalender_name+"' nicht gefunden")
 
+@kalender_bp.get("/kalender/test_webcal")
+def test_webcal_connection():
+    try:
+        cal = get_termin_calendar()
+        cal_name = cal.name if getattr(cal, "name", None) else "Unbekannt"
+        return jsonify({"message": f"Verbindung erfolgreich. Kalender '{cal_name}' erreichbar."})
+    except Exception as e:
+        return jsonify({"error": f"Verbindung fehlgeschlagen: {str(e)}"}), 400
+
 # services/sync_termine_push.py
 def push_termin(termin: dict, delete_from_db=False):
     """

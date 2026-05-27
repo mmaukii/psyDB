@@ -89,8 +89,11 @@
 <!-- WebDAV Passwort -->
 <div style="margin-bottom: 20px;">
 	<label for="webdavPassword"><strong>WebDAV Passwort:</strong></strong></label>
-	<input type="password" id="webdavPassword" placeholder="Passwort eingeben">
-	<button id="saveWebdavPasswordBtn">Passwort speichern</button>
+	<div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 5px;">
+		<input type="password" id="webdavPassword" placeholder="Passwort eingeben">
+		<button id="saveWebdavPasswordBtn">Passwort speichern</button>
+		<button id="testWebcalConnectionBtn" type="button">WebCal Verbindung testen</button>
+	</div>
 </div>
 <br><br>
 <h2 style="margin-bottom: 0;">Standardtexte für Rechnungen & Mahnungen</h2>

@@ -64,6 +64,26 @@ document.getElementById("saveWebdavPasswordBtn").addEventListener("click", () =>
         showToast("Fehler beim Speichern des WebDAV Passworts!", 3500);
     });
 });
+
+document.getElementById("testWebcalConnectionBtn").addEventListener("click", () => {
+    showToast("WebCal Verbindung wird geprüft...", null);
+
+    fetch("/api/kalender/test_webcal", {
+        method: "GET"
+    })
+    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok) {
+            showToast(data.message || "WebCal Verbindung erfolgreich!", 2500);
+        } else {
+            showToast(data.error || "WebCal Verbindung fehlgeschlagen!", 4000);
+        }
+    })
+    .catch(err => {
+        console.error("Fehler beim Test der WebCal Verbindung:", err);
+        showToast("Fehler beim Test der WebCal Verbindung!", 4000);
+    });
+});
 // Kopie von standorte.js, angepasst auf einstellungen
 function loadEinstellungen() {
     fetch('/api/standorte')
