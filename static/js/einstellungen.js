@@ -76,12 +76,16 @@ document.getElementById("testWebcalConnectionBtn").addEventListener("click", () 
         if (ok) {
             showToast(data.message || "WebCal Verbindung erfolgreich!", 2500);
         } else {
-            showToast(data.error || "WebCal Verbindung fehlgeschlagen!", 4000);
+            const toast = document.getElementById("toast");
+            if (toast) toast.classList.remove("show");
+            alert(data.error || "WebCal Verbindung fehlgeschlagen!");
         }
     })
     .catch(err => {
         console.error("Fehler beim Test der WebCal Verbindung:", err);
-        showToast("Fehler beim Test der WebCal Verbindung!", 4000);
+        const toast = document.getElementById("toast");
+        if (toast) toast.classList.remove("show");
+        alert("Fehler beim Test der WebCal Verbindung!");
     });
 });
 // Kopie von standorte.js, angepasst auf einstellungen

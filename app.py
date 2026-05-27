@@ -1,5 +1,5 @@
 
-from flask import Blueprint, Flask, render_template, request, redirect, url_for, render_template_string, jsonify, make_response
+from flask import Blueprint, Flask, render_template, request, redirect, url_for, render_template_string, jsonify, make_response, send_from_directory
 import sqlite3
 from datetime import date, datetime, timedelta, timezone
 from database import db
@@ -26,6 +26,8 @@ def require_unlock():
     if is_encryption_ready() and not should_force_passphrase_prompt():
         return
     if request.path.startswith("/static/"):
+        return
+    if request.path in ("/favicon.ico", "/psyDB.ico"):
         return
     if request.path.startswith("/unlock"):
         return
@@ -175,6 +177,14 @@ def unlock():
             return redirect(next_url)
         return render_template("unlock.html", error="Passwort falsch", setup_mode=setup_mode)
     return render_template("unlock.html", setup_mode=setup_mode)
+
+@app.get("/psyDB.ico")
+def psydb_favicon():
+    return send_from_directory(app.root_path, "psyDB.ico", mimetype="image/x-icon")
+
+@app.get("/favicon.ico")
+def favicon():
+    return send_from_directory(app.root_path, "psyDB.ico", mimetype="image/x-icon")
 
 @seiten_bp.get("/kunden")
 def kunden_seite():
