@@ -310,9 +310,13 @@ async function reloadTermineFuerKunde(kundeId) {
             const localStart = st.startzeit;
             const localEnd = st.endzeit;
 
+            const istNurGruppentermin = Boolean(st.nur_gruppentermin);
+
             // Buttons: je nach Status
             let buttons = "";
-            if (st.abgesagt) {
+            if (istNurGruppentermin) {
+                buttons = `<span style="color:#666;">aus Gruppe</span>`;
+            } else if (st.abgesagt) {
                 buttons = `<button class="restoreBtntermineproKunde table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️</button>`;
                 buttons += `<button class="deleteBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
                 buttons += `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
@@ -333,7 +337,10 @@ async function reloadTermineFuerKunde(kundeId) {
             }
 
             // Zeile zurückgeben, Klasse "abgesagt" setzen, optional display:none wenn Toggle aktiv
-            const rowStyle = (st.abgesagt && toggleAbgesagtBtn.dataset.show === "false") ? "display:none;" : "";
+            const rowStyles = [];
+            if (st.abgesagt && toggleAbgesagtBtn.dataset.show === "false") rowStyles.push("display:none;");
+            if (istNurGruppentermin) rowStyles.push("opacity:0.55;color:#666;");
+            const rowStyle = rowStyles.join(" ");
 
             // Gruppenkürzel anzeigen (wie in termine.js)
             const gruppenkuerzel = st.gruppenkuerzel || "";
@@ -342,7 +349,7 @@ async function reloadTermineFuerKunde(kundeId) {
             const gruppenTd = hatGruppenkuerzel ? `<td align="center">${gruppenkuerzel}</td>` : "";
 
             return `
-                <tr data-id="${st.id}" class="${st.abgesagt ? 'abgesagt' : ''}" style="${rowStyle}">
+                <tr data-id="${st.id || ''}" class="${st.abgesagt ? 'abgesagt' : ''}${istNurGruppentermin ? ' nur-gruppentermin' : ''}" style="${rowStyle}" title="${istNurGruppentermin ? 'Gruppentermin aus Gruppenzugehoerigkeit ohne angelegten Kundentermin' : ''}">
                     <th align="center">${datumDeutsch}</th>
                     <td align="center">${localStart}</td>
                     <td align="center">${localEnd}</td>

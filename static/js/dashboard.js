@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const logoImg = document.getElementById("dashboardLogo");
             
             if (logoVar && logoVar.wert) {
-                logoImg.src = logoVar.wert;
+                logoImg.src = `/api/logo-file?ts=${Date.now()}`;
                 logoImg.style.display = "block";
             } else {
                 logoImg.style.display = "none";

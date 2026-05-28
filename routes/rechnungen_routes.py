@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from urllib.parse import quote
 import qrcode
 import pdfkit
@@ -389,18 +390,16 @@ def generate_rechnung_pdf(rechnung_id):
     from models import Programmvariable
     logo_var = Programmvariable.query.filter_by(name='logo_file').first()
     logo_filename = logo_var.wert if logo_var and logo_var.wert else "static/firmen_logo_fuer_schreiben.png"
+
+    # Unterstützt Altwerte unter static/... und neue Werte unter Vorlagen/...
+    normalized_logo = logo_filename.lstrip('/')
+    if normalized_logo.startswith('static/'):
+        logo_absolute_path = os.path.join(app.root_path, normalized_logo)
+    else:
+        logo_absolute_path = os.path.join(app.root_path, normalized_logo)
     
-    # Konvertiere zu absolutem Pfad 
-    # Entferne /static/ Prefix falls vorhanden
-    if logo_filename.startswith('/static/'):
-        logo_filename = logo_filename[8:]  # Entferne "/static/"
-    elif logo_filename.startswith('static/'):
-        logo_filename = logo_filename[7:]  # Entferne "static/"
-    
-    logo_absolute_path = os.path.join(app.root_path, 'static', logo_filename)
-    
-    # Übergebe absoluten Pfad an Template
-    logo_path = f"file://{logo_absolute_path}"
+    # Übergebe absoluten Pfad als file-URI (wkhtmltopdf-kompatibel)
+    logo_path = Path(logo_absolute_path).resolve().as_uri()
 
     # QR-Code-Pfad zu absoluter URL konvertieren
     qr_filename = f"girocode_{r.rechnungsnr}.png"

@@ -3,9 +3,9 @@
 from flask import Blueprint, request, jsonify
 from database import db
 from datetime import datetime, timezone
-from models import Termin, Kunde, TermineRechnung, Gruppentermin, Gruppe, Rechnung
+from models import Termin, Kunde, TermineRechnung, Gruppentermin, Gruppe, Rechnung, GruppenKunde
 from routes.kalender_routes import push_termin
-from sqlalchemy import desc, asc
+from sqlalchemy import desc, asc, and_, func
 
 
 
@@ -461,7 +461,41 @@ def get_termine_kunde_rnr(kunde_id):
         .all()
     )
 
-    return jsonify([
+    fehlende_gruppentermine = (
+        db.session.query(
+            Gruppentermin.datum,
+            Gruppentermin.startzeit,
+            Gruppentermin.endzeit,
+            func.coalesce(GruppenKunde.betrag, Gruppentermin.betrag).label("betrag"),
+            Gruppentermin.beschreibung,
+            Gruppentermin.id.label("gruppentermin_id"),
+            Gruppentermin.entfallen.label("abgesagt"),
+            Gruppentermin.changestamp,
+            Gruppentermin.timestamp,
+            Kunde.vorname,
+            Kunde.nachname,
+            Kunde.kuerzel,
+            Kunde.id.label("kundeId"),
+            Gruppe.gruppenkuerzel
+        )
+        .join(Gruppe, Gruppentermin.gruppe_id == Gruppe.id)
+        .join(GruppenKunde, GruppenKunde.gruppe_id == Gruppe.id)
+        .join(Kunde, Kunde.id == GruppenKunde.kunde_id)
+        .outerjoin(
+            Termin,
+            and_(
+                Termin.gruppentermin_id == Gruppentermin.id,
+                Termin.kunde_id == kunde_id,
+                Termin.nur_offline_geloescht == 0
+            )
+        )
+        .filter(Kunde.id == kunde_id)
+        .filter(Gruppentermin.nur_offline_geloescht == 0)
+        .filter(Termin.id.is_(None))
+        .all()
+    )
+
+    termine = [
         {
             "id": r.id,
             "kundeId": r.kundeId,
@@ -479,8 +513,36 @@ def get_termine_kunde_rnr(kunde_id):
             "kundeId": r.kundeId,
             "gruppentermin_id": r.gruppentermin_id,
             "rechnungsnr": r.rechnungsnr,
-            "gruppenkuerzel": r.gruppenkuerzel or ""
+            "gruppenkuerzel": r.gruppenkuerzel or "",
+            "nur_gruppentermin": False
         }
         for r in result
+    ]
+
+    termine.extend([
+        {
+            "id": None,
+            "kundeId": r.kundeId,
+            "datum": r.datum,
+            "startzeit": r.startzeit,
+            "endzeit": r.endzeit,
+            "betrag": r.betrag,
+            "abgesagt": r.abgesagt,
+            "changesstamp": r.changestamp,
+            "timestamp": r.timestamp,
+            "beschreibung": r.beschreibung,
+            "vorname": r.vorname,
+            "nachname": r.nachname,
+            "kuerzel": r.kuerzel,
+            "gruppentermin_id": r.gruppentermin_id,
+            "rechnungsnr": None,
+            "gruppenkuerzel": r.gruppenkuerzel or "",
+            "nur_gruppentermin": True
+        }
+        for r in fehlende_gruppentermine
     ])
+
+    termine.sort(key=lambda t: ((t.get("datum") or ""), (t.get("startzeit") or "")), reverse=True)
+
+    return jsonify(termine)
 

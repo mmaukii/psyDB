@@ -261,15 +261,10 @@ def generate_mahnung_pdf(mahnung_id):
     from models import Programmvariable
     logo_var = Programmvariable.query.filter_by(name='logo_file').first()
     logo_filename = logo_var.wert if logo_var and logo_var.wert else "static/firmen_logo_fuer_schreiben.png"
-    
-    # Konvertiere zu absolutem Pfad für wkhtmltopdf
-    # Entferne /static/ Prefix falls vorhanden
-    if logo_filename.startswith('/static/'):
-        logo_filename = logo_filename[8:]  # Entferne "/static/"
-    elif logo_filename.startswith('static/'):
-        logo_filename = logo_filename[7:]  # Entferne "static/"
-    
-    logo_absolute_path = os.path.join(app.root_path, 'static', logo_filename)
+
+    # Unterstützt Altwerte unter static/... und neue Werte unter Vorlagen/...
+    normalized_logo = logo_filename.lstrip('/')
+    logo_absolute_path = os.path.join(app.root_path, normalized_logo)
 
     # Übergebe absoluten Pfad als file-URI an Template (wkhtmltopdf-kompatibel)
     logo_path = Path(logo_absolute_path).resolve().as_uri()

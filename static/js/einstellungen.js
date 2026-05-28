@@ -320,9 +320,7 @@ function loadProgrammvariablen() {
             // Logo-File laden und anzeigen
             const logoFile = data.find(v => v.name === "logo_file");
             if (logoFile && logoFile.wert) {
-                let cleanPath = logoFile.wert.replace('/static/images/', '/static/');
-                cleanPath = cleanPath.replace(/^\/static\//, 'Vorlagen/');
-                document.getElementById("logoFileInput").value = cleanPath;
+                document.getElementById("logoFileInput").value = logoFile.wert;
             } else {
                 document.getElementById("logoFileInput").value = '';
             }
@@ -380,7 +378,47 @@ function loadProgrammvariablen() {
 }
 
 // Logo-File Picker Handler
-// ...existing code...
+document.getElementById("logoFilePicker").addEventListener("change", () => {
+    const filePicker = document.getElementById("logoFilePicker");
+    const fileInput = document.getElementById("logoFileInput");
+
+    if (!filePicker.files || !filePicker.files[0]) {
+        return;
+    }
+
+    const selectedFile = filePicker.files[0];
+    const fileName = selectedFile.name.toLowerCase();
+    const isPng = fileName.endsWith(".png");
+    const isJpeg = fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpe");
+
+    if (!isPng && !isJpeg) {
+        alert("Bitte nur PNG oder JPEG auswählen.");
+        filePicker.value = "";
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    fetch("/api/upload-logo", {
+        method: "POST",
+        body: formData
+    })
+        .then(response => response.json().then(data => ({ ok: response.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok || !data.success) {
+                throw new Error(data.error || "Upload fehlgeschlagen");
+            }
+            fileInput.value = data.path;
+            filePicker.value = "";
+            showToast("Logo gespeichert.", 2000);
+        })
+        .catch(err => {
+            console.error("Fehler beim Logo-Upload:", err);
+            alert("Fehler beim Logo-Upload: " + err.message);
+            filePicker.value = "";
+        });
+});
 
 // Programmvariablen speichern
 document.getElementById("saveProgrammvariablenBtn").addEventListener("click", () => {
