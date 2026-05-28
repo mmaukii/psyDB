@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+
+# Python bytecode/cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Build and packaging artifacts
+build/
+dist/
+*.spec
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Logs and local runtime files
+*.log
+instance/
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Local databases and backups
+*.db
+*.sqlite
+*.sqlite3
+backups/
+
+# Project-specific generated folders
+Rechnungen/
+
+# Sensitive local config overrides (if you create one)
+config.local.ini
+
+*girocode*.png
