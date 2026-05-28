@@ -22,6 +22,7 @@ app = Flask(__name__)
 
 
 def configure_logging(flask_app):
+    # Hinweis: Konkrete Log-Ausgaben (info/warning/error) in den jeweiligen Ablaufen noch erganzen.
     handler = TimedRotatingFileHandler(
         "app.log",
         when="midnight",

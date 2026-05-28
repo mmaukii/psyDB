@@ -12,6 +12,26 @@ function showToast(text = "Gespeichert!", durationMs = 2000) {
         }, durationMs);
     }
 }
+
+const APP_TITLE = "psyDB";
+
+function updateBrowserTabTitle(activeTabText = "") {
+    const activeNavLink = document.querySelector(".nav-link.active");
+    const navTitle = activeNavLink ? activeNavLink.textContent.trim() : "";
+    const tabTitle = activeTabText ? activeTabText.trim() : "";
+
+    let title = APP_TITLE;
+    if (navTitle && tabTitle) {
+        title = `${navTitle} - ${tabTitle}`;
+    } else if (navTitle) {
+        title = `${navTitle}`;
+    } else if (tabTitle) {
+        title = `${tabTitle} `;
+    }
+
+    document.title = title;
+}
+
 // Tab Umschalten
 const tabs = document.querySelectorAll(".tab");
 const contents = document.querySelectorAll(".tab-content");
@@ -26,6 +46,8 @@ tabs.forEach(tab => {
         if (content) {
             content.classList.add("active");
         }
+
+        updateBrowserTabTitle(tab.textContent);
     });
 });
 
@@ -42,5 +64,8 @@ document.addEventListener("DOMContentLoaded", () => {
             link.classList.add("active");
         }
     });
+
+    const activeTab = document.querySelector(".tab.active");
+    updateBrowserTabTitle(activeTab ? activeTab.textContent : "");
 });
 
