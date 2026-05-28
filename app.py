@@ -4,11 +4,13 @@ import sqlite3
 from datetime import date, datetime, timedelta, timezone
 from database import db
 import os
+import logging
 import signal
 import shutil
 import threading
 import subprocess
 import sys
+from logging.handlers import TimedRotatingFileHandler
 from routes import kunden_bp, standorte_bp, termine_bp, rechnungen_bp, kalender_bp, gruppen_bp, gruppentermine_bp, gruppenkunden_bp ,  mahnungen_bp, programmvariablen_bp, dashboard_bp, druckvorlagen_bp, doku_bp, leistungen_bp
 from routes.auswertung_routes import auswertung_bp
 from services.backup_service import backup_sqlite_db
@@ -17,6 +19,25 @@ import time
 from models import Rechnung, Mahnung, Termin, Kunde, Leistung, Druckvorlage
 
 app = Flask(__name__)
+
+
+def configure_logging(flask_app):
+    handler = TimedRotatingFileHandler(
+        "app.log",
+        when="midnight",
+        interval=1,
+        backupCount=30,
+        encoding="utf-8",
+    )
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+
+    if not any(isinstance(existing_handler, TimedRotatingFileHandler) for existing_handler in flask_app.logger.handlers):
+        flask_app.logger.addHandler(handler)
+    flask_app.logger.setLevel(logging.INFO)
+
+
+configure_logging(app)
 
 
 @app.before_request
