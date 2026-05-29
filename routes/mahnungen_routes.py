@@ -13,11 +13,13 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas as pdf_canvas
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
 def _format_currency(value):
-    return f"{float(value or 0):.2f}".replace(".", ",")
+    return f"{float(value or 0):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
 def _append_multiline_paragraphs(story, text, style, space_after=2):
@@ -29,9 +31,50 @@ def _append_multiline_paragraphs(story, text, style, space_after=2):
             story.append(Spacer(1, space_after * mm))
 
 
+def _format_date_de(value):
+    if not value:
+        return ""
+    if hasattr(value, "strftime"):
+        return value.strftime("%d.%m.%Y")
+    text = str(value)
+    for date_format in ("%Y-%m-%d", "%d.%m.%Y"):
+        try:
+            return datetime.strptime(text, date_format).strftime("%d.%m.%Y")
+        except ValueError:
+            continue
+    return text
+
+
 def _ps_single_quote(value):
     """Escapes text for PowerShell single-quoted string literals."""
     return "'" + str(value).replace("'", "''") + "'"
+
+
+class NumberedCanvas(pdf_canvas.Canvas):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        page_count = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(page_count)
+            super().showPage()
+        super().save()
+
+    def draw_page_number(self, page_count):
+        if page_count <= 1:
+            return
+        self.saveState()
+        self.setFont("Helvetica", 9)
+        page_width = self._pagesize[0]
+        self.drawCentredString(page_width / 2.0, 28 * mm, f"Seite {self._pageNumber}/{page_count}")
+        self.restoreState()
 
 
 def open_windows_mail_with_attachment(recipient, subject, body, attachment_path):
@@ -63,9 +106,7 @@ def open_windows_mail_with_attachment(recipient, subject, body, attachment_path)
             "$mail.Display()"
         )
         subprocess.Popen([
-            "powershell",
-            "-NoProfile",
-            "-ExecutionPolicy", "Bypass",
+    
             "-Command",
             ps_script,
         ])
@@ -231,10 +272,27 @@ def generate_mahnung_pdf(mahnung_id):
     standort = kunde.standort if kunde else None
 
     # Zahlungsziel
-    rechnungsdatum = datetime.strptime(rechnung.datum, "%Y-%m-%d")
     _, zahlungsziel_mahnung, mahnspesen, _ = get_mahnung_config()
     zahlungsziel = date.today() + timedelta(days=zahlungsziel_mahnung)
     zahlungsziel_str = zahlungsziel.strftime("%d.%m.%Y")
+
+    # Verzugstage fuer den Mahnungstext
+    rechnungsdatum_obj = None
+    if hasattr(rechnung.datum, "date"):
+        rechnungsdatum_obj = rechnung.datum.date()
+    elif isinstance(rechnung.datum, date):
+        rechnungsdatum_obj = rechnung.datum
+    else:
+        try:
+            rechnungsdatum_obj = datetime.strptime(str(rechnung.datum), "%Y-%m-%d").date()
+        except Exception:
+            rechnungsdatum_obj = None
+    zahlungsziel_tage_rechnung = int(rechnung.zahlungsziel_tage or 0)
+    if rechnungsdatum_obj:
+        verzugsbeginn = rechnungsdatum_obj + timedelta(days=zahlungsziel_tage_rechnung)
+        verzugstage = max((date.today() - verzugsbeginn).days, 0)
+    else:
+        verzugstage = 0
 
     # Gesamtbetrag + Verzugszinsen + Mahnspesen
     gesamtbetrag = sum(s["betrag"] for s in termine_json)
@@ -282,7 +340,9 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
 
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="BodySmall", parent=styles["Normal"], fontSize=9, leading=12))
-    styles.add(ParagraphStyle(name="Body", parent=styles["Normal"], fontSize=10, leading=13))
+    styles.add(ParagraphStyle(name="Body", parent=styles["Normal"], fontSize=10, leading=15))
+    styles.add(ParagraphStyle(name="BodyRight", parent=styles["Body"], alignment=2))
+    styles.add(ParagraphStyle(name="TopName", parent=styles["Body"], fontName="Helvetica-Bold"))
     styles.add(ParagraphStyle(name="Heading", parent=styles["Heading2"], fontSize=14, leading=16, spaceAfter=6))
 
     doc = SimpleDocTemplate(
@@ -291,13 +351,13 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
         leftMargin=20 * mm,
         rightMargin=20 * mm,
         topMargin=12 * mm,
-        bottomMargin=15 * mm,
+        bottomMargin=34 * mm,
     )
     story = []
 
     firma_name = standort.name if standort else ""
     firma_ort = f"{standort.plz or ''} {standort.ort or ''}".strip() if standort else ""
-    header_left = [Paragraph(escape(firma_name), styles["Body"]) if firma_name else Paragraph("", styles["Body"]) ]
+    header_left = [Paragraph(escape(firma_name), styles["TopName"]) if firma_name else Paragraph("", styles["Body"]) ]
     if standort and standort.adresse:
         header_left.append(Paragraph(escape(standort.adresse), styles["BodySmall"]))
     if firma_ort:
@@ -307,31 +367,61 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
 
     logo_cell = ""
     if os.path.exists(logo_absolute_path):
+        logo_reader = ImageReader(logo_absolute_path)
+        original_width, original_height = logo_reader.getSize()
+        max_logo_width = 42 * mm
+        max_logo_height = 14 * mm
+        scale = min(max_logo_width / float(original_width), max_logo_height / float(original_height))
+
         logo = Image(logo_absolute_path)
-        logo.drawHeight = 18 * mm
-        logo.drawWidth = 55 * mm
+        logo.drawWidth = float(original_width) * scale
+        logo.drawHeight = float(original_height) * scale
         logo.hAlign = "RIGHT"
         logo_cell = logo
 
-    header_table = Table([[header_left, logo_cell]], colWidths=[120 * mm, 50 * mm])
+    header_logo_width = 50 * mm
+    header_table = Table([[header_left, logo_cell]], colWidths=[doc.width - header_logo_width, header_logo_width])
     header_table.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("ALIGN", (1, 0), (1, 0), "RIGHT"),
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ("TOPPADDING", (0, 0), (-1, -1), 0),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
     ]))
     story.append(header_table)
+    header_separator = Table([[""]], colWidths=[doc.width])
+    header_separator.setStyle(TableStyle([
+        ("LINEBELOW", (0, 0), (0, 0), 0.3, colors.HexColor("#CFCFCF")),
+        ("LEFTPADDING", (0, 0), (0, 0), 0),
+        ("RIGHTPADDING", (0, 0), (0, 0), 0),
+        ("TOPPADDING", (0, 0), (0, 0), 2),
+        ("BOTTOMPADDING", (0, 0), (0, 0), 3),
+    ]))
+    story.append(header_separator)
     story.append(Spacer(1, 8 * mm))
 
-    story.append(Paragraph(f"{escape(str(mahnung.mahnungsnr))}. Mahnung zu Rechnung {escape(str(rechnungs_nr))}", styles["Heading"]))
-    story.append(Paragraph(f"Mahndatum: {escape(str(mahnung.datum or ''))}", styles["Body"]))
-    story.append(Paragraph(f"Neues Zahlungsziel: {escape(zahlungsziel_str)}", styles["Body"]))
+    meta_data = [
+        ["Betrifft Rechnungsnummer:", str(rechnungs_nr)],
+        ["Rechnungsdatum:", _format_date_de(rechnung.datum)],
+        ["Mahnungsdatum:", _format_date_de(mahnung.datum)],
+    ]
+    meta_table = Table(meta_data, colWidths=[doc.width - (35 * mm), 35 * mm])
+    meta_table.setStyle(TableStyle([
+        ("ALIGN", (0, 0), (-1, -1), "RIGHT"),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5 * mm),
+    ]))
+    story.append(meta_table)
     story.append(Spacer(1, 4 * mm))
 
     if kunde:
-        story.append(Paragraph("Mahnung an:", styles["Body"]))
-        story.append(Paragraph(escape(f"{kunde.vorname or ''} {kunde.nachname or ''}".strip()), styles["BodySmall"]))
+        story.append(Paragraph(escape(f"{kunde.vorname or ''} {kunde.nachname or ''}".strip()), styles["TopName"]))
         if kunde.adresse:
             story.append(Paragraph(escape(kunde.adresse), styles["BodySmall"]))
         ort = f"{kunde.plz or ''} {kunde.ort or ''}".strip()
@@ -339,53 +429,92 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
             story.append(Paragraph(escape(ort), styles["BodySmall"]))
         story.append(Spacer(1, 5 * mm))
 
-    table_data = [["Datum", "Zeit", "Beschreibung", "Betrag (EUR)"]]
-    for t in termine_json:
-        time_range = f"{t.get('startzeit') or ''} - {t.get('endzeit') or ''}".strip(" -")
-        table_data.append([
-            str(t.get("datum") or ""),
-            time_range,
-            str(t.get("beschreibung") or ""),
-            _format_currency(t.get("betrag") or 0),
-        ])
+    story.append(Paragraph(f"{escape(str(mahnung.mahnungsnr))}. Mahnung zu Rechnung {escape(str(rechnungs_nr))}", styles["Heading"]))
+    story.append(Spacer(1, 2.5 * mm))
 
-    table_data.append(["", "", "Zwischensumme", _format_currency(gesamtbetrag)])
-    table_data.append(["", "", "Verzugszinsen", _format_currency(verzugszinsen)])
-    table_data.append(["", "", "Mahnspesen", _format_currency(mahnspesen)])
-    table_data.append(["", "", "Gesamtbetrag", _format_currency(gesamtbetragMahnung)])
+    story.append(Paragraph("Guten Tag!", styles["Body"]))
+    story.append(Spacer(1, 4 * mm))
+    story.append(Paragraph(
+        f"Leider konnte ich bis heute keinen Zahlungseingang zur oben genannten Rechnung ueber {_format_currency(gesamtbetrag)} € feststellen. Ich ersuche Sie daher, den offenen Betrag zuzueglich gesetzlicher Verzugszinsen und einer pauschalen Mahngebuehr bis spaetestens <b>{escape(zahlungsziel_str)}</b> zu begleichen. Nachfolgend die aktuelle Forderungsaufstellung:", styles["Body"]))
+    story.append(Spacer(1, 3 * mm))
 
-    positions_table = Table(table_data, colWidths=[28 * mm, 28 * mm, 84 * mm, 30 * mm])
+    table_data = [
+        ["Offener Rechnungsbetrag", f"{_format_currency(gesamtbetrag)} €"],
+        [f"Verzugszinsen ({mahnung.verzugszinsenProz} % p.a. fuer {verzugstage} Tage)", f"{_format_currency(verzugszinsen)} €"],
+        ["Mahnspesen (pauschal)", f"{_format_currency(mahnspesen)} €"],
+        ["Gesamtbetrag", f"{_format_currency(gesamtbetragMahnung)} €"],
+    ]
+
+    positions_table = Table(table_data, colWidths=[122 * mm, 31 * mm])
     positions_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F3F4F6")),
-        ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#B9BCC2")),
-        ("ALIGN", (3, 0), (3, -1), "RIGHT"),
+        ("LINEBELOW", (0, 0), (-1, -1), 0.25, colors.HexColor("#B9BCC2")),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEADING", (0, 0), (-1, -1), 16),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("LEFTPADDING", (0, 0), (0, -1), 4 * mm),
         ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
     ]))
     story.append(positions_table)
-    story.append(Spacer(1, 4 * mm))
+    story.append(Spacer(1, 6 * mm))
 
-    _append_multiline_paragraphs(story, mahnung.kommentar, styles["Body"])
+    if int(mahnung.mahnungsnr or 1) == 1:
+        story.append(Paragraph("Bitte begleichen Sie den offenen Betrag zeitnah.", styles["Body"]))
+    else:
+        story.append(Paragraph(
+            f"Sollte bis zum <b>{escape(zahlungsziel_str)}</b> keine Zahlung eingehen, sehe ich mich gezwungen, weitere rechtliche Schritte einzuleiten.",
+            styles["Body"],
+        ))
+    story.append(Spacer(1, 2 * mm))
 
-    if standort:
-        story.append(Spacer(1, 4 * mm))
-        if standort.kontoName:
-            story.append(Paragraph(f"Kontoinhaber: {escape(str(standort.kontoName))}", styles["BodySmall"]))
-        if standort.iban:
-            story.append(Paragraph(f"IBAN: {escape(str(standort.iban))}", styles["BodySmall"]))
-        if standort.bic:
-            story.append(Paragraph(f"BIC: {escape(str(standort.bic))}", styles["BodySmall"]))
+    has_footer = standort or os.path.exists(qr_absolute_path)
 
-    if os.path.exists(qr_absolute_path):
-        story.append(Spacer(1, 3 * mm))
-        story.append(Paragraph("GiroCode", styles["BodySmall"]))
-        qr_image = Image(qr_absolute_path)
-        qr_image.drawHeight = 28 * mm
-        qr_image.drawWidth = 28 * mm
-        story.append(qr_image)
+    bank_name = standort.bankname if standort and getattr(standort, "bankname", None) else "easybank"
+    account_name = standort.kontoName if standort and getattr(standort, "kontoName", None) else "Daniel Maurer"
+    account_iban = standort.iban if standort and getattr(standort, "iban", None) else "1111 2222 3333 4455"
+    account_bic = standort.bic if standort and getattr(standort, "bic", None) else "EASYATW1"
 
-    doc.build(story)
+    bank_lines = [
+        "Bankverbindung",
+        str(bank_name),
+        str(account_name),
+        f"IBAN: {account_iban}",
+        f"BIC: {account_bic}",
+    ]
+
+    def _draw_footer(canvas, page_doc):
+        if not has_footer:
+            return
+
+        canvas.saveState()
+
+        footer_top_y = page_doc.bottomMargin - 2 * mm
+        canvas.setStrokeColor(colors.HexColor("#CFCFCF"))
+        canvas.setLineWidth(0.3)
+        canvas.line(page_doc.leftMargin, footer_top_y, page_doc.leftMargin + page_doc.width, footer_top_y)
+
+        qr_size = 24 * mm
+        qr_x = page_doc.leftMargin
+        qr_y = footer_top_y - qr_size - 2 * mm
+        if os.path.exists(qr_absolute_path):
+            canvas.drawImage(qr_absolute_path, qr_x, qr_y, width=qr_size, height=qr_size, preserveAspectRatio=True, mask="auto")
+
+        canvas.setFont("Helvetica", 9)
+        qr_text_x = qr_x + qr_size + 2 * mm
+        qr_text_y = qr_y + (qr_size / 2.0) + (1.3 * mm)
+        canvas.drawString(qr_text_x, qr_text_y, "QR Code scannen")
+        canvas.drawString(qr_text_x, qr_text_y - (3.8 * mm), "und bezahlen")
+
+        right_col_x = page_doc.leftMargin + page_doc.width
+        line_y = footer_top_y - 4 * mm
+        for line in bank_lines:
+            canvas.drawRightString(right_col_x, line_y, line)
+            line_y -= 4.2 * mm
+
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=_draw_footer, onLaterPages=_draw_footer, canvasmaker=NumberedCanvas)
 
     return pdf_path, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnung.mahnungsnr
 
