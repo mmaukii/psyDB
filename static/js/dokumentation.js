@@ -443,7 +443,7 @@ dokuForm.addEventListener("submit", async e => {
   const gruppentermineId = dokuForm.querySelector("#gruppentermineId").value;
   // Text aufteilen wie in fensterDoku.js
   const [doku, pers_doku] = (text => {
-    const m = text.split(/\n*\.\-\-\.\n*/);
+    const m = text.split(/\n*(?:\*\*\*|\.\-\-\.)\n*/);
     return [m[0]?.trim() || "", m[1]?.trim() || ""];
   })(dokuText.value);
 

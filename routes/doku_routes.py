@@ -96,7 +96,7 @@ def export_dokus_kunde_pdf(kunde_id):
     # Filter aus Query-Parameter lesen
     doku_filter = request.args.get("filter", "ges")
     now_str = datetime.now().strftime("%y%m%d_%H%M%S")
-    pdf_filename = f"Doku_{kunde.kuerzel}_{now_str}.pdf"
+    pdf_filename = f"Dokuexport_{kunde.kuerzel}_{now_str}.pdf"
     folder_path = os.path.join(os.path.dirname(__file__), "..", "Rechnungen")
     folder_path = os.path.abspath(folder_path)
     os.makedirs(folder_path, exist_ok=True)
@@ -114,6 +114,7 @@ def export_dokus_kunde_pdf(kunde_id):
         rightMargin=15 * mm,
         topMargin=15 * mm,
         bottomMargin=15 * mm,
+        title="Dokuexport",
     )
 
     story = []

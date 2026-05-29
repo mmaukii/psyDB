@@ -20,7 +20,7 @@ window.openFensterDoku = function ({
 
     document.getElementById("termineId").value = termineId || "";
     document.getElementById("gruppentermineId").value = gruppentermineId || "";
-    document.getElementById("dokuText").value = pers_doku ? `${doku || ""}\n\n.--.\n${pers_doku}` : (doku || "");
+    document.getElementById("dokuText").value = pers_doku ? `${doku || ""}\n\n***\n${pers_doku}` : (doku || "");
 
 
 
@@ -61,8 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = Object.fromEntries(new FormData(dokuForm));
         // Dokutext aufteilen auf unterschiedliche Dokues
             [data.doku, data.pers_doku] = (text => {
-                // Split at .--. with any number of line breaks before and after
-                const m = text.split(/\n*\.\-\-\.\n*/);
+                // Split at *** with any number of line breaks before and after.
+                // Legacy .--. is still supported for older entries.
+                const m = text.split(/\n*(?:\*\*\*|\.\-\-\.)\n*/);
                 console.log("📄 Aufgeteilte Doku:", { doku: m[0]?.trim(), pers_doku: m[1]?.trim() });
                 return [m[0]?.trim() || "", m[1]?.trim() || ""];
                 })(document.getElementById("dokuText").value);
