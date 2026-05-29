@@ -24,6 +24,43 @@ def get_zahlungsziel_tage():
     return int(zahlungsziel_var.wert) if zahlungsziel_var else 14
 
 
+def is_rechnungsjahr_vorne():
+    """True, wenn die Jahreszahl in der Rechnungsnummer vorne stehen soll."""
+    jahr_vorne_var = Programmvariable.query.filter_by(name='rechnungsnummer_jahr_vorne').first()
+    if not jahr_vorne_var:
+        return True
+    return str(jahr_vorne_var.wert or "").strip().lower() in {"1", "true", "ja", "yes", "on"}
+
+
+def generate_rechnungsnummer():
+    """Erzeugt die nächste Rechnungsnummer abhängig von der Jahreszahl-Position."""
+    jahr_str = f"{date.today().year % 100:02d}"
+    jahr_vorne = is_rechnungsjahr_vorne()
+    max_laufende_nummer = 0
+
+    for (nummer,) in db.session.query(Rechnung.rechnungsnr).filter(Rechnung.rechnungsnr.isnot(None)).all():
+        nummer_text = str(nummer).strip()
+        if not nummer_text.isdigit() or len(nummer_text) <= 2:
+            continue
+
+        if jahr_vorne:
+            if not nummer_text.startswith(jahr_str):
+                continue
+            laufende_nummer_text = nummer_text[2:]
+        else:
+            if not nummer_text.endswith(jahr_str):
+                continue
+            laufende_nummer_text = nummer_text[:-2]
+
+        if laufende_nummer_text.isdigit():
+            max_laufende_nummer = max(max_laufende_nummer, int(laufende_nummer_text))
+
+    neue_laufende_nummer = max_laufende_nummer + 1
+    if jahr_vorne:
+        return f"{jahr_str}{neue_laufende_nummer:03d}"
+    return f"{neue_laufende_nummer:03d}{jahr_str}"
+
+
 def _format_currency(value):
     return f"{float(value or 0):.2f}".replace(".", ",")
 
@@ -776,24 +813,7 @@ def create_rechnungen_aus_termine():
                 }), 400
 
             # --- Rechnungsnummer generieren ---
-            jahr = date.today().year % 100  # z. B. 25 für 2025
-
-            # Höchste existierende Rechnungsnummer dieses Jahres abrufen
-            letzte_rechnung = (
-                Rechnung.query
-                .filter(Rechnung.rechnungsnr.like(f"{jahr}%"))
-                .order_by(Rechnung.rechnungsnr.desc())
-                .first()
-            )
-
-            if letzte_rechnung and letzte_rechnung.rechnungsnr:
-                # Letzte NNN extrahieren und +1
-                letzte_nnn = int(str(letzte_rechnung.rechnungsnr)[2:])
-                neue_nnn = letzte_nnn + 1
-            else:
-                neue_nnn = 1
-
-            rechnungsnr = int(f"{jahr}{neue_nnn:03d}")  # z. B. 25001
+            rechnungsnr = generate_rechnungsnummer()
 
             # Zahlungsziel aus Programmvariablen holen
             zahlungsziel_tage = get_zahlungsziel_tage()

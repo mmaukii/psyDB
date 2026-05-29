@@ -8,7 +8,7 @@ class Rechnung(db.Model):
     datum = db.Column(db.String)
     betrag = db.Column(db.Float)
 
-    rechnungsnr = db.Column(db.Integer, unique=True)
+    rechnungsnr = db.Column(db.String, unique=True)
     bezahlt = db.Column(db.Integer)
 
     rechnungTextOben = db.Column(db.String)

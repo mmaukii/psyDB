@@ -60,8 +60,93 @@ app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_FILE}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
+
+def migrate_rechnungsnr_to_text_if_needed():
+    """Migriert rechnungsnr auf TEXT, damit führende Nullen erhalten bleiben."""
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='rechnungen'")
+        if not cur.fetchone():
+            return
+
+        cur.execute("PRAGMA table_info(rechnungen)")
+        columns = cur.fetchall()
+        rechnungsnr_info = next((col for col in columns if col[1] == "rechnungsnr"), None)
+        if not rechnungsnr_info:
+            return
+
+        rechnungsnr_type = str(rechnungsnr_info[2] or "").strip().lower()
+        if "text" in rechnungsnr_type or "char" in rechnungsnr_type:
+            return
+
+        cur.execute("PRAGMA foreign_keys=OFF")
+        conn.execute("BEGIN")
+
+        cur.execute(
+            """
+            CREATE TABLE rechnungen_new (
+                id INTEGER NOT NULL PRIMARY KEY,
+                datum VARCHAR,
+                betrag FLOAT,
+                rechnungsnr TEXT UNIQUE,
+                bezahlt INTEGER,
+                rechnungTextOben VARCHAR,
+                rechnungTextUnten VARCHAR,
+                kommentar VARCHAR,
+                timestamp VARCHAR,
+                changestamp VARCHAR,
+                zahlungsziel_tage INTEGER,
+                zahlungsverweis VARCHAR
+            )
+            """
+        )
+
+        cur.execute(
+            """
+            SELECT
+                id, datum, betrag, rechnungsnr, bezahlt,
+                rechnungTextOben, rechnungTextUnten, kommentar,
+                timestamp, changestamp, zahlungsziel_tage, zahlungsverweis
+            FROM rechnungen
+            """
+        )
+        rows = cur.fetchall()
+
+        insert_sql = (
+            "INSERT INTO rechnungen_new "
+            "(id, datum, betrag, rechnungsnr, bezahlt, rechnungTextOben, rechnungTextUnten, kommentar, "
+            "timestamp, changestamp, zahlungsziel_tage, zahlungsverweis) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+
+        for row in rows:
+            nr = row[3]
+            nr_text = None
+            if nr is not None:
+                nr_text = str(nr).strip()
+                if nr_text.isdigit() and len(nr_text) < 5:
+                    nr_text = nr_text.zfill(5)
+
+            cur.execute(insert_sql, (
+                row[0], row[1], row[2], nr_text, row[4],
+                row[5], row[6], row[7], row[8], row[9], row[10], row[11]
+            ))
+
+        cur.execute("DROP TABLE rechnungen")
+        cur.execute("ALTER TABLE rechnungen_new RENAME TO rechnungen")
+
+        conn.commit()
+        cur.execute("PRAGMA foreign_keys=ON")
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
 with app.app_context():
     db.create_all()
+    migrate_rechnungsnr_to_text_if_needed()
     # Initiale Programmvariablen einfügen, falls nicht vorhanden
     from models import Programmvariable
     from models import Standort
@@ -105,6 +190,7 @@ with app.app_context():
         {'name': 'supervision_betrag', 'wert': '90', 'bezeichnung': 'Standardpreis Supervision €', 'sort': 82, 'checkbox': False},
         {'name': 'max_backups', 'wert': '10', 'bezeichnung': 'Maximale Backups', 'sort': 101, 'checkbox': False},
         {'name': 'auto_kuerzel_kunden', 'wert': '1', 'bezeichnung': 'Kürzel bei Kunden automatisch erstellen', 'sort': 102, 'checkbox': True},
+        {'name': 'rechnungsnummer_jahr_vorne', 'wert': '1', 'bezeichnung': 'Jahreszahl bei Rechnungsnummer vorne', 'sort': 103, 'checkbox': True},
         {'name': 'letzte_kalender_sync', 'wert': '', 'bezeichnung': None, 'sort': None, 'checkbox': False},
         {'name': 'kalender_sync', 'wert': '0', 'bezeichnung': 'Kalender synchronisieren', 'sort': 190, 'checkbox': True},
         {'name': 'kalender_sync_nur_zum_server', 'wert': '1', 'bezeichnung': 'Kalender nur zum Server synchronisieren', 'sort': 191, 'checkbox': True},
