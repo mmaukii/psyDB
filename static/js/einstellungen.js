@@ -335,7 +335,8 @@ function loadProgrammvariablen() {
                 "rechnung_text_oben", "rechnung_text_unten",
                 "mahnung1_text_oben", "mahnung1_text_unten",
                 "mahnung2_text_oben", "mahnung2_text_unten",
-                "rechnung_text_email","mahnung_text_email"
+                "rechnung_text_email", "mahnung_text_email",
+                "email_text_nach_anrede"
             ];
             const standardtexte = [];
             const kalenderFelder = [

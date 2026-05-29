@@ -761,11 +761,17 @@ def rechnung_mail(rechnung_id):
         
         # Text aus Programmvariable holen
         from models import Programmvariable
-        email_text_var = Programmvariable.query.filter_by(name='rechnung_text_email').first()
+        # Mehrstufiger Fallback für Standardtext
+        email_text_var = Programmvariable.query.filter_by(name='email_text_nach_anrede').first()
         if email_text_var and email_text_var.wert:
-            body = f"{anrede}\n\n{email_text_var.wert}"
+            mailtext = email_text_var.wert
         else:
-            body = anrede
+            alt_text_var = Programmvariable.query.filter_by(name='rechnung_text_email').first()
+            if alt_text_var and alt_text_var.wert:
+                mailtext = alt_text_var.wert
+            else:
+                mailtext = "anbei erhalten Sie Ihre aktuelle Rechnung als PDF."
+        body = f"{anrede}\n\n{mailtext}"
 
         if sys.platform.startswith("darwin"):
             opened = open_macos_mail_with_attachment(recipient, subject, body, pdf_path)

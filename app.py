@@ -186,6 +186,7 @@ with app.app_context():
         #{'name': 'db_passphrase_check', 'wert': '', 'bezeichnung': 'DB Passwort Prüftoken', 'sort': None, 'checkbox': False},
         {'name': 'rechnung_text_oben', 'wert': 'Sehr geehrte Damen und Herren,\nanbei erhalten Sie Ihre aktuelle Rechnung.', 'bezeichnung': 'Standardtext Rechnung oben', 'sort': 100, 'checkbox': False},
         {'name': 'rechnung_text_unten', 'wert': 'Vielen Dank für Ihr Vertrauen.\nBitte überweisen Sie den Betrag innerhalb der angegebenen Frist.', 'bezeichnung': 'Standardtext Rechnung unten', 'sort': 101, 'checkbox': False},
+        {'name': 'email_text_nach_anrede', 'wert': 'anbei erhalten Sie Ihre aktuelle Rechnung als PDF.', 'bezeichnung': 'Standardtext E-Mail nach Anrede', 'sort': 110, 'checkbox': False},
         {'name': 'supervision_zeit', 'wert': '55', 'bezeichnung': 'Standarddauer Supervision min', 'sort': 92, 'checkbox': False},
         {'name': 'supervision_betrag', 'wert': '90', 'bezeichnung': 'Standardpreis Supervision €', 'sort': 82, 'checkbox': False},
         {'name': 'max_backups', 'wert': '10', 'bezeichnung': 'Maximale Backups', 'sort': 101, 'checkbox': False},
