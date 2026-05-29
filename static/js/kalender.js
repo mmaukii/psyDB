@@ -21,7 +21,7 @@ async function syncPraxisKalender() {
         // Kein return mehr: Termine aus DB trotzdem anzeigen
     }
 
-    async function requestSync(missingEventAction = null, missingEventActions = null, changedEventActions = null) {
+    async function requestSync(missingEventAction = null, missingEventActions = null, changedEventActions = null, newEventActions = null) {
         const payload = { interactive: true };
         if (missingEventAction) {
             payload.missing_event_action = missingEventAction;
@@ -31,6 +31,9 @@ async function syncPraxisKalender() {
         }
         if (changedEventActions && Object.keys(changedEventActions).length) {
             payload.changed_event_actions = changedEventActions;
+        }
+        if (newEventActions && Object.keys(newEventActions).length) {
+            payload.new_event_actions = newEventActions;
         }
 
         const res = await fetch("/api/calendar/sync", {
@@ -52,7 +55,8 @@ async function syncPraxisKalender() {
     try {
         let missingActions = null;
         let changedActions = null;
-        let data = await requestSync(null, missingActions, changedActions);
+        let newActions = null;
+        let data = await requestSync(null, missingActions, changedActions, newActions);
 
         if (data.requires_missing_action) {
             const actions = await window.askMissingOnlineEventsAction(data.missing_events || []);
@@ -61,7 +65,7 @@ async function syncPraxisKalender() {
                 return;
             }
             missingActions = actions;
-            data = await requestSync(null, missingActions, changedActions);
+            data = await requestSync(null, missingActions, changedActions, newActions);
         }
 
         if (data.requires_changed_action) {
@@ -71,7 +75,17 @@ async function syncPraxisKalender() {
                 return;
             }
             changedActions = actions;
-            data = await requestSync(null, missingActions, changedActions);
+            data = await requestSync(null, missingActions, changedActions, newActions);
+        }
+
+        if (data.requires_new_action) {
+            const actions = await window.askNewOnlineEventsAction(data.new_events || []);
+            if (!actions) {
+                showToast("Sync abgebrochen", 2000);
+                return;
+            }
+            newActions = actions;
+            data = await requestSync(null, missingActions, changedActions, newActions);
         }
 
         const duration = ((performance.now() - startedAt) / 1000).toFixed(1);

@@ -753,7 +753,7 @@ END:VCALENDAR
 
 
 # --- Route zum Pull der termine ---
-def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=None, changed_event_actions=None, log=None):
+def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=None, changed_event_actions=None, new_event_actions=None, log=None):
     def log_msg(msg):
         print(msg)
         if log is not None:
@@ -766,6 +766,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=Non
     delete_action = normalize_missing_event_action(delete_action)
     missing_event_actions = missing_event_actions or {}
     changed_event_actions = changed_event_actions or {}
+    new_event_actions = new_event_actions or {}
     client = _create_webdav_client()
 
     principal = client.principal()
@@ -901,6 +902,20 @@ def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=Non
         termin = db_uids.get(uid)
 
         if not termin:
+            new_event_action = normalize_new_event_action(new_event_actions.get(uid))
+
+            if new_event_action == "ignore":
+                log_msg(f"→ Neuer Online-Termin bleibt unverändert: UID={uid}")
+                continue
+
+            if new_event_action == "delete":
+                try:
+                    event.delete()
+                    log_msg(f"🗑 Neuer Online-Termin gelöscht: UID={uid}")
+                except Exception as e:
+                    log_msg(f"⚠ Fehler beim Löschen des neuen Online-Termins: {e}")
+                continue
+
             # Neues Online-Event mit gültigem Kürzel → minimal in DB anlegen
             #print(f"Neues Event UID={uid}, Summary='{summary}'")
             start = ve.dtstart.value
@@ -1123,6 +1138,15 @@ def normalize_changed_event_action(action):
     return "online"
 
 
+def normalize_new_event_action(action):
+    value = (action or "").strip().lower()
+    if value in {"delete", "löschen", "loeschen"}:
+        return "delete"
+    if value in {"ignore", "nichts", "nichts_tun", "nichts tun"}:
+        return "ignore"
+    return "take"
+
+
 def build_missing_event_payload(termin, force_calendar_update=False):
     if isinstance(termin, Gruppentermin):
         payload = {
@@ -1207,6 +1231,18 @@ def serialize_changed_online_event(termin, online_datum, online_startzeit, onlin
         "online_datum": online_datum,
         "online_startzeit": online_startzeit,
         "online_endzeit": online_endzeit,
+    }
+
+
+def serialize_new_online_event(uid, typ, name, datum, startzeit, endzeit, beschreibung):
+    return {
+        "uid": uid,
+        "typ": typ,
+        "name": name,
+        "datum": datum,
+        "startzeit": startzeit,
+        "endzeit": endzeit,
+        "beschreibung": beschreibung,
     }
 
 
@@ -1335,6 +1371,93 @@ def find_changed_online_events(log=None):
     return changed_events
 
 
+def find_new_online_events(log=None):
+    def log_msg(msg):
+        print(msg)
+        if log is not None:
+            log.append(msg)
+
+    client = _create_webdav_client()
+    principal = client.principal()
+    calendars = principal.calendars()
+
+    terminkalender_var = Programmvariable.query.filter_by(name='termine_kalender').first()
+    terminkalender_name = (terminkalender_var.wert if terminkalender_var else "").lower()
+
+    cal = next(
+        (
+            c for c in calendars
+            if terminkalender_name in (c.name or "").lower()
+            or terminkalender_name in str(c.url).lower()
+        ),
+        None
+    )
+
+    if not cal:
+        log_msg(f"❌ {terminkalender_name}-Kalender nicht gefunden")
+        return []
+
+    kunden = Kunde.query.all()
+    gruppen = Gruppe.query.all()
+    kunden_by_kuerzel_low = {k.kuerzel.lower(): k for k in kunden}
+    gruppen_by_kuerzel_low = {g.gruppenkuerzel.lower(): g for g in gruppen}
+    valid_kuerzel_low = set(kunden_by_kuerzel_low) | set(gruppen_by_kuerzel_low)
+
+    db_termine = Termin.query.filter(Termin.caldav_uid.isnot(None)).all()
+    db_gruppen = Gruppentermin.query.filter(Gruppentermin.caldav_uid.isnot(None)).all()
+    db_uids = {s.caldav_uid for s in db_termine + db_gruppen}
+
+    new_events = []
+    for event in cal.events():
+        try:
+            ve = event.vobject_instance.vevent
+            uid = ve.uid.value
+        except Exception as e:
+            log_msg(f"⚠ Überspringe fehlerhaftes Event (kein VEVENT/UID): {e}")
+            continue
+
+        if uid in db_uids:
+            continue
+
+        summary = getattr(ve.summary, "value", "").strip()
+        if summary.lower() not in valid_kuerzel_low:
+            continue
+
+        try:
+            start = ve.dtstart.value
+            end = ve.dtend.value
+            if not hasattr(start, "hour"):
+                start = datetime.combine(start, datetime.min.time())
+            if not hasattr(end, "hour"):
+                end = datetime.combine(end, datetime.min.time())
+        except Exception as e:
+            log_msg(f"⚠ Fehler beim Lesen eines neuen Online-Termins: {e}")
+            continue
+
+        if summary.lower() in kunden_by_kuerzel_low:
+            kunde = kunden_by_kuerzel_low[summary.lower()]
+            typ = "kunde"
+            name = f"{getattr(kunde, 'vorname', '')} {getattr(kunde, 'nachname', '')}".strip()
+        else:
+            gruppe = gruppen_by_kuerzel_low[summary.lower()]
+            typ = "gruppe"
+            name = getattr(gruppe, "gruppenname", "")
+
+        new_events.append(
+            serialize_new_online_event(
+                uid,
+                typ,
+                name,
+                start.date().isoformat(),
+                start.time().strftime("%H:%M"),
+                end.time().strftime("%H:%M"),
+                getattr(ve.description, "value", "") if hasattr(ve, "description") else "",
+            )
+        )
+
+    return new_events
+
+
 @kalender_bp.post("/calendar/sync")
 def sync_calendar():
     logs = []
@@ -1345,6 +1468,7 @@ def sync_calendar():
         selected_missing_event_action = payload.get("missing_event_action")
         selected_missing_event_actions = payload.get("missing_event_actions") or {}
         selected_changed_event_actions = payload.get("changed_event_actions") or {}
+        selected_new_event_actions = payload.get("new_event_actions") or {}
 
         # Vor dem Sync: Offline-Termine/Gruppentermine synchronisieren, nur wenn kalender_sync == '1'
         kalender_sync = Programmvariable.query.filter_by(name="kalender_sync").first()
@@ -1391,10 +1515,25 @@ def sync_calendar():
                         "logs": logs,
                     })
 
+            if (
+                interactive and
+                kalender_sync_abfragen and kalender_sync_abfragen.wert == "1" and
+                not selected_new_event_actions
+            ):
+                new_events = find_new_online_events(log=logs)
+                if new_events:
+                    return jsonify({
+                        "success": True,
+                        "requires_new_action": True,
+                        "new_events": new_events,
+                        "logs": logs,
+                    })
+
             pull_termine_from_caldav(
                 delete_action=normalize_missing_event_action(selected_missing_event_action),
                 missing_event_actions=selected_missing_event_actions,
                 changed_event_actions=selected_changed_event_actions,
+                new_event_actions=selected_new_event_actions,
                 log=logs
             )
         else:

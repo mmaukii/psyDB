@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const startedAt = performance.now();
         showToast("Sync Termine läuft …", null);
         try {
-            const requestSync = async (missingEventAction = null, missingEventActions = null, changedEventActions = null) => {
+            const requestSync = async (missingEventAction = null, missingEventActions = null, changedEventActions = null, newEventActions = null) => {
                 const payload = { interactive };
                 if (missingEventAction) {
                     payload.missing_event_action = missingEventAction;
@@ -20,6 +20,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 if (changedEventActions && Object.keys(changedEventActions).length) {
                     payload.changed_event_actions = changedEventActions;
+                }
+                if (newEventActions && Object.keys(newEventActions).length) {
+                    payload.new_event_actions = newEventActions;
                 }
 
                 const res = await fetch("/api/calendar/sync", {
@@ -34,7 +37,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
             let missingActions = null;
             let changedActions = null;
-            let data = await requestSync(null, missingActions, changedActions);
+            let newActions = null;
+            let data = await requestSync(null, missingActions, changedActions, newActions);
 
             if (interactive && data.requires_missing_action) {
                 const actions = await window.askMissingOnlineEventsAction(data.missing_events || []);
@@ -43,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     return;
                 }
                 missingActions = actions;
-                data = await requestSync(null, missingActions, changedActions);
+                data = await requestSync(null, missingActions, changedActions, newActions);
             }
 
             if (interactive && data.requires_changed_action) {
@@ -53,7 +57,17 @@ document.addEventListener("DOMContentLoaded", function() {
                     return;
                 }
                 changedActions = actions;
-                data = await requestSync(null, missingActions, changedActions);
+                data = await requestSync(null, missingActions, changedActions, newActions);
+            }
+
+            if (interactive && data.requires_new_action) {
+                const actions = await window.askNewOnlineEventsAction(data.new_events || []);
+                if (!actions) {
+                    showToast("Sync abgebrochen", 2000);
+                    return;
+                }
+                newActions = actions;
+                data = await requestSync(null, missingActions, changedActions, newActions);
             }
 
             const duration = ((performance.now() - startedAt) / 1000).toFixed(1);
