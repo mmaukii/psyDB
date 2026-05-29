@@ -86,16 +86,42 @@ def dashboard():
     ).order_by(Gruppentermin.startzeit).all()
     termine_morgen = sorted(list(termine_morgen) + list(gruppentermine_morgen), key=lambda t: t.startzeit)
     
-    # 4. Prüfung Rechnungsnummern durchgängig
+    # 4. Prüfung Rechnungsnummern durchgängig (pro Jahr, Jahr vorne oder hinten)
     all_rechnungen = Rechnung.query.order_by(Rechnung.rechnungsnr).all()
-    rechnungsnrs = [r.rechnungsnr for r in all_rechnungen]
+    from routes.rechnungen_routes import is_rechnungsjahr_vorne
+    jahr_vorne = is_rechnungsjahr_vorne()
+    jahr_nummern = {}
+    for r in all_rechnungen:
+        nummer = str(r.rechnungsnr).strip()
+        if not nummer or len(nummer) != 5 or not nummer.isdigit():
+            continue
+        if jahr_vorne:
+            jahr = nummer[:2]
+            laufende_nummer = nummer[2:]
+        else:
+            jahr = nummer[-2:]
+            laufende_nummer = nummer[:-2]
+        if jahr not in jahr_nummern:
+            jahr_nummern[jahr] = set()
+        try:
+            laufende_nummer_int = int(laufende_nummer)
+            jahr_nummern[jahr].add(laufende_nummer_int)
+        except ValueError:
+            continue
+
     missing_numbers = []
-    if rechnungsnrs:
-        min_nr = min(rechnungsnrs)
-        max_nr = max(rechnungsnrs)
+    for jahr, nummern in jahr_nummern.items():
+        if not nummern:
+            continue
+        min_nr = min(nummern)
+        max_nr = max(nummern)
         expected = set(range(min_nr, max_nr + 1))
-        actual = set(rechnungsnrs)
-        missing_numbers = sorted(expected - actual)
+        missing = sorted(expected - nummern)
+        for miss in missing:
+            if jahr_vorne:
+                missing_numbers.append(f"{jahr}{miss:03d}")
+            else:
+                missing_numbers.append(f"{miss:03d}{jahr}")
     
     # 5. Überschneidende Termine
     overlapping_termine = []
