@@ -5,10 +5,11 @@ from database import db
 from datetime import datetime
 import os
 from xml.sax.saxutils import escape
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer
 
 doku_bp = Blueprint("doku", __name__)
 
@@ -21,6 +22,32 @@ def _append_multiline(story, text, style):
             story.append(Paragraph(escape(line.strip()), style))
         else:
             story.append(Spacer(1, 0.5 * mm))
+
+
+def _format_date_de(value):
+    if not value:
+        return ""
+    if hasattr(value, "strftime"):
+        return value.strftime("%d.%m.%Y")
+    text = str(value)
+    for date_format in ("%Y-%m-%d", "%d.%m.%Y"):
+        try:
+            return datetime.strptime(text, date_format).strftime("%d.%m.%Y")
+        except ValueError:
+            continue
+    return text
+
+
+def _format_time_short(value):
+    if not value:
+        return ""
+    text = str(value).strip()
+    for time_format in ("%H:%M:%S", "%H:%M"):
+        try:
+            return datetime.strptime(text, time_format).strftime("%H:%M")
+        except ValueError:
+            continue
+    return text[:5] if len(text) >= 5 else text
 
 # --- PDF-Export aller Dokus eines Kunden (Einzel + Gruppen) ---
 @doku_bp.route("/doku/kunde/<int:kunde_id>/pdf")
@@ -99,14 +126,26 @@ def export_dokus_kunde_pdf(kunde_id):
 
     story.append(Paragraph(escape(heading), styles["DocHeading"]))
     story.append(Spacer(1, 2 * mm))
-    story.append(Paragraph(f"Export: {escape(datetime.now().strftime('%d.%m.%Y %H:%M'))}", styles["DocMeta"]))
-    story.append(Paragraph(f"Filter: {escape(doku_filter)}", styles["DocMeta"]))
+    story.append(Paragraph(f"Export am: {escape(datetime.now().strftime('%d.%m.%Y %H:%M'))}", styles["DocMeta"]))
     story.append(Spacer(1, 6 * mm))
 
     if not alle_dokus:
         story.append(Paragraph("Keine Dokumentationseinträge vorhanden.", styles["DocBody"]))
     else:
-        for entry in alle_dokus:
+        previous_datum = None
+        for index, entry in enumerate(alle_dokus):
+            aktuelles_datum = str(entry.get("datum") or "")
+            if index > 0 and aktuelles_datum != previous_datum:
+                story.append(
+                    HRFlowable(
+                        width="100%",
+                        thickness=0.6,
+                        color=colors.HexColor("#CFCFCF"),
+                        spaceBefore=1 * mm,
+                        spaceAfter=4 * mm,
+                    )
+                )
+
             status_parts = []
             if entry.get("abgesagt"):
                 status_parts.append("abgesagt")
@@ -114,12 +153,21 @@ def export_dokus_kunde_pdf(kunde_id):
                 status_parts.append("entfallen")
             status = f" ({', '.join(status_parts)})" if status_parts else ""
 
-            title = f"{entry.get('datum') or ''} {entry.get('startzeit') or ''}-{entry.get('endzeit') or ''} | {entry.get('anzeigeName') or ''}{status}"
+            datum_text = _format_date_de(entry.get("datum"))
+            startzeit_text = _format_time_short(entry.get("startzeit"))
+            endzeit_text = _format_time_short(entry.get("endzeit"))
+            zeit_text = ""
+            if startzeit_text and endzeit_text:
+                zeit_text = f" {startzeit_text}-{endzeit_text}"
+            elif startzeit_text:
+                zeit_text = f" {startzeit_text}"
+
+            title = f"{datum_text}{zeit_text}{status}"
             story.append(Paragraph(escape(title.strip()), styles["DocMeta"]))
 
             beschreibung = entry.get("beschreibung") or ""
             if beschreibung.strip():
-                story.append(Paragraph(f"<b>Thema:</b> {escape(beschreibung.strip())}", styles["DocBody"]))
+                story.append(Paragraph(f"<b>Bezeichnung:</b> {escape(beschreibung.strip())}", styles["DocBody"]))
 
             doku_text = entry.get("doku") or ""
             if doku_text.strip() and doku_filter in ("ges", "allg"):
@@ -133,6 +181,7 @@ def export_dokus_kunde_pdf(kunde_id):
                 _append_multiline(story, pers_text, styles["DocBody"])
 
             story.append(Spacer(1, 5 * mm))
+            previous_datum = aktuelles_datum
 
     doc.build(story)
     return send_file(pdf_path, as_attachment=True, download_name=pdf_filename, mimetype="application/pdf")
