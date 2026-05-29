@@ -20,17 +20,52 @@ async function syncPraxisKalender() {
         showToast("Offline: Sync nicht möglich!", 2000);
         // Kein return mehr: Termine aus DB trotzdem anzeigen
     }
-    const startedAt = performance.now();
-    showToast("Sync Termine läuft …", null);
-    const res = await fetch("/api/calendar/sync", { method: "POST" });
-    if (!res.ok) {
-        return;
+
+    async function requestSync(missingEventAction = null, missingEventActions = null) {
+        const payload = { interactive: true };
+        if (missingEventAction) {
+            payload.missing_event_action = missingEventAction;
+        }
+        if (missingEventActions && Object.keys(missingEventActions).length) {
+            payload.missing_event_actions = missingEventActions;
+        }
+
+        const res = await fetch("/api/calendar/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            throw new Error("Fehler beim Synchronisieren");
+        }
+
+        return await res.json();
     }
 
-    const duration = ((performance.now() - startedAt) / 1000).toFixed(1);
-    showToast(`Sync Termine ✅ (${duration}s)`);
+    const startedAt = performance.now();
+    showToast("Sync Termine läuft …", null);
 
-    calendar.refetchEvents(); // lokale
+    try {
+        let data = await requestSync();
+
+        if (data.requires_missing_action) {
+            const actions = await window.askMissingOnlineEventsAction(data.missing_events || []);
+            if (!actions) {
+                showToast("Sync abgebrochen", 2000);
+                return;
+            }
+            data = await requestSync(null, actions);
+        }
+
+        const duration = ((performance.now() - startedAt) / 1000).toFixed(1);
+        showToast(`Sync Termine ✅ (${duration}s)`);
+
+        calendar.refetchEvents(); // lokale
+    } catch (error) {
+        console.error("Fehler beim Kalender-Sync:", error);
+        showToast("Sync Fehler!", 2000);
+    }
 }
 
 document.getElementById('syncButton').addEventListener('click', syncPraxisKalender);

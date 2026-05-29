@@ -340,6 +340,7 @@ function loadProgrammvariablen() {
             const standardtexte = [];
             const kalenderFelder = [
                 "kalender_sync_nur_zum_server",
+                "kalender_sync_abfragen",
                 "termine_kalender",
                 "andere_kalender",
                 "webdav_pfad",

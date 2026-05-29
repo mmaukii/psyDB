@@ -615,10 +615,16 @@ LAST-MODIFIED:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}
 END:VEVENT
 END:VCALENDAR
 """
+        event = None
         if termin.get("caldav_uid"):
+            try:
+                event = cal.event_by_uid(uid)
+            except Exception as e:
+                print(f"⚠ Event UID={uid} nicht im Kalender gefunden, wird neu angelegt: {e}")
+
+        if event:
             # Update: Vergleiche Timestamps
             print("Vergleiche Timestamps für Update")
-            event = cal.event_by_uid(uid)
             # Hole changestamp (DB) und modified (Kalender)
             db_changestamp = None
             caldav_modified = None
@@ -735,7 +741,7 @@ END:VCALENDAR
 
 
 # --- Route zum Pull der termine ---
-def pull_termine_from_caldav(delete_action="abgesagt", log=None):
+def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=None, log=None):
     def log_msg(msg):
         print(msg)
         if log is not None:
@@ -743,8 +749,10 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
     """
     Pull von CalDAV-Events in die DB.
     Nur Events mit Summary = Kunden- oder Gruppenkuerzel werden bearbeitet.
-    delete_action: "abgesagt" oder "löschen" für online gelöschte Termine
+    delete_action: Standardaktion: "abgesagt", "löschen", "restore" oder "ignore" für online gelöschte Termine
     """
+    delete_action = normalize_missing_event_action(delete_action)
+    missing_event_actions = missing_event_actions or {}
     client = _create_webdav_client()
 
     principal = client.principal()
@@ -811,28 +819,51 @@ def pull_termine_from_caldav(delete_action="abgesagt", log=None):
             log_msg(f"🗑 Online gelöscht: UID={uid}, Titel={getattr(termin, 'beschreibung', '')}")
             # Prüfen ob Einzel- oder Gruppentermin
             timestamp = datetime.now()
+            db_changed = False
+            event_action = normalize_missing_event_action(missing_event_actions.get(uid, delete_action))
 
             if isinstance(termin, Gruppentermin):
-                if delete_action == "abgesagt":
+                if event_action == "abgesagt":
                     if not termin.entfallen:
                         termin.entfallen = timestamp
                         log_msg("→ Gruppentermin als entfallen markiert (Timestamp gesetzt)")
+                        db_changed = True
                     else:
                         log_msg("→ Gruppentermin bereits entfallen, Timestamp bleibt")
-                elif delete_action == "löschen":
+                elif event_action == "löschen":
                     db.session.delete(termin)
                     log_msg("→ Gruppentermin aus DB gelöscht")
+                    db_changed = True
+                elif event_action == "restore":
+                    try:
+                        push_termin(build_missing_event_payload(termin))
+                        log_msg("→ Gruppentermin online wiederhergestellt")
+                    except Exception as e:
+                        log_msg(f"⚠ Fehler beim Wiederherstellen des Gruppentermins: {e}")
+                elif event_action == "ignore":
+                    log_msg("→ Gruppentermin bleibt unverändert")
             else:
                 # Einzeltermin
-                if delete_action == "abgesagt":
+                if event_action == "abgesagt":
                     if not termin.abgesagt:
                         termin.abgesagt = timestamp
                         log_msg("→ Einzeltermin als abgesagt markiert (Timestamp gesetzt)")
-                elif delete_action == "löschen":
+                        db_changed = True
+                elif event_action == "löschen":
                     db.session.delete(termin)
                     log_msg("→ Einzeltermin aus DB gelöscht")
+                    db_changed = True
+                elif event_action == "restore":
+                    try:
+                        push_termin(build_missing_event_payload(termin))
+                        log_msg("→ Einzeltermin online wiederhergestellt")
+                    except Exception as e:
+                        log_msg(f"⚠ Fehler beim Wiederherstellen des Einzeltermins: {e}")
+                elif event_action == "ignore":
+                    log_msg("→ Einzeltermin bleibt unverändert")
 
-            db.session.commit()
+            if db_changed:
+                db.session.commit()
 
     # 2️⃣ Events pullen
     for event in events:
@@ -1043,11 +1074,132 @@ def get_event_etag(event):
         return None
 
 
+def normalize_missing_event_action(delete_action):
+    action = (delete_action or "").strip().lower()
+    if action in {"delete", "löschen", "loeschen"}:
+        return "löschen"
+    if action in {"restore", "wiederherstellen", "wiederhergestellt"}:
+        return "restore"
+    if action in {"ignore", "nichts", "nichts_tun", "nichts tun"}:
+        return "ignore"
+    if action in {"entfallen", "abgesagt"}:
+        return "abgesagt"
+    return "abgesagt"
+
+
+def build_missing_event_payload(termin):
+    if isinstance(termin, Gruppentermin):
+        return {
+            "gruppentermin_id": termin.id,
+            "datum": termin.datum,
+            "startzeit": termin.startzeit,
+            "endzeit": termin.endzeit,
+            "beschreibung": termin.beschreibung,
+            "kommentar": termin.kommentar,
+            "betrag": termin.betrag,
+            "caldav_uid": termin.caldav_uid,
+            "caldav_etag": termin.caldav_etag,
+            "entfallen": termin.entfallen,
+            "kuerzel": termin.gruppe.gruppenkuerzel if getattr(termin, "gruppe", None) else None,
+        }
+
+    return {
+        "termin_id": termin.id,
+        "datum": termin.datum,
+        "startzeit": termin.startzeit,
+        "endzeit": termin.endzeit,
+        "beschreibung": termin.beschreibung,
+        "kommentar": termin.kommentar,
+        "betrag": termin.betrag,
+        "caldav_uid": termin.caldav_uid,
+        "caldav_etag": termin.caldav_etag,
+        "abgesagt": termin.abgesagt,
+        "kuerzel": termin.kunde.kuerzel if getattr(termin, "kunde", None) else None,
+    }
+
+
+def serialize_missing_online_event(termin):
+    is_gruppe = isinstance(termin, Gruppentermin)
+    if is_gruppe:
+        kuerzel = termin.gruppe.gruppenkuerzel if getattr(termin, "gruppe", None) else ""
+        name = termin.gruppe.gruppenname if getattr(termin, "gruppe", None) else ""
+        typ = "gruppe"
+    else:
+        kuerzel = termin.kunde.kuerzel if getattr(termin, "kunde", None) else ""
+        kunde = getattr(termin, "kunde", None)
+        name = f"{getattr(kunde, 'vorname', '')} {getattr(kunde, 'nachname', '')}".strip()
+        typ = "kunde"
+
+    return {
+        "typ": typ,
+        "id": termin.id,
+        "uid": termin.caldav_uid,
+        "kuerzel": kuerzel,
+        "name": name,
+        "datum": termin.datum,
+        "startzeit": termin.startzeit,
+        "endzeit": termin.endzeit,
+        "beschreibung": termin.beschreibung,
+    }
+
+
+def find_missing_online_events(log=None):
+    def log_msg(msg):
+        print(msg)
+        if log is not None:
+            log.append(msg)
+
+    client = _create_webdav_client()
+    principal = client.principal()
+    calendars = principal.calendars()
+
+    terminkalender_var = Programmvariable.query.filter_by(name='termine_kalender').first()
+    terminkalender_name = (terminkalender_var.wert if terminkalender_var else "").lower()
+
+    cal = next(
+        (
+            c for c in calendars
+            if terminkalender_name in (c.name or "").lower()
+            or terminkalender_name in str(c.url).lower()
+        ),
+        None
+    )
+
+    if not cal:
+        log_msg(f"❌ {terminkalender_name}-Kalender nicht gefunden")
+        return []
+
+    events = cal.events()
+    online_uids = set()
+    for ev in events:
+        try:
+            uid_value = ev.vobject_instance.vevent.uid.value
+            if uid_value:
+                online_uids.add(uid_value)
+        except Exception as e:
+            log_msg(f"⚠ Überspringe Event ohne UID: {e}")
+
+    db_termine = Termin.query.filter(Termin.caldav_uid.isnot(None)).all()
+    db_gruppen = Gruppentermin.query.filter(Gruppentermin.caldav_uid.isnot(None)).all()
+
+    missing_events = []
+    for termin in db_termine + db_gruppen:
+        if termin.caldav_uid and termin.caldav_uid not in online_uids:
+            missing_events.append(serialize_missing_online_event(termin))
+
+    return missing_events
+
+
 @kalender_bp.post("/calendar/sync")
 def sync_calendar():
     logs = []
     print("🔄 Termin-Kalender-Synchronisation gestartet backend")
     try:
+        payload = request.get_json(silent=True) or {}
+        interactive = bool(payload.get("interactive"))
+        selected_missing_event_action = payload.get("missing_event_action")
+        selected_missing_event_actions = payload.get("missing_event_actions") or {}
+
         # Vor dem Sync: Offline-Termine/Gruppentermine synchronisieren, nur wenn kalender_sync == '1'
         kalender_sync = Programmvariable.query.filter_by(name="kalender_sync").first()
         if kalender_sync and kalender_sync.wert == "1":
@@ -1059,11 +1211,31 @@ def sync_calendar():
         # Nur ausführen, wenn kalender_sync und kalender_sync_nur_zum_server == '1'
         kalender_sync = Programmvariable.query.filter_by(name="kalender_sync").first()
         kalender_sync_nur_zum_server = Programmvariable.query.filter_by(name="kalender_sync_nur_zum_server").first()
+        kalender_sync_abfragen = Programmvariable.query.filter_by(name="kalender_sync_abfragen").first()
         if (
             kalender_sync and kalender_sync.wert == "1" and
             kalender_sync_nur_zum_server and kalender_sync_nur_zum_server.wert == "1"
         ):
-            pull_termine_from_caldav(delete_action="abgesagt", log=logs)
+            if (
+                interactive and
+                kalender_sync_abfragen and kalender_sync_abfragen.wert == "1" and
+                not selected_missing_event_action and
+                not selected_missing_event_actions
+            ):
+                missing_events = find_missing_online_events(log=logs)
+                if missing_events:
+                    return jsonify({
+                        "success": True,
+                        "requires_missing_action": True,
+                        "missing_events": missing_events,
+                        "logs": logs,
+                    })
+
+            pull_termine_from_caldav(
+                delete_action=normalize_missing_event_action(selected_missing_event_action),
+                missing_event_actions=selected_missing_event_actions,
+                log=logs
+            )
         else:
             logs.append("pull_termine_from_caldav übersprungen (kalender_sync oder kalender_sync_nur_zum_server != 1)")
         # Zeitstempel speichern
