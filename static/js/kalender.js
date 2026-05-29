@@ -21,13 +21,16 @@ async function syncPraxisKalender() {
         // Kein return mehr: Termine aus DB trotzdem anzeigen
     }
 
-    async function requestSync(missingEventAction = null, missingEventActions = null) {
+    async function requestSync(missingEventAction = null, missingEventActions = null, changedEventActions = null) {
         const payload = { interactive: true };
         if (missingEventAction) {
             payload.missing_event_action = missingEventAction;
         }
         if (missingEventActions && Object.keys(missingEventActions).length) {
             payload.missing_event_actions = missingEventActions;
+        }
+        if (changedEventActions && Object.keys(changedEventActions).length) {
+            payload.changed_event_actions = changedEventActions;
         }
 
         const res = await fetch("/api/calendar/sync", {
@@ -47,7 +50,9 @@ async function syncPraxisKalender() {
     showToast("Sync Termine läuft …", null);
 
     try {
-        let data = await requestSync();
+        let missingActions = null;
+        let changedActions = null;
+        let data = await requestSync(null, missingActions, changedActions);
 
         if (data.requires_missing_action) {
             const actions = await window.askMissingOnlineEventsAction(data.missing_events || []);
@@ -55,7 +60,18 @@ async function syncPraxisKalender() {
                 showToast("Sync abgebrochen", 2000);
                 return;
             }
-            data = await requestSync(null, actions);
+            missingActions = actions;
+            data = await requestSync(null, missingActions, changedActions);
+        }
+
+        if (data.requires_changed_action) {
+            const actions = await window.askChangedOnlineEventsAction(data.changed_events || []);
+            if (!actions) {
+                showToast("Sync abgebrochen", 2000);
+                return;
+            }
+            changedActions = actions;
+            data = await requestSync(null, missingActions, changedActions);
         }
 
         const duration = ((performance.now() - startedAt) / 1000).toFixed(1);

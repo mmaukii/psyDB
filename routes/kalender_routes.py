@@ -623,6 +623,18 @@ END:VCALENDAR
                 print(f"⚠ Event UID={uid} nicht im Kalender gefunden, wird neu angelegt: {e}")
 
         if event:
+            if termin.get("force_calendar_update"):
+                print("Erzwinge Kalender-Update aus Datenbank")
+                event.data = vevent
+                event.save()
+                etag = get_event_etag(event)
+                db.session.execute(
+                    text(f"UPDATE {table} SET caldav_etag=:etag WHERE id=:id"),
+                    {"etag": etag, "id": id}
+                )
+                db.session.commit()
+                return
+
             # Update: Vergleiche Timestamps
             print("Vergleiche Timestamps für Update")
             # Hole changestamp (DB) und modified (Kalender)
@@ -741,7 +753,7 @@ END:VCALENDAR
 
 
 # --- Route zum Pull der termine ---
-def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=None, log=None):
+def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=None, changed_event_actions=None, log=None):
     def log_msg(msg):
         print(msg)
         if log is not None:
@@ -753,6 +765,7 @@ def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=Non
     """
     delete_action = normalize_missing_event_action(delete_action)
     missing_event_actions = missing_event_actions or {}
+    changed_event_actions = changed_event_actions or {}
     client = _create_webdav_client()
 
     principal = client.principal()
@@ -1046,6 +1059,20 @@ def pull_termine_from_caldav(delete_action="abgesagt", missing_event_actions=Non
         
         #log_msg(f"etag_changed: {etag_changed}, fields_changed: {fields_changed}, etag in DB: {termin.caldav_etag}, etag online: {etag}")   
         if etag_changed or fields_changed or not etag:
+            changed_action = normalize_changed_event_action(changed_event_actions.get(uid))
+
+            if fields_changed and changed_action == "database":
+                try:
+                    push_termin(build_missing_event_payload(termin, force_calendar_update=True))
+                    log_msg(f"↩ Datenbanktermin zurück in den Kalender geschrieben: UID={uid}")
+                except Exception as e:
+                    log_msg(f"⚠ Fehler beim Zurückschreiben des Datenbanktermins: {e}")
+                continue
+
+            if fields_changed and changed_action == "ignore":
+                log_msg(f"→ Verschobener Termin bleibt unverändert: UID={uid}")
+                continue
+
             termin.datum = online_datum
             termin.startzeit = online_start
             termin.endzeit = online_end
@@ -1087,9 +1114,18 @@ def normalize_missing_event_action(delete_action):
     return "abgesagt"
 
 
-def build_missing_event_payload(termin):
+def normalize_changed_event_action(action):
+    value = (action or "").strip().lower()
+    if value in {"database", "db", "datenbank"}:
+        return "database"
+    if value in {"ignore", "nichts", "nichts_tun", "nichts tun"}:
+        return "ignore"
+    return "online"
+
+
+def build_missing_event_payload(termin, force_calendar_update=False):
     if isinstance(termin, Gruppentermin):
-        return {
+        payload = {
             "gruppentermin_id": termin.id,
             "datum": termin.datum,
             "startzeit": termin.startzeit,
@@ -1102,8 +1138,11 @@ def build_missing_event_payload(termin):
             "entfallen": termin.entfallen,
             "kuerzel": termin.gruppe.gruppenkuerzel if getattr(termin, "gruppe", None) else None,
         }
+        if force_calendar_update:
+            payload["force_calendar_update"] = 1
+        return payload
 
-    return {
+    payload = {
         "termin_id": termin.id,
         "datum": termin.datum,
         "startzeit": termin.startzeit,
@@ -1116,6 +1155,9 @@ def build_missing_event_payload(termin):
         "abgesagt": termin.abgesagt,
         "kuerzel": termin.kunde.kuerzel if getattr(termin, "kunde", None) else None,
     }
+    if force_calendar_update:
+        payload["force_calendar_update"] = 1
+    return payload
 
 
 def serialize_missing_online_event(termin):
@@ -1140,6 +1182,31 @@ def serialize_missing_online_event(termin):
         "startzeit": termin.startzeit,
         "endzeit": termin.endzeit,
         "beschreibung": termin.beschreibung,
+    }
+
+
+def serialize_changed_online_event(termin, online_datum, online_startzeit, online_endzeit):
+    is_gruppe = isinstance(termin, Gruppentermin)
+    if is_gruppe:
+        name = termin.gruppe.gruppenname if getattr(termin, "gruppe", None) else ""
+        typ = "gruppe"
+    else:
+        kunde = getattr(termin, "kunde", None)
+        name = f"{getattr(kunde, 'vorname', '')} {getattr(kunde, 'nachname', '')}".strip()
+        typ = "kunde"
+
+    return {
+        "typ": typ,
+        "id": termin.id,
+        "uid": termin.caldav_uid,
+        "name": name,
+        "beschreibung": termin.beschreibung,
+        "db_datum": termin.datum,
+        "db_startzeit": termin.startzeit,
+        "db_endzeit": termin.endzeit,
+        "online_datum": online_datum,
+        "online_startzeit": online_startzeit,
+        "online_endzeit": online_endzeit,
     }
 
 
@@ -1190,6 +1257,84 @@ def find_missing_online_events(log=None):
     return missing_events
 
 
+def find_changed_online_events(log=None):
+    def log_msg(msg):
+        print(msg)
+        if log is not None:
+            log.append(msg)
+
+    client = _create_webdav_client()
+    principal = client.principal()
+    calendars = principal.calendars()
+
+    terminkalender_var = Programmvariable.query.filter_by(name='termine_kalender').first()
+    terminkalender_name = (terminkalender_var.wert if terminkalender_var else "").lower()
+
+    cal = next(
+        (
+            c for c in calendars
+            if terminkalender_name in (c.name or "").lower()
+            or terminkalender_name in str(c.url).lower()
+        ),
+        None
+    )
+
+    if not cal:
+        log_msg(f"❌ {terminkalender_name}-Kalender nicht gefunden")
+        return []
+
+    db_termine = Termin.query.filter(Termin.caldav_uid.isnot(None)).all()
+    db_gruppen = Gruppentermin.query.filter(Gruppentermin.caldav_uid.isnot(None)).all()
+    db_uids = {s.caldav_uid: s for s in db_termine + db_gruppen}
+
+    changed_events = []
+    for event in cal.events():
+        try:
+            ve = event.vobject_instance.vevent
+            uid = ve.uid.value
+        except Exception as e:
+            log_msg(f"⚠ Überspringe fehlerhaftes Event (kein VEVENT/UID): {e}")
+            continue
+
+        termin = db_uids.get(uid)
+        if not termin:
+            continue
+
+        try:
+            online_start = ve.dtstart.value
+            online_end = ve.dtend.value
+
+            if not hasattr(online_end, "hour"):
+                online_end = datetime.combine(online_end, datetime.min.time())
+            if not hasattr(online_start, "hour"):
+                online_start = datetime.combine(online_start, datetime.min.time())
+
+            online_datum = online_start.date().isoformat()
+            online_startzeit = online_start.time().strftime("%H:%M")
+            online_endzeit = online_end.time().strftime("%H:%M")
+        except Exception as e:
+            log_msg(f"⚠ Fehler beim Lesen eines verschobenen Termins: {e}")
+            continue
+
+        fields_changed = (
+            termin.datum != online_datum
+            or termin.startzeit != online_startzeit
+            or termin.endzeit != online_endzeit
+        )
+
+        if fields_changed:
+            changed_events.append(
+                serialize_changed_online_event(
+                    termin,
+                    online_datum,
+                    online_startzeit,
+                    online_endzeit,
+                )
+            )
+
+    return changed_events
+
+
 @kalender_bp.post("/calendar/sync")
 def sync_calendar():
     logs = []
@@ -1199,6 +1344,7 @@ def sync_calendar():
         interactive = bool(payload.get("interactive"))
         selected_missing_event_action = payload.get("missing_event_action")
         selected_missing_event_actions = payload.get("missing_event_actions") or {}
+        selected_changed_event_actions = payload.get("changed_event_actions") or {}
 
         # Vor dem Sync: Offline-Termine/Gruppentermine synchronisieren, nur wenn kalender_sync == '1'
         kalender_sync = Programmvariable.query.filter_by(name="kalender_sync").first()
@@ -1231,9 +1377,24 @@ def sync_calendar():
                         "logs": logs,
                     })
 
+            if (
+                interactive and
+                kalender_sync_abfragen and kalender_sync_abfragen.wert == "1" and
+                not selected_changed_event_actions
+            ):
+                changed_events = find_changed_online_events(log=logs)
+                if changed_events:
+                    return jsonify({
+                        "success": True,
+                        "requires_changed_action": True,
+                        "changed_events": changed_events,
+                        "logs": logs,
+                    })
+
             pull_termine_from_caldav(
                 delete_action=normalize_missing_event_action(selected_missing_event_action),
                 missing_event_actions=selected_missing_event_actions,
+                changed_event_actions=selected_changed_event_actions,
                 log=logs
             )
         else:

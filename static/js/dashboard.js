@@ -10,13 +10,16 @@ document.addEventListener("DOMContentLoaded", function() {
         const startedAt = performance.now();
         showToast("Sync Termine läuft …", null);
         try {
-            const requestSync = async (missingEventAction = null, missingEventActions = null) => {
+            const requestSync = async (missingEventAction = null, missingEventActions = null, changedEventActions = null) => {
                 const payload = { interactive };
                 if (missingEventAction) {
                     payload.missing_event_action = missingEventAction;
                 }
                 if (missingEventActions && Object.keys(missingEventActions).length) {
                     payload.missing_event_actions = missingEventActions;
+                }
+                if (changedEventActions && Object.keys(changedEventActions).length) {
+                    payload.changed_event_actions = changedEventActions;
                 }
 
                 const res = await fetch("/api/calendar/sync", {
@@ -29,7 +32,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 return await res.json();
             };
 
-            let data = await requestSync();
+            let missingActions = null;
+            let changedActions = null;
+            let data = await requestSync(null, missingActions, changedActions);
 
             if (interactive && data.requires_missing_action) {
                 const actions = await window.askMissingOnlineEventsAction(data.missing_events || []);
@@ -37,7 +42,18 @@ document.addEventListener("DOMContentLoaded", function() {
                     showToast("Sync abgebrochen", 2000);
                     return;
                 }
-                data = await requestSync(null, actions);
+                missingActions = actions;
+                data = await requestSync(null, missingActions, changedActions);
+            }
+
+            if (interactive && data.requires_changed_action) {
+                const actions = await window.askChangedOnlineEventsAction(data.changed_events || []);
+                if (!actions) {
+                    showToast("Sync abgebrochen", 2000);
+                    return;
+                }
+                changedActions = actions;
+                data = await requestSync(null, missingActions, changedActions);
             }
 
             const duration = ((performance.now() - startedAt) / 1000).toFixed(1);
