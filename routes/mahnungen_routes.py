@@ -1,44 +1,32 @@
-from flask import Blueprint, request, jsonify, render_template, current_app as app,  send_file
+from flask import Blueprint, request, jsonify, current_app as app, send_file
 from database import db
 from models import Mahnung, Rechnung, Termin, TermineRechnung, Kunde, Programmvariable  # Mahnung muss als Model existieren
 import os
-import shutil
 import subprocess
 import sys
-from pathlib import Path
 from urllib.parse import quote
 import qrcode
-import pdfkit
 from datetime import date, datetime, timedelta, timezone
 import math
+from xml.sax.saxutils import escape
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
-def get_wkhtmltopdf_configuration():
-    """Ermittelt optional den wkhtmltopdf-Pfad für pdfkit."""
-    env_path = os.getenv("WKHTMLTOPDF_PATH")
-    if env_path and os.path.exists(env_path):
-        return pdfkit.configuration(wkhtmltopdf=env_path)
+def _format_currency(value):
+    return f"{float(value or 0):.2f}".replace(".", ",")
 
-    candidates = []
 
-    if sys.platform.startswith("win"):
-        if getattr(sys, "frozen", False):
-            meipass = getattr(sys, "_MEIPASS", None)
-            if meipass:
-                candidates.append(os.path.join(meipass, "wkhtmltopdf.exe"))
-            candidates.append(os.path.join(os.path.dirname(sys.executable), "wkhtmltopdf.exe"))
-
-        candidates.append(r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-
-    which_path = shutil.which("wkhtmltopdf.exe") or shutil.which("wkhtmltopdf")
-    if which_path:
-        candidates.append(which_path)
-
-    for candidate in candidates:
-        if candidate and os.path.exists(candidate):
-            return pdfkit.configuration(wkhtmltopdf=candidate)
-
-    return None
+def _append_multiline_paragraphs(story, text, style, space_after=2):
+    if not text:
+        return
+    for line in str(text).splitlines():
+        if line.strip():
+            story.append(Paragraph(escape(line.strip()), style))
+            story.append(Spacer(1, space_after * mm))
 
 
 def _ps_single_quote(value):
@@ -254,20 +242,10 @@ def generate_mahnung_pdf(mahnung_id):
     verzugszinsen = mahnung.verzugszinsen
     gesamtbetragMahnung = gesamtbetrag + verzugszinsen + mahnspesen
 
-    # Formatierter Gesamtbetrag für Template
-    gesamtbetrag_formatted = f"{gesamtbetrag:,.2f}".replace(",", " ").replace(".", ",").replace(" ", ".")
-
     # Lade Logo-Pfad
-    from models import Programmvariable
     logo_var = Programmvariable.query.filter_by(name='logo_file').first()
     logo_filename = logo_var.wert if logo_var and logo_var.wert else "static/firmen_logo_fuer_schreiben.png"
-
-    # Unterstützt Altwerte unter static/... und neue Werte unter Vorlagen/...
-    normalized_logo = logo_filename.lstrip('/')
-    logo_absolute_path = os.path.join(app.root_path, normalized_logo)
-
-    # Übergebe absoluten Pfad als file-URI an Template (wkhtmltopdf-kompatibel)
-    logo_path = Path(logo_absolute_path).resolve().as_uri()
+    logo_absolute_path = os.path.join(app.root_path, logo_filename.lstrip('/'))
     
     # QR-Code erstellen BEVOR Template gerendert wird
     rechnungs_nr = rechnung.rechnungsnr
@@ -294,43 +272,6 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
     # QR-Code erstellen
     qrcode.make(qr_data).save(qr_absolute_path)
     
-    # QR-Code-Pfad zu absoluter URL konvertieren (NACH Erstellung)
-    qr_path_file_url = Path(qr_absolute_path).resolve().as_uri() if os.path.exists(qr_absolute_path) else ""
-
-    # HTML rendern (analog zu Rechnungen: Template aus /Vorlagen laden, falls nicht im templates-Ordner)
-    from flask import render_template_string
-    template_name = "DruckvorlageMahnung.html"
-    templates_root = os.path.join(app.root_path, "templates")
-    template_in_templates = os.path.join(templates_root, "Vorlagen", template_name)
-    template_context = {
-        "firma": standort,
-        "kunde": kunde,
-        "zahlungsziel": zahlungsziel_str,
-        "verzugszinsen": verzugszinsen,
-        "verzugstage": max((datetime.now() - rechnungsdatum).days, 0),
-        "mahnspesen": mahnspesen,
-        "rechnung": rechnung,
-        "rechnungen": [rechnung],
-        "mahnung": mahnung,
-        "positionen": termine_json,
-        "gesamtbetrag_formatted": gesamtbetrag_formatted,
-        "logo_path": logo_path,
-        "qr_code_path": qr_path_file_url
-    }
-    if os.path.exists(template_in_templates):
-        html_content = render_template("Vorlagen/" + template_name, **template_context)
-    else:
-        candidate_paths = [
-            os.path.join(app.root_path, "Vorlagen", template_name),
-            os.path.join(app.root_path, "Vorlagen", "DruckvorlageMahnung.html"),
-        ]
-        template_file = next((p for p in candidate_paths if os.path.exists(p)), None)
-        if not template_file:
-            raise FileNotFoundError(f"Druckvorlage nicht gefunden: {template_name}")
-        with open(template_file, "r", encoding="utf-8") as f:
-            template_source = f.read()
-        html_content = render_template_string(template_source, **template_context)
-
     # PDF-Dateiname
     now_str = datetime.now().strftime("%y%m%d_%H%M")
     nachname = kunde.nachname if kunde else "kunde"
@@ -339,42 +280,112 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
     os.makedirs(folder_path, exist_ok=True)
     pdf_path = os.path.join(folder_path, pdf_filename)
 
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="BodySmall", parent=styles["Normal"], fontSize=9, leading=12))
+    styles.add(ParagraphStyle(name="Body", parent=styles["Normal"], fontSize=10, leading=13))
+    styles.add(ParagraphStyle(name="Heading", parent=styles["Heading2"], fontSize=14, leading=16, spaceAfter=6))
 
-    # Footer HTML-Datei laden (optional, falls vorhanden)
-    footer_file_path = os.path.join(app.root_path, "Vorlagen", "Druckvorlage_Footer.html")
-    footer_html_rendered = None
-    temp_footer_path = None
-    if os.path.exists(footer_file_path):
-        with open(footer_file_path, "r", encoding="utf-8") as f:
-            footer_template_source = f.read()
-        # Footer rendern (z.B. mit Firmeninfos, QR-Code, etc.)
-        footer_html_rendered = render_template_string(
-            footer_template_source,
-            firma=standort,
-            qr_code_path=qr_path_file_url
-        )
-        # Temporäre Footer-Datei speichern
-        temp_footer_path = os.path.join(app.root_path, "Vorlagen", "footer_rendered_mahnung.html")
-        with open(temp_footer_path, "w", encoding="utf-8") as f:
-            f.write(footer_html_rendered)
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=A4,
+        leftMargin=20 * mm,
+        rightMargin=20 * mm,
+        topMargin=12 * mm,
+        bottomMargin=15 * mm,
+    )
+    story = []
 
-    # PDFKit Optionen wie bei Rechnung
-    options = {
-        'enable-local-file-access': None,
-        'margin-top': '20mm',
-        'margin-bottom': '35mm',
-        'margin-left': '20mm',
-        'margin-right': '20mm',
-    }
-    if temp_footer_path:
-        options['footer-html'] = "file:///" + temp_footer_path.replace("\\", "/")
-        options['footer-spacing'] = '5'
+    firma_name = standort.name if standort else ""
+    firma_ort = f"{standort.plz or ''} {standort.ort or ''}".strip() if standort else ""
+    header_left = [Paragraph(escape(firma_name), styles["Body"]) if firma_name else Paragraph("", styles["Body"]) ]
+    if standort and standort.adresse:
+        header_left.append(Paragraph(escape(standort.adresse), styles["BodySmall"]))
+    if firma_ort:
+        header_left.append(Paragraph(escape(firma_ort), styles["BodySmall"]))
+    if standort and standort.email:
+        header_left.append(Paragraph(escape(standort.email), styles["BodySmall"]))
 
-    wkhtml_config = get_wkhtmltopdf_configuration()
-    if wkhtml_config:
-        pdfkit.from_string(html_content, pdf_path, options=options, configuration=wkhtml_config)
-    else:
-        pdfkit.from_string(html_content, pdf_path, options=options)
+    logo_cell = ""
+    if os.path.exists(logo_absolute_path):
+        logo = Image(logo_absolute_path)
+        logo.drawHeight = 18 * mm
+        logo.drawWidth = 55 * mm
+        logo.hAlign = "RIGHT"
+        logo_cell = logo
+
+    header_table = Table([[header_left, logo_cell]], colWidths=[120 * mm, 50 * mm])
+    header_table.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 8 * mm))
+
+    story.append(Paragraph(f"{escape(str(mahnung.mahnungsnr))}. Mahnung zu Rechnung {escape(str(rechnungs_nr))}", styles["Heading"]))
+    story.append(Paragraph(f"Mahndatum: {escape(str(mahnung.datum or ''))}", styles["Body"]))
+    story.append(Paragraph(f"Neues Zahlungsziel: {escape(zahlungsziel_str)}", styles["Body"]))
+    story.append(Spacer(1, 4 * mm))
+
+    if kunde:
+        story.append(Paragraph("Mahnung an:", styles["Body"]))
+        story.append(Paragraph(escape(f"{kunde.vorname or ''} {kunde.nachname or ''}".strip()), styles["BodySmall"]))
+        if kunde.adresse:
+            story.append(Paragraph(escape(kunde.adresse), styles["BodySmall"]))
+        ort = f"{kunde.plz or ''} {kunde.ort or ''}".strip()
+        if ort:
+            story.append(Paragraph(escape(ort), styles["BodySmall"]))
+        story.append(Spacer(1, 5 * mm))
+
+    table_data = [["Datum", "Zeit", "Beschreibung", "Betrag (EUR)"]]
+    for t in termine_json:
+        time_range = f"{t.get('startzeit') or ''} - {t.get('endzeit') or ''}".strip(" -")
+        table_data.append([
+            str(t.get("datum") or ""),
+            time_range,
+            str(t.get("beschreibung") or ""),
+            _format_currency(t.get("betrag") or 0),
+        ])
+
+    table_data.append(["", "", "Zwischensumme", _format_currency(gesamtbetrag)])
+    table_data.append(["", "", "Verzugszinsen", _format_currency(verzugszinsen)])
+    table_data.append(["", "", "Mahnspesen", _format_currency(mahnspesen)])
+    table_data.append(["", "", "Gesamtbetrag", _format_currency(gesamtbetragMahnung)])
+
+    positions_table = Table(table_data, colWidths=[28 * mm, 28 * mm, 84 * mm, 30 * mm])
+    positions_table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F3F4F6")),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#B9BCC2")),
+        ("ALIGN", (3, 0), (3, -1), "RIGHT"),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+    ]))
+    story.append(positions_table)
+    story.append(Spacer(1, 4 * mm))
+
+    _append_multiline_paragraphs(story, mahnung.kommentar, styles["Body"])
+
+    if standort:
+        story.append(Spacer(1, 4 * mm))
+        if standort.kontoName:
+            story.append(Paragraph(f"Kontoinhaber: {escape(str(standort.kontoName))}", styles["BodySmall"]))
+        if standort.iban:
+            story.append(Paragraph(f"IBAN: {escape(str(standort.iban))}", styles["BodySmall"]))
+        if standort.bic:
+            story.append(Paragraph(f"BIC: {escape(str(standort.bic))}", styles["BodySmall"]))
+
+    if os.path.exists(qr_absolute_path):
+        story.append(Spacer(1, 3 * mm))
+        story.append(Paragraph("GiroCode", styles["BodySmall"]))
+        qr_image = Image(qr_absolute_path)
+        qr_image.drawHeight = 28 * mm
+        qr_image.drawWidth = 28 * mm
+        story.append(qr_image)
+
+    doc.build(story)
 
     return pdf_path, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnung.mahnungsnr
 

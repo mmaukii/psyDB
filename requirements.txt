@@ -24,8 +24,8 @@ lxml==6.0.2
 MarkupSafe==3.0.3
 more-itertools==10.8.0
 niquests==3.17.0
-pdfkit==1.0.0
 pillow==12.1.1
+reportlab==4.4.4
 pycparser==3.0
 python-dateutil==2.9.0.post0
 PyYAML==6.0.3

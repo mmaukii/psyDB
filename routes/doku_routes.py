@@ -1,12 +1,26 @@
 
-from flask import Blueprint, request, send_file, abort, render_template
+from flask import Blueprint, request, send_file
 from models import Kunde, Termin, Gruppe, Gruppentermin, GruppenKunde
 from database import db
 from datetime import datetime
-import pdfkit
 import os
+from xml.sax.saxutils import escape
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 doku_bp = Blueprint("doku", __name__)
+
+
+def _append_multiline(story, text, style):
+    if not text:
+        return
+    for line in str(text).splitlines():
+        if line.strip():
+            story.append(Paragraph(escape(line.strip()), style))
+        else:
+            story.append(Spacer(1, 1.5 * mm))
 
 # --- PDF-Export aller Dokus eines Kunden (Einzel + Gruppen) ---
 @doku_bp.route("/doku/kunde/<int:kunde_id>/pdf")
@@ -54,28 +68,71 @@ def export_dokus_kunde_pdf(kunde_id):
     alle_dokus.sort(key=lambda d: d["datum"] or "", reverse=True)
     # Filter aus Query-Parameter lesen
     doku_filter = request.args.get("filter", "ges")
-    # HTML generieren aus ../Vorlagen/
-    from jinja2 import Environment, FileSystemLoader, select_autoescape
-    vorlagen_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Vorlagen'))
-    env = Environment(
-        loader=FileSystemLoader(vorlagen_path),
-        autoescape=select_autoescape(['html', 'xml'])
-    )
-    template = env.get_template("doku_export.html")
-    html_content = template.render(kunde=kunde, alle_dokus=alle_dokus, doku_filter=doku_filter)
     now_str = datetime.now().strftime("%y%m%d_%H%M%S")
     pdf_filename = f"Doku_{kunde.kuerzel}_{now_str}.pdf"
     folder_path = os.path.join(os.path.dirname(__file__), "..", "Rechnungen")
     folder_path = os.path.abspath(folder_path)
     os.makedirs(folder_path, exist_ok=True)
     pdf_path = os.path.join(folder_path, pdf_filename)
-    # PDF erzeugen
-    options = {
-        'enable-local-file-access': None,
-        'margin-top': '15mm',
-        'margin-bottom': '15mm',
-        'margin-left': '15mm',
-        'margin-right': '15mm',
-    }
-    pdfkit.from_string(html_content, pdf_path, options=options)
+
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="DocHeading", parent=styles["Heading2"], fontSize=14, leading=17))
+    styles.add(ParagraphStyle(name="DocMeta", parent=styles["Normal"], fontSize=9, leading=12))
+    styles.add(ParagraphStyle(name="DocBody", parent=styles["Normal"], fontSize=10, leading=14))
+
+    doc = SimpleDocTemplate(
+        pdf_path,
+        pagesize=A4,
+        leftMargin=15 * mm,
+        rightMargin=15 * mm,
+        topMargin=15 * mm,
+        bottomMargin=15 * mm,
+    )
+
+    story = []
+    if doku_filter == "allg":
+        heading = f"Allgemeine Dokumentation: {kunde.vorname or ''} {kunde.nachname or ''}".strip()
+    elif doku_filter == "pers":
+        heading = f"Persoenliche Dokumentation: {kunde.vorname or ''} {kunde.nachname or ''}".strip()
+    else:
+        heading = f"Dokumentation: {kunde.vorname or ''} {kunde.nachname or ''}".strip()
+
+    story.append(Paragraph(escape(heading), styles["DocHeading"]))
+    story.append(Spacer(1, 2 * mm))
+    story.append(Paragraph(f"Export: {escape(datetime.now().strftime('%d.%m.%Y %H:%M'))}", styles["DocMeta"]))
+    story.append(Paragraph(f"Filter: {escape(doku_filter)}", styles["DocMeta"]))
+    story.append(Spacer(1, 6 * mm))
+
+    if not alle_dokus:
+        story.append(Paragraph("Keine Dokumentationseinträge vorhanden.", styles["DocBody"]))
+    else:
+        for entry in alle_dokus:
+            status_parts = []
+            if entry.get("abgesagt"):
+                status_parts.append("abgesagt")
+            if entry.get("entfallen"):
+                status_parts.append("entfallen")
+            status = f" ({', '.join(status_parts)})" if status_parts else ""
+
+            title = f"{entry.get('datum') or ''} {entry.get('startzeit') or ''}-{entry.get('endzeit') or ''} | {entry.get('anzeigeName') or ''}{status}"
+            story.append(Paragraph(escape(title.strip()), styles["DocMeta"]))
+
+            beschreibung = entry.get("beschreibung") or ""
+            if beschreibung.strip():
+                story.append(Paragraph(f"<b>Thema:</b> {escape(beschreibung.strip())}", styles["DocBody"]))
+
+            doku_text = entry.get("doku") or ""
+            if doku_text.strip() and doku_filter in ("ges", "allg"):
+                story.append(Paragraph("<b>Allgemeine Dokumentation:</b>", styles["DocMeta"]))
+                _append_multiline(story, doku_text, styles["DocBody"])
+
+            pers_text = entry.get("pers_doku") or ""
+            if pers_text.strip() and doku_filter in ("ges", "pers"):
+                story.append(Spacer(1, 1.2 * mm))
+                story.append(Paragraph("<b>Persoenliche Dokumentation:</b>", styles["DocMeta"]))
+                _append_multiline(story, pers_text, styles["DocBody"])
+
+            story.append(Spacer(1, 5 * mm))
+
+    doc.build(story)
     return send_file(pdf_path, as_attachment=True, download_name=pdf_filename, mimetype="application/pdf")
