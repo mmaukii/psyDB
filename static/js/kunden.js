@@ -771,13 +771,31 @@ function loadDruckvorlagenDropdown(selectedId = null) {
 
     select.innerHTML = '<option value="">-- bitte wählen --</option>';
 
+    const erlaubteDruckvorlagen = [
+        { name: "Standard", kuerzel: "Stand" },
+        { name: "Supervision", kuerzel: "Sup" },
+        { name: "TherapieKK", kuerzel: "KK" },
+    ];
+
     return fetch('/api/druckvorlagen')
         .then(res => res.json())
         .then(data => {
-            data.forEach(v => {
+            erlaubteDruckvorlagen.forEach(erlaubteVorlage => {
+                const matchedVorlage = data.find(v => {
+                    const name = String(v.name || "").trim().toLowerCase();
+                    const kuerzel = String(v.kuerzel || "").trim().toLowerCase();
+                    const erlaubteNamen = [erlaubteVorlage.name, `Rechnung ${erlaubteVorlage.name}`]
+                        .map(text => String(text).trim().toLowerCase());
+                    return erlaubteNamen.includes(name) || kuerzel === erlaubteVorlage.kuerzel.trim().toLowerCase();
+                });
+
+                if (!matchedVorlage) {
+                    return;
+                }
+
                 const option = document.createElement('option');
-                option.value = v.id;
-                option.textContent = v.name || v.pfad || `Vorlage ${v.id}`;
+                option.value = matchedVorlage.id;
+                option.textContent = erlaubteVorlage.name;
                 select.appendChild(option);
             });
 

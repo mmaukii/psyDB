@@ -397,6 +397,10 @@ def generate_rechnung_pdf(rechnung_id):
     gesamtbetrag = sum(s["betrag"] for s in termine_json)
     r.gesamtbetrag = gesamtbetrag
 
+    druckvorlage = None
+    if kunde and getattr(kunde, "druckvorlage_id", None):
+        druckvorlage = Druckvorlage.query.get(kunde.druckvorlage_id)
+
     # Zahlungsziel-Datum berechnen
     zahlungsziel_datum = None
     try:
@@ -410,10 +414,15 @@ def generate_rechnung_pdf(rechnung_id):
     now_str = datetime.now().strftime("%y%m%d_%H%M")
     rechnungs_nr = r.rechnungsnr
     druckvorlage_kuerzel = ""
-    if kunde and getattr(kunde, "druckvorlage_id", None):
-        druckvorlage = Druckvorlage.query.get(kunde.druckvorlage_id)
-        if druckvorlage and getattr(druckvorlage, "kuerzel", None):
-            druckvorlage_kuerzel = f"_{druckvorlage.kuerzel}_"
+    if druckvorlage and getattr(druckvorlage, "kuerzel", None):
+        druckvorlage_kuerzel = f"_{druckvorlage.kuerzel}_"
+    is_therapiekk_template = bool(
+        druckvorlage
+        and (
+            str(getattr(druckvorlage, "kuerzel", "")).strip().lower() == "kk"
+            or str(getattr(druckvorlage, "name", "")).strip().lower() == "therapiekk"
+        )
+    )
     kuerzel = kunde.kuerzel if kunde else "kunde"
     pdf_filename = f"ReNr_{rechnungs_nr}_{now_str}_{druckvorlage_kuerzel}_{kuerzel}.pdf"
     folder_path = os.path.join(app.root_path, "Rechnungen")
@@ -522,6 +531,32 @@ ReNR:{rechnungs_nr}
     story.append(Paragraph(f"Rechnung Nr. {escape(str(rechnungs_nr))}", styles["Heading"]))
     
     story.append(Spacer(1, 4 * mm))
+
+    if is_therapiekk_template and kunde:
+        therapiekk_info = Table(
+            [
+                [
+                    Paragraph("<b>Sozialversicherungsnummer</b>", styles["Body"]),
+                    Paragraph("<b>Krankenkasse</b>", styles["Body"]),
+                    Paragraph("<b>Diagnose</b>", styles["Body"]),
+                ],
+                [
+                    Paragraph(escape(str(kunde.svnr or "")), styles["Body"]),
+                    Paragraph(escape(str(kunde.krankenkasse or "")), styles["Body"]),
+                    Paragraph(escape(str(kunde.diagnose or "")), styles["Body"]),
+                ],
+            ],
+            colWidths=[doc.width / 3.0, doc.width / 3.0, doc.width / 3.0],
+        )
+        therapiekk_info.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ]))
+        story.append(therapiekk_info)
+        story.append(Spacer(1, 6 * mm))
 
    
 

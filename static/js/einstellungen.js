@@ -172,6 +172,7 @@ function loadEinstellungen() {
         });
 }
 
+/*
 function loadDruckvorlagen() {
     fetch('/api/druckvorlagen')
         .then(res => res.json())
@@ -234,6 +235,7 @@ function loadDruckvorlagen() {
             });
         });
 }
+*/
 
 document.getElementById("addStandortBtn").addEventListener("click", () => {
     const tbody = document.querySelector("#standorteTable tbody");
@@ -268,10 +270,11 @@ document.getElementById("addStandortBtn").addEventListener("click", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
     loadEinstellungen();
-    loadDruckvorlagen();
+    /* loadDruckvorlagen(); */
     loadProgrammvariablen();
 });
 
+/*
 document.getElementById("addDruckvorlageBtn").addEventListener("click", () => {
     const tbody = document.querySelector("#druckvorlagenTable tbody");
     const tr = document.createElement("tr");
@@ -310,6 +313,7 @@ document.getElementById("addDruckvorlageBtn").addEventListener("click", () => {
         }).then(() => loadDruckvorlagen());
     });
 });
+*/
 
 function loadProgrammvariablen() {
     fetch('/api/programmvariablen')
