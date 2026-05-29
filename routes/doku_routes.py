@@ -20,7 +20,7 @@ def _append_multiline(story, text, style):
         if line.strip():
             story.append(Paragraph(escape(line.strip()), style))
         else:
-            story.append(Spacer(1, 1.5 * mm))
+            story.append(Spacer(1, 0.5 * mm))
 
 # --- PDF-Export aller Dokus eines Kunden (Einzel + Gruppen) ---
 @doku_bp.route("/doku/kunde/<int:kunde_id>/pdf")
