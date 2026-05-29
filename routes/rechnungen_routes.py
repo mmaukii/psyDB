@@ -472,6 +472,7 @@ ReNR:{rechnungs_nr}
         topMargin=12 * mm,
         bottomMargin=34 * mm,
     )
+    doc.title = f"Rnr{rechnungs_nr}"
     story = []
 
     header_left = [Paragraph(escape(firma_name), styles["TopName"]) if firma_name else Paragraph("", styles["Body"]) ]
@@ -613,9 +614,11 @@ ReNR:{rechnungs_nr}
 
     def _draw_footer(canvas, page_doc):
         if not has_footer:
+            canvas.setTitle(f"Rnr{rechnungs_nr}")
             return
 
         canvas.saveState()
+        canvas.setTitle(f"Rnr{rechnungs_nr}")
 
         footer_top_y = page_doc.bottomMargin - 2 * mm
         canvas.setStrokeColor(colors.HexColor("#CFCFCF"))
@@ -650,7 +653,12 @@ ReNR:{rechnungs_nr}
 @rechnungen_bp.get("/rechnungen/pdf/<int:rechnung_id>")
 def rechnung_pdf(rechnung_id):
     pdf_path, _, _, _ = generate_rechnung_pdf(rechnung_id)
-    return send_file(pdf_path, mimetype="application/pdf", as_attachment=False)
+    return send_file(
+        pdf_path,
+        mimetype="application/pdf",
+        as_attachment=False,
+        download_name=os.path.basename(pdf_path),
+    )
 
 # --- Endpoint: PDF + Mail versenden ---
 @rechnungen_bp.get("/rechnungen/mail/<int:rechnung_id>")

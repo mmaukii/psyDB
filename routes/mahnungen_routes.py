@@ -353,6 +353,7 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
         topMargin=12 * mm,
         bottomMargin=34 * mm,
     )
+    doc.title = f"Rnr{rechnungs_nr}"
     story = []
 
     firma_name = standort.name if standort else ""
@@ -485,9 +486,11 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
 
     def _draw_footer(canvas, page_doc):
         if not has_footer:
+            canvas.setTitle(f"Rnr{rechnungs_nr}")
             return
 
         canvas.saveState()
+        canvas.setTitle(f"Rnr{rechnungs_nr}")
 
         footer_top_y = page_doc.bottomMargin - 2 * mm
         canvas.setStrokeColor(colors.HexColor("#CFCFCF"))
@@ -564,5 +567,10 @@ def mahnung_mail(mahnung_id):
 @mahnungen_bp.get("/mahnungen/pdf/<int:mahnung_id>")
 def mahnung_pdf(mahnung_id):
     pdf_path, _, _, _, _, _ = generate_mahnung_pdf(mahnung_id)
-    return send_file(pdf_path, mimetype="application/pdf", as_attachment=False)
+    return send_file(
+        pdf_path,
+        mimetype="application/pdf",
+        as_attachment=False,
+        download_name=os.path.basename(pdf_path),
+    )
 
