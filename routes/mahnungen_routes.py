@@ -114,6 +114,37 @@ def open_windows_mail_with_attachment(recipient, subject, body, attachment_path)
     except Exception:
         return False
 
+
+def open_macos_mail_with_attachment(recipient, subject, body, attachment_path):
+    """Öffnet unter macOS genau einen Mail-Entwurf mit Anhang."""
+    abs_attachment = os.path.abspath(attachment_path)
+    if not os.path.exists(abs_attachment):
+        return False
+
+    script_lines = [
+        "on run argv",
+        "set theRecipient to item 1 of argv",
+        "set theSubject to item 2 of argv",
+        "set messageBody to item 3 of argv",
+        "set attachmentPath to item 4 of argv",
+        "if messageBody does not end with return then set messageBody to messageBody & return",
+        "tell application \"Mail\"",
+        "set newMessage to make new outgoing message with properties {visible:true, subject:theSubject, content:messageBody}",
+        "tell newMessage",
+        "make new to recipient at end of to recipients with properties {address:theRecipient}",
+        "make new attachment with properties {file name:POSIX file attachmentPath} at after the last paragraph",
+        "end tell",
+        "activate",
+        "end tell",
+        "end run",
+    ]
+
+    try:
+        subprocess.Popen(["osascript", *sum([["-e", line] for line in script_lines], []), recipient, subject, body, abs_attachment])
+        return True
+    except Exception:
+        return False
+
 def get_mahnung_config():
     """Holt Mahnungskonfiguration aus Programmvariablen"""
     zahlungsziel_rechnung_var = Programmvariable.query.filter_by(name='zahlungsziel_tage_rechnung').first()
@@ -546,9 +577,10 @@ def mahnung_mail(mahnung_id):
             body = anrede
 
         if sys.platform.startswith("darwin"):
-            mailto = f"mailto:{quote(kunde.email)}?subject={quote(subject)}&body={quote(body)}"
-            subprocess.Popen(["open", mailto])
-            subprocess.Popen(["open", "-a", "Mail", pdf_path])
+            opened = open_macos_mail_with_attachment(kunde.email, subject, body, pdf_path)
+            if not opened:
+                mailto = f"mailto:{quote(kunde.email)}?subject={quote(subject)}&body={quote(body)}"
+                subprocess.Popen(["open", mailto])
         elif sys.platform.startswith("win"):
             opened = open_windows_mail_with_attachment(kunde.email, subject, body, pdf_path)
             if not opened:

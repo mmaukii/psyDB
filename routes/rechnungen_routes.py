@@ -162,6 +162,37 @@ def open_windows_mail_with_attachment(recipient, subject, body, attachment_path)
         return False
 
 
+def open_macos_mail_with_attachment(recipient, subject, body, attachment_path):
+    """Öffnet unter macOS genau einen Mail-Entwurf mit Anhang."""
+    abs_attachment = os.path.abspath(attachment_path)
+    if not os.path.exists(abs_attachment):
+        return False
+
+    script_lines = [
+        "on run argv",
+        "set theRecipient to item 1 of argv",
+        "set theSubject to item 2 of argv",
+        "set messageBody to item 3 of argv",
+        "set attachmentPath to item 4 of argv",
+        "if messageBody does not end with return then set messageBody to messageBody & return",
+        "tell application \"Mail\"",
+        "set newMessage to make new outgoing message with properties {visible:true, subject:theSubject, content:messageBody}",
+        "tell newMessage",
+        "make new to recipient at end of to recipients with properties {address:theRecipient}",
+        "make new attachment with properties {file name:POSIX file attachmentPath} at after the last paragraph",
+        "end tell",
+        "activate",
+        "end tell",
+        "end run",
+    ]
+
+    try:
+        subprocess.Popen(["osascript", *sum([["-e", line] for line in script_lines], []), recipient, subject, body, abs_attachment])
+        return True
+    except Exception:
+        return False
+
+
 rechnungen_bp = Blueprint("rechnungen", __name__)
 
 # --- Alle Rechnungen ---
@@ -737,10 +768,10 @@ def rechnung_mail(rechnung_id):
             body = anrede
 
         if sys.platform.startswith("darwin"):
-            # macOS: Mail.app via open
-            mailto = f"mailto:{quote(recipient)}?subject={quote(subject)}&body={quote(body)}"
-            subprocess.Popen(["open", mailto])
-            subprocess.Popen(["open", "-a", "Mail", pdf_path])
+            opened = open_macos_mail_with_attachment(recipient, subject, body, pdf_path)
+            if not opened:
+                mailto = f"mailto:{quote(recipient)}?subject={quote(subject)}&body={quote(body)}"
+                subprocess.Popen(["open", mailto])
         elif sys.platform.startswith("win"):
             # Windows: Outlook mit echtem PDF-Anhang, mailto nur als Fallback
             opened = open_windows_mail_with_attachment(recipient, subject, body, pdf_path)
