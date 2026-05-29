@@ -144,7 +144,7 @@ with app.app_context():
         standard_druckvorlagen = [
             {
                 'id': 3,
-                'name': 'Standard',
+                'name': 'Therapie',
                 'pfad': 'Vorlagen/DruckvorlageRechnungPsychotherapie.html',
                 'kuerzel': 'Stand',
                 'timestamp': erstellungszeit,
@@ -152,7 +152,7 @@ with app.app_context():
             },
             {
                 'id': 4,
-                'name': 'TherapieKK',
+                'name': 'Therapie-KKasse',
                 'pfad': 'Vorlagen/DruckvorlageRechnungPsychotherapieKrankenkasse.html',
                 'kuerzel': 'KK',
                 'timestamp': erstellungszeit,
@@ -160,8 +160,8 @@ with app.app_context():
             },
             {
                 'id': 5,
-                'name': 'Supervision',
-                'pfad': 'Vorlagen/DruckvorlageRechnungSupervision.html',
+                'name': 'Unternehmerisch',
+                'pfad': 'Vorlagen/DruckvorlageRechnungUnternehmerisch.html',
                 'kuerzel': 'Sup',
                 'timestamp': erstellungszeit,
                 'changestamp': None,

@@ -358,7 +358,7 @@ function loadProgrammvariablen() {
                 let tdContent = "";
                 if (v.checkbox === true || v.checkbox === 1 || v.checkbox === "1") {
                     const checked = v.wert == "1" ? "checked" : "";
-                    tdContent = `<td style="text-align:center;"><input type="checkbox" data-field="wert" data-id="${v.id}" ${checked}></td>`;
+                    tdContent = `<td style="text-align:left;"><input type="checkbox" data-field="wert" data-id="${v.id}" ${checked}></td>`;
                 } else {
                     tdContent = `<td contenteditable="true" data-field="wert" data-id="${v.id}">${v.wert || ""}</td>`;
                 }

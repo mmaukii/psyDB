@@ -772,9 +772,9 @@ function loadDruckvorlagenDropdown(selectedId = null) {
     select.innerHTML = '<option value="">-- bitte wählen --</option>';
 
     const erlaubteDruckvorlagen = [
-        { name: "Standard", kuerzel: "Stand" },
-        { name: "Supervision", kuerzel: "Sup" },
-        { name: "TherapieKK", kuerzel: "KK" },
+        { name: "Therapie", kuerzel: "Stand" },
+        { name: "Unternehmerisch", kuerzel: "Sup" },
+        { name: "Therapie-KKasse", kuerzel: "KK" },
     ];
 
     return fetch('/api/druckvorlagen')

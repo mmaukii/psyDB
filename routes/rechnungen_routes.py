@@ -416,11 +416,19 @@ def generate_rechnung_pdf(rechnung_id):
     druckvorlage_kuerzel = ""
     if druckvorlage and getattr(druckvorlage, "kuerzel", None):
         druckvorlage_kuerzel = f"_{druckvorlage.kuerzel}_"
-    is_therapiekk_template = bool(
+    is_therapie_kkasse_template = bool(
         druckvorlage
         and (
             str(getattr(druckvorlage, "kuerzel", "")).strip().lower() == "kk"
-            or str(getattr(druckvorlage, "name", "")).strip().lower() == "therapiekk"
+            or str(getattr(druckvorlage, "name", "")).strip().lower() == "therapie-kkasse"
+        )
+    )
+    is_unternehmerisch_template = bool(
+        druckvorlage
+        and (
+            "unternehmerisch" in str(getattr(druckvorlage, "name", "")).strip().lower()
+            or "unternehmerisch" in str(getattr(druckvorlage, "pfad", "")).strip().lower()
+            or str(getattr(druckvorlage, "kuerzel", "")).strip().lower() == "sup"
         )
     )
     kuerzel = kunde.kuerzel if kunde else "kunde"
@@ -533,13 +541,13 @@ ReNR:{rechnungs_nr}
     
     story.append(Spacer(1, 4 * mm))
 
-    if is_therapiekk_template and kunde:
-        therapiekk_info = Table(
+    if is_therapie_kkasse_template and kunde:
+        therapie_kkasse_info = Table(
             [
                 [
-                    Paragraph("<b>Sozialversicherungsnummer</b>", styles["Body"]),
-                    Paragraph("<b>Krankenkasse</b>", styles["Body"]),
-                    Paragraph("<b>Diagnose</b>", styles["Body"]),
+                    Paragraph("<b>Sozialversicherungsnummer:</b>", styles["Body"]),
+                    Paragraph("<b>Krankenkasse:</b>", styles["Body"]),
+                    Paragraph("<b>Diagnose:</b>", styles["Body"]),
                 ],
                 [
                     Paragraph(escape(str(kunde.svnr or "")), styles["Body"]),
@@ -547,16 +555,18 @@ ReNR:{rechnungs_nr}
                     Paragraph(escape(str(kunde.diagnose or "")), styles["Body"]),
                 ],
             ],
-            colWidths=[doc.width / 3.0, doc.width / 3.0, doc.width / 3.0],
+            colWidths=[doc.width * 0.47, doc.width * 0.29, doc.width * 0.24],
         )
-        therapiekk_info.setStyle(TableStyle([
+        therapie_kkasse_info.setStyle(TableStyle([
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("LEFTPADDING", (2, 0), (2, -1), 9 * mm),
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
         ]))
-        story.append(therapiekk_info)
+        story.append(therapie_kkasse_info)
         story.append(Spacer(1, 6 * mm))
 
    
@@ -587,12 +597,15 @@ ReNR:{rechnungs_nr}
     story.append(positions_table)
     story.append(Spacer(1, 4 * mm))
 
-    story.append(Paragraph("Umsatzsteuerbefreit gemaess § 6 Abs. 1 Z 19 UStG.", styles["Body"]))
+    if is_unternehmerisch_template:
+        story.append(Paragraph("Umsatzsteuerbefreit nach § 6 Abs. 1 Z 27 UStG.", styles["Body"]))
+    else:
+        story.append(Paragraph("Umsatzsteuerbefreit nach § 6 Abs. 1 Z 19 UStG.", styles["Body"]))
     zahlungsziel_de = _format_date_de(zahlungsziel_datum)
     if zahlungsziel_de:
-        story.append(Paragraph(f"Ich ersuche, den Rechnungsbetrag bis spaetestens {escape(zahlungsziel_de)} zu ueberweisen.", styles["Body"]))
+        story.append(Paragraph(f"Ich ersuche, den Rechnungsbetrag bis spätestens {escape(zahlungsziel_de)} zu überweisen.", styles["Body"]))
     else:
-        story.append(Paragraph("Ich ersuche, den Rechnungsbetrag fristgerecht zu ueberweisen.", styles["Body"]))
+        story.append(Paragraph("Ich ersuche, den Rechnungsbetrag fristgerecht zu überweisen.", styles["Body"]))
     story.append(Spacer(1, 3 * mm))
 
     _append_multiline_paragraphs(story, r.rechnungTextUnten, styles["Body"])

@@ -15,7 +15,6 @@ ENV/
 # Build and packaging artifacts
 build/
 dist/
-*.spec
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
