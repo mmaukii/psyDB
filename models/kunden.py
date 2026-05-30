@@ -16,7 +16,7 @@ class Kunde(db.Model):
     stundensatz = db.Column(db.Numeric)
     kuerzel = db.Column(db.String, unique=True, nullable=False)
     geschlecht = db.Column(db.String)
-    gebdatum = db.Column(db.String)
+    gebdatum = db.Column(EncryptedString)
 
     ust = db.Column(db.Integer, default=0)
 
@@ -38,8 +38,8 @@ class Kunde(db.Model):
     standort = db.relationship("Standort", backref="kunden")
     druckvorlage = db.relationship("Druckvorlage", backref="kunden")
     # Neue Felder
-    svnr = db.Column(db.Integer)
-    krankenkasse = db.Column(db.String)
-    diagnose = db.Column(db.String)
+    svnr = db.Column(EncryptedString)
+    krankenkasse = db.Column(EncryptedString)
+    diagnose = db.Column(EncryptedString)
 
     
