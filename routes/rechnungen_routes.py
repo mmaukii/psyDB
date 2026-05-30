@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify, current_app as app, send_file
 from database import db
 from models import Rechnung, Termin, TermineRechnung, Kunde, Mahnung, Programmvariable, Druckvorlage
@@ -16,7 +17,17 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas as pdf_canvas
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-
+# Hilfsfunktion: Druckvorlagen-Mapping (1=Therapie, 2=Therapie-KKasse, 3=Unternehmerisch)
+def get_druckvorlage_info(druckvorlage_id):
+    mapping = {
+        1: {"name": "Therapie", "kuerzel": "therapie"},
+        2: {"name": "Therapie-KKasse", "kuerzel": "kk"},
+        3: {"name": "Unternehmerisch", "kuerzel": "sup"},
+    }
+    try:
+        return mapping.get(int(druckvorlage_id), {"name": "Therapie", "kuerzel": "therapie"})
+    except Exception:
+        return {"name": "Therapie", "kuerzel": "therapie"}
 
 def get_zahlungsziel_tage():
     """Holt Zahlungsziel-Tage aus Programmvariablen"""
@@ -469,7 +480,8 @@ def generate_rechnung_pdf(rechnung_id, save_to_disk=False):
 
     druckvorlage = None
     if kunde and getattr(kunde, "druckvorlage_id", None):
-        druckvorlage = Druckvorlage.query.get(kunde.druckvorlage_id)
+        druckvorlage = get_druckvorlage_info(kunde.druckvorlage_id)
+    
 
     # Zahlungsziel-Datum berechnen
     zahlungsziel_datum = None
@@ -483,26 +495,11 @@ def generate_rechnung_pdf(rechnung_id, save_to_disk=False):
     # PDF-Dateiname
     now_str = datetime.now().strftime("%y%m%d_%H%M")
     rechnungs_nr = r.rechnungsnr
-    druckvorlage_kuerzel = ""
-    if druckvorlage and getattr(druckvorlage, "kuerzel", None):
-        druckvorlage_kuerzel = f"_{druckvorlage.kuerzel}_"
-    is_therapie_kkasse_template = bool(
-        druckvorlage
-        and (
-            str(getattr(druckvorlage, "kuerzel", "")).strip().lower() == "kk"
-            or str(getattr(druckvorlage, "name", "")).strip().lower() == "therapie-kkasse"
-        )
-    )
-    is_unternehmerisch_template = bool(
-        druckvorlage
-        and (
-            "unternehmerisch" in str(getattr(druckvorlage, "name", "")).strip().lower()
-            or "unternehmerisch" in str(getattr(druckvorlage, "pfad", "")).strip().lower()
-            or str(getattr(druckvorlage, "kuerzel", "")).strip().lower() == "sup"
-        )
-    )
+    druckvorlage_kuerzel = f"_{druckvorlage['kuerzel']}_" if druckvorlage else ""
+    is_therapie_kkasse_template = druckvorlage and int(kunde.druckvorlage_id) == 2
+    is_unternehmerisch_template = druckvorlage and druckvorlage["kuerzel"] == "sup"
     kuerzel = kunde.kuerzel if kunde else "kunde"
-    pdf_filename = f"ReNr_{rechnungs_nr}_{now_str}_{druckvorlage_kuerzel}_{kuerzel}.pdf"
+    pdf_filename = f"ReNr_{rechnungs_nr}_{now_str}{druckvorlage_kuerzel}_{kuerzel}.pdf"
     # Speicherpfad aus Programmvariable rechnungs_pfad, sonst Standard
     rechnungs_pfad_var = Programmvariable.query.filter_by(name='rechnungs_pfad').first()
     import io
@@ -915,11 +912,11 @@ def create_rechnungen_aus_termine():
             if not kunde:
                 raise ValueError(f"Kunde {kunde_id} nicht gefunden")
 
-            # Prüfe, ob Druckvorlage vorhanden ist
-            if not kunde.druckvorlage_id:
+            # Prüfe, ob Druckvorlage vorhanden ist (1,2,3)
+            if not kunde.druckvorlage_id or int(kunde.druckvorlage_id) not in (1,2,3):
                 return jsonify({
                     "success": False,
-                    "error": f"Kunde {kunde.nachname} ({kunde_id}) hat keine Druckvorlage hinterlegt. Bitte zuerst eine Druckvorlage auswählen."
+                    "error": f"Kunde {kunde.nachname} ({kunde_id}) hat keine gültige Druckvorlage (1,2,3) hinterlegt. Bitte zuerst eine Druckvorlage auswählen."
                 }), 400
 
             # --- Rechnungsnummer generieren ---
