@@ -13,13 +13,15 @@
 	.pfadCell { display: flex; gap: 8px; align-items: center; }
 	.pfadInput { flex: 1; min-width: 0; }
 	.pfadFile { flex: 0 0 auto; }
+	body { color: #000; }
+	span, small, label, h2 { color: #000 !important; }
 </style>
 </head>
 <body>
 <h2 style="margin-bottom: 0;">Standorte</h2>
 <div style="display: flex; align-items: baseline; gap: 10px;">
 	
-	<span style="font-size: 0.95em; color: #666; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
+	<span style="font-size: 0.95em; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
 </div>
 
 <table id="standorteTable">
@@ -72,11 +74,11 @@
 		<input type="file" id="logoFilePicker" accept="image/*" style="flex: 1;">
 		<input type="text" id="logoFileInput" placeholder="Relativer Pfad (z.B. Vorlagen/logo.png)" style="flex: 2;" readonly>
 	</div>
-	<small style="color: #666; display: block; margin-top: 5px;">
+	<small style="display: block; margin-top: 5px;">
 		ℹ️ Wählen Sie eine Bilddatei aus. Datei wird einmalig hochgeladen und in den Vorlagenordner kopiert. Der Pfad zur Datei wird automatisch gesetzt.
 </div>
 
-<span style="font-size: 0.95em; color: #666; font-weight: normal;">Eingegebene Werte müssen durch Klick auf Speicherbutton übernommen werden.</span>
+<span style="font-size: 0.95em; font-weight: normal;">Eingegebene Werte müssen durch Klick auf Speicherbutton übernommen werden.</span>
 <table id="programmvariablenTable">
 	<thead>
 		<tr>
@@ -99,7 +101,7 @@
 </div>
 <br><br>
 <h2 style="margin-bottom: 0;">Standardtexte für Rechnungen & Mahnungen</h2>
-<span style="font-size: 0.95em; color: #666; font-weight: normal;">Eingegebene Werte müssen durch Klick auf Speicherbutton übernommen werden.</span>
+<span style="font-size: 0.95em; font-weight: normal;">Eingegebene Werte müssen durch Klick auf Speicherbutton übernommen werden.</span>
 
 <table id="standardtexteTable" style="width:100%;">
 	<colgroup>
@@ -128,7 +130,7 @@
 	   <input type="password" id="dbPassphraseNewConfirm" placeholder="Neues Passwort bestätigen">
 	   <button id="changeDbPassphraseBtn">Passwort ändern</button>
    </div>
-   <small style="color: #666; display: block; margin-top: 5px;">
+	<small style="display: block; margin-top: 5px;">
 	   ℹ️ Für Änderungen wird das aktuelle Passwort benötigt.
    </small>
 </div>
@@ -140,7 +142,7 @@
 <h2 style="margin-bottom: 0;">Leistungen</h2>
 <div style="display: flex; align-items: baseline; gap: 10px;">
 	
-	<span style="font-size: 0.95em; color: #666; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
+	<span style="font-size: 0.95em; font-weight: normal;">(Werte werden direkt bei Eingabe übernommen, kein Speicherbutton)</span>
 </div>
 <table id="leistungenTable">
 	<thead>
