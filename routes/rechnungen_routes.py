@@ -427,7 +427,9 @@ def get_termine_fuer_rechnung(rechnung_id):
     })
 
 
-def generate_rechnung_pdf(rechnung_id):
+
+
+def generate_rechnung_pdf(rechnung_id, save_to_disk=False):
     """Rechnung laden und mit ReportLab als PDF erzeugen."""
 
     r = Rechnung.query.get_or_404(rechnung_id)
@@ -501,9 +503,51 @@ def generate_rechnung_pdf(rechnung_id):
     )
     kuerzel = kunde.kuerzel if kunde else "kunde"
     pdf_filename = f"ReNr_{rechnungs_nr}_{now_str}_{druckvorlage_kuerzel}_{kuerzel}.pdf"
-    folder_path = os.path.join(app.root_path, "Rechnungen")
-    os.makedirs(folder_path, exist_ok=True)
-    pdf_path = os.path.join(folder_path, pdf_filename)
+    # Speicherpfad aus Programmvariable rechnungs_pfad, sonst Standard
+    rechnungs_pfad_var = Programmvariable.query.filter_by(name='rechnungs_pfad').first()
+    import io
+    if save_to_disk and rechnungs_pfad_var and rechnungs_pfad_var.wert:
+        pfad = rechnungs_pfad_var.wert.strip()
+        if not os.path.isabs(pfad):
+            folder_path = os.path.abspath(os.path.join(app.root_path, pfad))
+        else:
+            folder_path = pfad
+        os.makedirs(folder_path, exist_ok=True)
+        pdf_path = os.path.join(folder_path, pdf_filename)
+        doc = SimpleDocTemplate(
+            pdf_path,
+            pagesize=A4,
+            leftMargin=20 * mm,
+            rightMargin=20 * mm,
+            topMargin=12 * mm,
+            bottomMargin=34 * mm,
+        )
+        doc.title = f"Rnr{rechnungs_nr}"
+        # ... story und rest wie gehabt ...
+        # (story wird weiter unten befüllt)
+        # ...
+        # doc.build(story, ...)
+        # ...
+        # return pdf_path, ...
+    else:
+        # Nur temporär im Speicher erzeugen
+        pdf_buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            pdf_buffer,
+            pagesize=A4,
+            leftMargin=20 * mm,
+            rightMargin=20 * mm,
+            topMargin=12 * mm,
+            bottomMargin=34 * mm,
+        )
+        doc.title = f"Rnr{rechnungs_nr}"
+        # ... story und rest wie gehabt ...
+        # (story wird weiter unten befüllt)
+        # ...
+        # doc.build(story, ...)
+        # ...
+        # pdf_buffer.seek(0)
+        # return pdf_buffer, ...
 
     # QR-Code
     qr_filename = f"girocode_{rechnungs_nr}.png"
@@ -540,15 +584,7 @@ ReNR:{rechnungs_nr}
     styles.add(ParagraphStyle(name="TopName", parent=styles["Body"], fontName="Helvetica-Bold"))
     styles.add(ParagraphStyle(name="Heading", parent=styles["Heading2"], fontSize=14, leading=16, spaceAfter=6))
 
-    doc = SimpleDocTemplate(
-        pdf_path,
-        pagesize=A4,
-        leftMargin=20 * mm,
-        rightMargin=20 * mm,
-        topMargin=12 * mm,
-        bottomMargin=34 * mm,
-    )
-    doc.title = f"Rnr{rechnungs_nr}"
+    # story = [] bleibt wie gehabt, aber doc ist jetzt entweder auf Datei oder Buffer
     story = []
 
     header_left = [Paragraph(escape(firma_name), styles["TopName"]) if firma_name else Paragraph("", styles["Body"]) ]
@@ -728,23 +764,28 @@ ReNR:{rechnungs_nr}
 
     doc.build(story, onFirstPage=_draw_footer, onLaterPages=_draw_footer, canvasmaker=NumberedCanvas)
 
-    return pdf_path, kunde, rechnungs_nr, kunde.nachname if kunde else ""
+    if save_to_disk and rechnungs_pfad_var and rechnungs_pfad_var.wert:
+        return pdf_path, kunde, rechnungs_nr, kunde.nachname if kunde else ""
+    else:
+        pdf_buffer.seek(0)
+        return pdf_buffer, kunde, rechnungs_nr, kunde.nachname if kunde else ""
 
 # --- Endpoint: PDF anzeigen ---
 @rechnungen_bp.get("/rechnungen/pdf/<int:rechnung_id>")
 def rechnung_pdf(rechnung_id):
-    pdf_path, _, _, _ = generate_rechnung_pdf(rechnung_id)
+    pdf_obj, _, _, _ = generate_rechnung_pdf(rechnung_id, save_to_disk=False)
+    # Immer nur aus dem Speicher ausliefern, nie aus Datei
     return send_file(
-        pdf_path,
+        pdf_obj,
         mimetype="application/pdf",
         as_attachment=False,
-        download_name=os.path.basename(pdf_path),
+        download_name="Rechnung.pdf",
     )
 
 # --- Endpoint: PDF + Mail versenden ---
 @rechnungen_bp.get("/rechnungen/mail/<int:rechnung_id>")
 def rechnung_mail(rechnung_id):
-    pdf_path, kunde, rechnungs_nr, nachname = generate_rechnung_pdf(rechnung_id)
+    pdf_obj, kunde, rechnungs_nr, nachname = generate_rechnung_pdf(rechnung_id, save_to_disk=True)
     print(nachname)
 
     if kunde:
@@ -773,6 +814,18 @@ def rechnung_mail(rechnung_id):
                 mailtext = "anbei erhalten Sie Ihre aktuelle Rechnung als PDF."
         body = f"{anrede}\n\n{mailtext}"
 
+        # Wenn Datei, wie gehabt, sonst temporär speichern und anhängen
+        import tempfile
+        import shutil
+        if isinstance(pdf_obj, str):
+            pdf_path = pdf_obj
+        else:
+            # BytesIO -> temporäre Datei für Mail
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+            shutil.copyfileobj(pdf_obj, tmp)
+            tmp.close()
+            pdf_path = tmp.name
+
         if sys.platform.startswith("darwin"):
             opened = open_macos_mail_with_attachment(recipient, subject, body, pdf_path)
             if not opened:
@@ -795,7 +848,16 @@ def rechnung_mail(rechnung_id):
             ]
             subprocess.Popen(cmd)
 
-    return jsonify({"success": True, "pdf_path": pdf_path})
+        # Temporäre Datei ggf. löschen (optional, je nach Mail-Client-Verhalten)
+        if not isinstance(pdf_obj, str):
+            import time
+            time.sleep(5)  # Warten, bis Mail-Client geöffnet hat
+            try:
+                os.unlink(pdf_path)
+            except Exception:
+                pass
+
+    return jsonify({"success": True})
 
 
 

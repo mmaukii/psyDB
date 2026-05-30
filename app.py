@@ -178,7 +178,7 @@ with app.app_context():
         {'name': 'termine_kalender', 'wert': 'praxis', 'bezeichnung': 'Webdav Kalender für Termine', 'sort': 202, 'checkbox': False},
         {'name': 'andere_kalender', 'wert': 'Personal', 'bezeichnung': 'weitere Webdav Kalender, bei mehreren mit ";" trennen', 'sort': 203, 'checkbox': False},
         {'name': 'logo_file', 'wert': '/static/firmen_neu.png', 'bezeichnung': 'Pfad zur Logodatei', 'sort': 401, 'checkbox': False},
-        {'name': 'rechnungs_pfad', 'wert': '', 'bezeichnung': 'Ordner für Rechnungsablage', 'sort': 402, 'checkbox': False},
+        {'name': 'rechnungs_pfad', 'wert': '', 'bezeichnung': 'Ordner für automatische Rechnungsablage bei email-Versand (absolut oder relativ). Wenn leer keine Ablage', 'sort': 104, 'checkbox': False},
         {'name': 'einzel_betrag', 'wert': '83', 'bezeichnung': 'Standardpreis Einzeltherapie €', 'sort': 80, 'checkbox': False},
         {'name': 'paar_betrag', 'wert': '90', 'bezeichnung': 'Standardpreis Paartherapie €', 'sort': 81, 'checkbox': False},
         {'name': 'einzel_zeit', 'wert': '50', 'bezeichnung': 'Standarddauer Einzeltherapie min', 'sort': 90, 'checkbox': False},
