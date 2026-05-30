@@ -178,6 +178,7 @@ with app.app_context():
         {'name': 'termine_kalender', 'wert': 'praxis', 'bezeichnung': 'Webdav Kalender für Termine', 'sort': 202, 'checkbox': False},
         {'name': 'andere_kalender', 'wert': 'Personal', 'bezeichnung': 'weitere Webdav Kalender, bei mehreren mit ";" trennen', 'sort': 203, 'checkbox': False},
         {'name': 'logo_file', 'wert': '/static/firmen_neu.png', 'bezeichnung': 'Pfad zur Logodatei', 'sort': 401, 'checkbox': False},
+        {'name': 'rechnungs_pfad', 'wert': '', 'bezeichnung': 'Ordner für Rechnungsablage', 'sort': 402, 'checkbox': False},
         {'name': 'einzel_betrag', 'wert': '83', 'bezeichnung': 'Standardpreis Einzeltherapie €', 'sort': 80, 'checkbox': False},
         {'name': 'paar_betrag', 'wert': '90', 'bezeichnung': 'Standardpreis Paartherapie €', 'sort': 81, 'checkbox': False},
         {'name': 'einzel_zeit', 'wert': '50', 'bezeichnung': 'Standarddauer Einzeltherapie min', 'sort': 90, 'checkbox': False},
@@ -226,36 +227,7 @@ with app.app_context():
         ]
         db.session.add_all(Leistung(**leistung) for leistung in standard_leistungen)
 
-    if not Druckvorlage.query.first():
-        erstellungszeit = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        standard_druckvorlagen = [
-            {
-                'id': 3,
-                'name': 'Therapie',
-                'pfad': 'Vorlagen/DruckvorlageRechnungPsychotherapie.html',
-                'kuerzel': 'Stand',
-                'timestamp': erstellungszeit,
-                'changestamp': '2026-05-24 22:01:01',
-            },
-            {
-                'id': 4,
-                'name': 'Therapie-KKasse',
-                'pfad': 'Vorlagen/DruckvorlageRechnungPsychotherapieKrankenkasse.html',
-                'kuerzel': 'KK',
-                'timestamp': erstellungszeit,
-                'changestamp': None,
-            },
-            {
-                'id': 5,
-                'name': 'Unternehmerisch',
-                'pfad': 'Vorlagen/DruckvorlageRechnungUnternehmerisch.html',
-                'kuerzel': 'Sup',
-                'timestamp': erstellungszeit,
-                'changestamp': None,
-            },
-        ]
-        db.session.add_all(Druckvorlage(**druckvorlage) for druckvorlage in standard_druckvorlagen)
-
+    
     db.session.commit()
     
     # Initialisiere WebDAV-Konfiguration

@@ -328,6 +328,13 @@ function loadProgrammvariablen() {
             } else {
                 document.getElementById("logoFileInput").value = '';
             }
+            // Rechnungs-Pfad laden und anzeigen
+            const rechnungsPfad = data.find(v => v.name === "rechnungs_pfad");
+            if (rechnungsPfad && rechnungsPfad.wert) {
+                document.getElementById("rechnungsPfadInput").value = rechnungsPfad.wert;
+            } else {
+                document.getElementById("rechnungsPfadInput").value = '';
+            }
             // Prüfen, ob kalender_sync aktiv ist
             const kalenderSyncActive = !!data.find(v => v.name === "kalender_sync" && v.wert == "1");
             // Standardtexte separat sammeln
