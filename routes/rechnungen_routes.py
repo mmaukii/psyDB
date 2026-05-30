@@ -509,19 +509,30 @@ def generate_rechnung_pdf(rechnung_id, save_to_disk=False):
     if save_to_disk and rechnungs_pfad_var and rechnungs_pfad_var.wert:
         pfad = rechnungs_pfad_var.wert.strip()
         if not os.path.isabs(pfad):
-            folder_path = os.path.abspath(os.path.join(app.root_path, pfad))
+            # Fehler: Pfad ist nicht absolut
+            from flask import flash
+            flash("Der Ablagepfad für Rechnungen muss absolut sein. PDF wird nicht gespeichert.", "warning")
+            pdf_buffer = io.BytesIO()
+            doc = SimpleDocTemplate(
+                pdf_buffer,
+                pagesize=A4,
+                leftMargin=20 * mm,
+                rightMargin=20 * mm,
+                topMargin=12 * mm,
+                bottomMargin=34 * mm,
+            )
         else:
             folder_path = pfad
-        os.makedirs(folder_path, exist_ok=True)
-        pdf_path = os.path.join(folder_path, pdf_filename)
-        doc = SimpleDocTemplate(
-            pdf_path,
-            pagesize=A4,
-            leftMargin=20 * mm,
-            rightMargin=20 * mm,
-            topMargin=12 * mm,
-            bottomMargin=34 * mm,
-        )
+            os.makedirs(folder_path, exist_ok=True)
+            pdf_path = os.path.join(folder_path, pdf_filename)
+            doc = SimpleDocTemplate(
+                pdf_path,
+                pagesize=A4,
+                leftMargin=20 * mm,
+                rightMargin=20 * mm,
+                topMargin=12 * mm,
+                bottomMargin=34 * mm,
+            )
         doc.title = f"Rnr{rechnungs_nr}"
         # ... story und rest wie gehabt ...
         # (story wird weiter unten befüllt)

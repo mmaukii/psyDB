@@ -274,7 +274,7 @@ def delete_mahnung(id):
     db.session.commit()
     return jsonify({"success": True})
 
-def generate_mahnung_pdf(mahnung_id):
+def generate_mahnung_pdf(mahnung_id, save_to_disk=False):
     """Hilfsfunktion: erzeugt PDF + QR-Code für Mahnung und gibt die wichtigen Infos zurück"""
     mahnung = Mahnung.query.get_or_404(mahnung_id)
     rechnung = Rechnung.query.get_or_404(mahnung.rechnung_id)
@@ -365,9 +365,45 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
     now_str = datetime.now().strftime("%y%m%d_%H%M")
     nachname = kunde.nachname if kunde else "kunde"
     pdf_filename = f"Rechnung_Nr_{rechnungs_nr}_{mahnung.mahnungsnr}Mahnung_{now_str}_{nachname}.pdf"
-    folder_path = os.path.join(app.root_path, "Rechnungen")
-    os.makedirs(folder_path, exist_ok=True)
-    pdf_path = os.path.join(folder_path, pdf_filename)
+    import io
+    rechnungs_pfad_var = Programmvariable.query.filter_by(name="rechnungs_pfad").first()
+    rechnungs_pfad = rechnungs_pfad_var.wert.strip() if rechnungs_pfad_var and rechnungs_pfad_var.wert else ""
+    if save_to_disk and rechnungs_pfad:
+        if not os.path.isabs(rechnungs_pfad) and rechnungs_pfad:
+            # Fehler: Pfad ist nicht absolut
+            from flask import flash
+            flash("Der Ablagepfad für Mahnungen muss absolut sein. PDF wird nicht gespeichert.", "warning")
+            pdf_buffer = io.BytesIO()
+            doc = SimpleDocTemplate(
+                pdf_buffer,
+                pagesize=A4,
+                leftMargin=20 * mm,
+                rightMargin=20 * mm,
+                topMargin=12 * mm,
+                bottomMargin=34 * mm,
+            )
+        else:
+            folder_path = rechnungs_pfad
+            os.makedirs(folder_path, exist_ok=True)
+            pdf_path = os.path.join(folder_path, pdf_filename)
+            doc = SimpleDocTemplate(
+                pdf_path,
+                pagesize=A4,
+                leftMargin=20 * mm,
+                rightMargin=20 * mm,
+                topMargin=12 * mm,
+                bottomMargin=34 * mm,
+            )
+    else:
+        pdf_buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            pdf_buffer,
+            pagesize=A4,
+            leftMargin=20 * mm,
+            rightMargin=20 * mm,
+            topMargin=12 * mm,
+            bottomMargin=34 * mm,
+        )
 
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="BodySmall", parent=styles["Normal"], fontSize=9, leading=12))
@@ -376,14 +412,6 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
     styles.add(ParagraphStyle(name="TopName", parent=styles["Body"], fontName="Helvetica-Bold"))
     styles.add(ParagraphStyle(name="Heading", parent=styles["Heading2"], fontSize=14, leading=16, spaceAfter=6))
 
-    doc = SimpleDocTemplate(
-        pdf_path,
-        pagesize=A4,
-        leftMargin=20 * mm,
-        rightMargin=20 * mm,
-        topMargin=12 * mm,
-        bottomMargin=34 * mm,
-    )
     doc.title = f"Rnr{rechnungs_nr}"
     story = []
 
@@ -549,13 +577,16 @@ ReNR:{rechnungs_nr}_{mahnung.mahnungsnr}.Mahnung
         canvas.restoreState()
 
     doc.build(story, onFirstPage=_draw_footer, onLaterPages=_draw_footer, canvasmaker=NumberedCanvas)
-
-    return pdf_path, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnung.mahnungsnr
+    if save_to_disk and rechnungs_pfad:
+        return pdf_path, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnung.mahnungsnr
+    else:
+        pdf_buffer.seek(0)
+        return pdf_buffer, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnung.mahnungsnr
 
 
 @mahnungen_bp.get("/mahnungen/mail/<int:mahnung_id>")
 def mahnung_mail(mahnung_id):
-    pdf_path, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnungsnr = generate_mahnung_pdf(mahnung_id)
+    pdf_path, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnungsnr = generate_mahnung_pdf(mahnung_id, save_to_disk=True)
 
     if kunde:
         geschlecht = getattr(kunde, "geschlecht", "").lower()
@@ -598,11 +629,11 @@ def mahnung_mail(mahnung_id):
 
 @mahnungen_bp.get("/mahnungen/pdf/<int:mahnung_id>")
 def mahnung_pdf(mahnung_id):
-    pdf_path, _, _, _, _, _ = generate_mahnung_pdf(mahnung_id)
+    pdf_obj, _, _, _, _, _ = generate_mahnung_pdf(mahnung_id, save_to_disk=False)
     return send_file(
-        pdf_path,
+        pdf_obj,
         mimetype="application/pdf",
         as_attachment=False,
-        download_name=os.path.basename(pdf_path),
+        download_name="Mahnung.pdf",
     )
 
