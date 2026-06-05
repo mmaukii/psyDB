@@ -392,6 +392,13 @@ document.getElementById("neuBtn").addEventListener("click", () => {
     form.reset();
     form.id.value = "";
     form.aktiv.checked = true;  // ⭐ aktiv standardmäßig anhaken
+    // Gruppen-Auswahl zurücksetzen (kein vorausgewählter Eintrag bei neuem Klienten)
+    ausgewaehlteGruppen = [];
+    const gruppenTags = document.getElementById("gruppenTags");
+    if (gruppenTags) gruppenTags.innerHTML = "";
+    if (input) input.value = "";
+    if (suggestions) suggestions.innerHTML = "";
+    document.querySelectorAll("#gruppenHidden").forEach(el => el.value = "");
     if (kundenDokuText) {
         kundenDokuText.value = "";
     }
