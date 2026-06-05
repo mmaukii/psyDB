@@ -589,6 +589,13 @@ def mahnung_mail(mahnung_id):
     pdf_path, kunde, rechnungs_nr, nachname, zahlungsziel_str, mahnungsnr = generate_mahnung_pdf(mahnung_id, save_to_disk=True)
 
     if kunde:
+        recipient = str(kunde.email or "").strip()
+        if not recipient:
+            return jsonify({
+                "success": False,
+                "error": "Für diesen Kunden ist keine E-Mail-Adresse hinterlegt. Versand nicht möglich."
+            }), 400
+
         geschlecht = getattr(kunde, "geschlecht", "").lower()
         if geschlecht == "m":
             anrede = f"Hallo Herr {nachname},"
@@ -608,22 +615,27 @@ def mahnung_mail(mahnung_id):
             body = anrede
 
         if sys.platform.startswith("darwin"):
-            opened = open_macos_mail_with_attachment(kunde.email, subject, body, pdf_path)
+            opened = open_macos_mail_with_attachment(recipient, subject, body, pdf_path)
             if not opened:
-                mailto = f"mailto:{quote(kunde.email)}?subject={quote(subject)}&body={quote(body)}"
+                mailto = f"mailto:{quote(recipient)}?subject={quote(subject)}&body={quote(body)}"
                 subprocess.Popen(["open", mailto])
         elif sys.platform.startswith("win"):
-            opened = open_windows_mail_with_attachment(kunde.email, subject, body, pdf_path)
+            opened = open_windows_mail_with_attachment(recipient, subject, body, pdf_path)
             if not opened:
-                mailto = f"mailto:{quote(kunde.email)}?subject={quote(subject)}&body={quote(body)}"
+                mailto = f"mailto:{quote(recipient)}?subject={quote(subject)}&body={quote(body)}"
                 subprocess.Popen(["cmd", "/c", "start", "", mailto])
         else:
             cmd = [
                 "thunderbird",
                 "-compose",
-                f"to='{kunde.email}',subject='{subject}',body='{body}',attachment='{pdf_path}'"
+                f"to='{recipient}',subject='{subject}',body='{body}',attachment='{pdf_path}'"
             ]
             subprocess.Popen(cmd)
+    else:
+        return jsonify({
+            "success": False,
+            "error": "Kein Kunde zur Mahnung gefunden. Versand nicht möglich."
+        }), 400
 
     return jsonify({"success": True, "pdf_path": pdf_path})
 

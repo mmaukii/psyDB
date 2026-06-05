@@ -456,12 +456,19 @@ async function ladeRechnungen() {
 
   // 🔹 mail-Button
   document.querySelectorAll('.mail-btn').forEach(button => {
-    button.addEventListener('click', (e) => {
+    button.addEventListener('click', async (e) => {
       e.stopPropagation();
       const id = button.dataset.id;
 
-        fetch(`/api/rechnungen/mail/${id}`, { method: "GET" })
-        .catch(err => console.error(err));
+      try {
+        const response = await fetch(`/api/rechnungen/mail/${id}`, { method: "GET" });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          alert(data.error || "Mail kann nicht versendet werden, weil keine E-Mail-Adresse hinterlegt ist.");
+        }
+      } catch (err) {
+        console.error(err);
+      }
     });
   });
 
@@ -614,11 +621,19 @@ async function ladeMahnungen(rechnungId) {
 
         // Mail
         document.querySelectorAll(".mail-mahnung-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
+            btn.addEventListener("click", async (e) => {
                 e.stopPropagation();
                 const id = btn.dataset.id;
-                fetch(`/api/mahnungen/mail/${id}`, { method: "GET" })
-                  .catch(err => console.error(err));
+
+                try {
+                  const response = await fetch(`/api/mahnungen/mail/${id}`, { method: "GET" });
+                  if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    alert(data.error || "Mail kann nicht versendet werden, weil keine E-Mail-Adresse hinterlegt ist.");
+                  }
+                } catch (err) {
+                  console.error(err);
+                }
             });
         });
 

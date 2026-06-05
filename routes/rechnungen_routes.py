@@ -797,7 +797,13 @@ def rechnung_mail(rechnung_id):
     print(nachname)
 
     if kunde:
-        recipient = kunde.email
+        recipient = str(kunde.email or "").strip()
+        if not recipient:
+            return jsonify({
+                "success": False,
+                "error": "Für diesen Kunden ist keine E-Mail-Adresse hinterlegt. Versand nicht möglich."
+            }), 400
+
         geschlecht = getattr(kunde, "geschlecht", "").lower()
         if geschlecht == "m":
             anrede = f"Hallo Herr {nachname},"
@@ -864,6 +870,11 @@ def rechnung_mail(rechnung_id):
                 os.unlink(pdf_path)
             except Exception:
                 pass
+    else:
+        return jsonify({
+            "success": False,
+            "error": "Kein Kunde zur Rechnung gefunden. Versand nicht möglich."
+        }), 400
 
     return jsonify({"success": True})
 
@@ -951,7 +962,9 @@ def create_rechnungen_aus_termine():
                 "kunde_id": kunde_id,
                 "rechnung_id": rechnung.id,
                 "termine": [s.id for s in kunden_termine],
-                "rechnungsnr": rechnung.rechnungsnr
+                "rechnungsnr": rechnung.rechnungsnr,
+                "kunde_name": f"{(kunde.vorname or '').strip()} {(kunde.nachname or '').strip()}".strip() or (kunde.nachname or ""),
+                "hat_email": bool(str(kunde.email or "").strip())
             })
 
         db.session.commit()

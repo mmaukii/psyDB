@@ -612,9 +612,22 @@ document.getElementById('getSelectedButton').addEventListener('click', () => {
         if (data.success) {
             // Rechnungsnummern und IDs extrahieren
             const rechnungsNrs = data.rechnungen.map(r => r.rechnungsnr);
-            const rechnungsIds = data.rechnungen.map(r => r.rechnung_id);
+            const rechnungenMitEmail = data.rechnungen.filter(r => r.hat_email);
+            const rechnungenOhneEmail = data.rechnungen.filter(r => !r.hat_email);
             console.log("Neue Rechnungsnummern vom Server:", rechnungsNrs);
             alert(`Neue Rechnungen erstellt! Nummern: ${rechnungsNrs.join(", ")}`);
+
+            if (rechnungenOhneEmail.length > 0) {
+                const fehlendeKunden = rechnungenOhneEmail
+                    .map(r => `${r.kunde_name || `Kunde ${r.kunde_id}`} (ReNr ${r.rechnungsnr})`)
+                    .join("\n");
+
+                alert(
+                    "Hinweis: Für folgende Kunden ist keine E-Mail-Adresse hinterlegt. " +
+                    "Die Rechnungen wurden erstellt, wird aber nicht automatisch per mail versendet.\n\n" +
+                    fehlendeKunden       
+                );
+            }
 
             // Offene Termine aktualisieren und Auswahl zurücksetzen
             ladeTermine();
@@ -623,7 +636,8 @@ document.getElementById('getSelectedButton').addEventListener('click', () => {
             document.getElementById("selectAllTermine").checked = false;
 
             // Für jede neue Rechnungs-ID die PDF erzeugen
-            rechnungsIds.forEach(id => {
+            rechnungenMitEmail.forEach(r => {
+                const id = r.rechnung_id;
                 fetch(`/api/rechnungen/mail/${id}`, { method: "GET" })
                     .then(resp => {
                         if (!resp.ok) {
