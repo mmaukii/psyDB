@@ -73,6 +73,7 @@ def get_gruppenstunde(id):
         "timestamp": gs.timestamp,
         "changestamp": gs.changestamp,
         "doku": gs.doku,
+        "pers_doku": gs.pers_doku,
         "therapieform": gs.therapieform,
         "ust": gs.gruppe.ust if hasattr(gs, 'gruppe') and gs.gruppe else None,
         "nur_offline_veraendert": getattr(gs, 'nur_offline_veraendert', 0)
@@ -244,6 +245,8 @@ def get_gruppentermine(gruppe_id):
                     "entfallen": gs.entfallen,
                     "timestamp": gs.timestamp,
                     "changestamp": gs.changestamp,
+                    "doku": gs.doku,
+                    "pers_doku": gs.pers_doku,
                     "teilnehmer": teilnehmer,  # hier die Liste der Teilnehmer
                     "therapieform": gs.therapieform,
                     "ust": gs.gruppe.ust

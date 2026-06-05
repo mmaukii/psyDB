@@ -335,18 +335,30 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 const localStart = utcToLocalTime(st.datum, st.startzeit);
                 const localEnd = utcToLocalTime(st.datum, st.endzeit);
 
+                // Doku-Status für Button-Rahmen:
+                // - Blau: nur allgemeine Doku
+                // - Grün: persönliche Doku vorhanden (oder Legacy-Trenner "***" in doku)
+                const dokuRaw = (st.doku || "").trim();
+                const persDokuRaw = (st.pers_doku || "").trim();
+                const hasAnyDoku = dokuRaw.length > 0 || persDokuRaw.length > 0;
+                const hasPersDoku = persDokuRaw.length > 0 || dokuRaw.includes("***");
+                const dokuBorderStyle = hasPersDoku
+                    ? "border:4px solid #2e7d32;"
+                    : (hasAnyDoku ? "border:4px solid #4c86ddff;" : "");
+                const dokuButton = `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten" style="${dokuBorderStyle}">📚</button>`;
+
                 // Buttons je nach Status anzeigen
                 const hatTermine = alleTermine.some(t => t.gruppentermin_id === st.id);
                 let buttons = "";
                 if (st.entfallen) {
                     buttons = `<button class="restoreBtnTermineProGruppe table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️</button>`;
                     buttons += `<button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
-                    buttons += `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
+                    buttons += dokuButton;
                 } else {
                     if (!hatTermine) {
                         buttons += `<button class="editBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>`;
                     }
-                    buttons += `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
+                    buttons += dokuButton;
                     if (!hatTermine) {
                         buttons += `<button class="absageBtnGruppe table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>`;
                         buttons += `<button class="deleteBtnTermineProGruppe table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
@@ -449,6 +461,13 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
 //akutalisieren Tabellen nach schließen fensterTerminAnpassen
 document.addEventListener("kalenderTermineAnpassung", function (e) {
     reloadGruppentermineAnwesenheit(document.getElementById("gruppenForm_id").value); // einfach, zuverlässig
+});
+
+// Doku-Änderung sofort in der Anzeige übernehmen (z. B. Rahmenfarbe am Doku-Button)
+document.addEventListener("dokuGespeichert", function () {
+    const gruppeId = document.getElementById("gruppenForm_id")?.value || selectedGruppeId;
+    if (!gruppeId) return;
+    reloadGruppentermineAnwesenheit(gruppeId);
 });
 
 //für button löschen delete in der Tabelle
@@ -595,9 +614,19 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
 
         console.log("📚 Doku öffnen für Termin:", gruppentermineId);
 
+        // Datum formatieren für Titelanzeige
+        const datumParts = (stunde.datum || "").split("-");
+        const datumDoku = datumParts.length === 3
+            ? `${datumParts[2]}.${datumParts[1]}.${datumParts[0].slice(2)}`
+            : (stunde.datum || "");
+        const kuerzelDoku = document.getElementById("gruppenkuerzel")?.value || "";
+
         openFensterDoku({
             gruppentermineId,
-            doku : stunde.doku || ""
+            doku : stunde.doku || "",
+            pers_doku: stunde.pers_doku || "",
+            datum: datumDoku,
+            kuerzel: kuerzelDoku
         });
      }   
 });

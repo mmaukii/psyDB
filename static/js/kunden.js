@@ -312,6 +312,18 @@ async function reloadTermineFuerKunde(kundeId) {
 
             const istNurGruppentermin = Boolean(st.nur_gruppentermin);
 
+            // Doku-Status für Button-Rahmen:
+            // - Blau: nur allgemeine Doku
+            // - Grün: persönliche Doku vorhanden (oder Legacy-Trenner "***" in doku)
+            const dokuRaw = (st.doku || "").trim();
+            const persDokuRaw = (st.pers_doku || "").trim();
+            const hasAnyDoku = dokuRaw.length > 0 || persDokuRaw.length > 0;
+            const hasPersDoku = persDokuRaw.length > 0 || dokuRaw.includes("***");
+            const dokuBorderStyle = hasPersDoku
+                ? "border:4px solid #2e7d32;"
+                : (hasAnyDoku ? "border:4px solid #4c86ddff;" : "");
+            const dokuButton = `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten" style="${dokuBorderStyle}pointer-events:auto;position:relative;z-index:2;cursor:pointer;">📚</button>`;
+
             // Buttons: je nach Status
             let buttons = "";
             if (istNurGruppentermin) {
@@ -319,17 +331,17 @@ async function reloadTermineFuerKunde(kundeId) {
             } else if (st.abgesagt) {
                 buttons = `<button class="restoreBtntermineproKunde table-btn" data-id="${st.id}" title="Termin wiederherstellen">📅↩️</button>`;
                 buttons += `<button class="deleteBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>`;
-                buttons += `<button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>`;
+                buttons += dokuButton;
             } else {
                 if (st.rechnungsnr) {
                     buttons = `
-                        <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
+                        ${dokuButton}
                         <span style="margin-right: 0.5em; ">ReNr ${st.rechnungsnr}</span>
                     `;
                 } else {
                     buttons = `
                         <button class="editBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz editieren">🛠️</button>
-                        <button class="dokuBtntermineproKunde table-btn" data-id="${st.id}" title="Doku Eintrag erstellen/bearbeiten">📚</button>
+                        ${dokuButton}
                         <button class="absageBtntermineproKunde table-btn" data-id="${st.id}" title="Ereignis absagen">🚫</button>
                         <button class="deleteBtntermineproKunde table-btn" data-id="${st.id}" title="Datensatz löschen">🗑️</button>
                     `;
@@ -596,8 +608,9 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
     // ===============================
     // 📚 DOKU BUTTON GEDRÜCKT
     // ===============================
-    if (e.target.classList.contains("dokuBtntermineproKunde")) {
-        const termineId = e.target.dataset.id;
+    const dokuBtn = e.target.closest ? e.target.closest(".dokuBtntermineproKunde") : null;
+    if (dokuBtn) {
+        const termineId = dokuBtn.dataset.id;
         console.log("Doku Button gedrückt für Termin ID:", termineId);
         const res = await fetch(`/api/termine/${termineId}`);
         if (!res.ok) {
@@ -608,9 +621,19 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
 
         console.log("📚 Doku öffnen für Termin:", termineId);
 
+        // Datum formatieren für Titelanzeige
+        const datumParts = (stunde.datum || "").split("-");
+        const datumDoku = datumParts.length === 3
+            ? `${datumParts[2]}.${datumParts[1]}.${datumParts[0].slice(2)}`
+            : (stunde.datum || "");
+        const kuerzelDoku = stunde.kuerzel || form?.kuerzel?.value || "";
+
         openFensterDoku({
             termineId,
-            doku : stunde.doku || ""
+            doku : stunde.doku || "",
+            pers_doku: stunde.pers_doku || "",
+            datum: datumDoku,
+            kuerzel: kuerzelDoku
         });
     }
 
@@ -658,6 +681,13 @@ document.addEventListener("kalenderTermineAnpassung", function (e) {
     console.log("📅 Termin gespeichert, Kalender aktualisieren", e.detail);
 
     reloadTermineFuerKunde(document.getElementById("kundenForm").id.value); // einfach, zuverlässig
+});
+
+// Doku-Änderung sofort in der Anzeige übernehmen (z. B. Rahmenfarbe am Doku-Button)
+document.addEventListener("dokuGespeichert", function () {
+    const kundeId = form?.querySelector('[name="id"]')?.value || localStorage.getItem("selectedKundeId");
+    if (!kundeId) return;
+    reloadTermineFuerKunde(kundeId);
 });
 
 

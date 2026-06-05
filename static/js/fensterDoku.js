@@ -11,7 +11,9 @@ window.openFensterDoku = function ({
     termineId = "",
     gruppentermineId = "",
     doku = "",
-    pers_doku = ""
+    pers_doku = "",
+    datum = "",
+    kuerzel = ""
 }) {
     console.log("📚 Öffne Doku");
     console.log({  termineId, gruppentermineId ,doku, pers_doku});
@@ -26,10 +28,11 @@ window.openFensterDoku = function ({
 
     // Titel anpassen
     const title = document.getElementById("dokuModalTitle");
+    const infoStr = [kuerzel, datum].filter(Boolean).join(" – ");
     if (gruppentermineId) {
-        title.textContent = "Dokumentation – Gruppe";
+        title.textContent = infoStr ? `Dokumentation – Gruppe – ${infoStr}` : "Dokumentation – Gruppe";
     } else {
-        title.textContent = "Dokumentation – Einzelstunde";
+        title.textContent = infoStr ? `Dokumentation – Einzelstunde – ${infoStr}` : "Dokumentation – Einzelstunde";
     }
 
     fensterDoku.style.display = "block";
@@ -64,8 +67,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Split at *** with any number of line breaks before and after.
                 // Legacy .--. is still supported for older entries.
                 const m = text.split(/\n*(?:\*\*\*|\.\-\-\.)\n*/);
-                console.log("📄 Aufgeteilte Doku:", { doku: m[0]?.trim(), pers_doku: m[1]?.trim() });
-                return [m[0]?.trim() || "", m[1]?.trim() || ""];
+                const dokuVal = m[0]?.trim() || null;
+                const persDokuVal = m[1]?.trim() || null;
+                console.log("📄 Aufgeteilte Doku:", { doku: dokuVal, pers_doku: persDokuVal });
+                return [dokuVal, persDokuVal];
                 })(document.getElementById("dokuText").value);
 
         console.log("💾 Speichere Doku:", data);
