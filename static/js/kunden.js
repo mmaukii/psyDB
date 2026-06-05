@@ -43,7 +43,7 @@ if (mailKundeBtn) {
     mailKundeBtn.addEventListener("click", () => {
         const email = (form.email.value || "").trim();
         if (!email) {
-            alert("Keine E-Mail-Adresse für den Kunden vorhanden.");
+            alert("Mailversand nicht möglich: Für diesen Kunden ist keine E-Mail-Adresse hinterlegt.");
             return;
         }
 

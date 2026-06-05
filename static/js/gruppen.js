@@ -46,9 +46,24 @@ if (mailGruppeBtn) {
             const res = await fetch(`/api/gruppen/${gruppeId}/kunden`);
             if (!res.ok) throw new Error("Fehler beim Laden der Teilnehmer");
             const kunden = await res.json();
-            const emails = kunden
-                .map(k => (k.email || "").trim())
-                .filter(e => e.length > 0);
+            const kundenMitEmail = kunden.filter(k => (k.email || "").trim().length > 0);
+            const kundenOhneEmail = kunden.filter(k => (k.email || "").trim().length === 0);
+            const emails = kundenMitEmail.map(k => (k.email || "").trim());
+
+            if (kundenOhneEmail.length > 0) {
+                const fehlende = kundenOhneEmail
+                    .map(k => {
+                        const name = `${(k.vorname || "").trim()} ${(k.nachname || "").trim()}`.trim();
+                        return name || k.kuerzel || `Kunde ${k.id}`;
+                    })
+                    .join("\n");
+
+                alert(
+                    "Mailversand für folgende Teilnehmer nicht möglich (keine E-Mail-Adresse hinterlegt):\n\n" +
+                    fehlende +
+                    "\n\nFür alle anderen Teilnehmer wird jetzt eine Sammelmail geöffnet."
+                );
+            }
 
             if (emails.length === 0) {
                 alert("Keine E-Mail-Adressen bei den Teilnehmern gefunden.");
