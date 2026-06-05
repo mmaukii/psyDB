@@ -241,6 +241,16 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
 
         const gruppentermineSorted = sortiereGruppentermine(gruppentermine);
 
+        // Statistik: vergangene, geplante und entfallene Termine
+        const heute = new Date().toISOString().slice(0, 10);
+        const vergangen = gruppentermine.filter(st => !st.entfallen && st.datum < heute).length;
+        const geplant   = gruppentermine.filter(st => !st.entfallen && st.datum >= heute).length;
+        const entfallen = gruppentermine.filter(st => !!st.entfallen).length;
+        const statsEl = document.getElementById("gruppeTermineStats");
+        if (statsEl) {
+            statsEl.textContent = `Abgehalten: ${vergangen} | Geplant: ${geplant} | Entfallen: ${entfallen}`;
+        }
+
         if (gruppentermine.length === 0) {
             termineProGruppeListe.innerHTML = `<tr><td colspan="3">Keine Termine vorhanden.</td></tr>`;
             termineProGruppeAnwesenheitsListe.innerHTML = `<tr><td colspan="3">Keine Termine vorhanden.</td></tr>`;
@@ -484,8 +494,11 @@ termineProGruppeListeElement.addEventListener("click", async (e) => {
         try {
             const res = await fetch(`/api/gruppentermine/${id}`, { method: "DELETE" });
             if (res.ok) {
-                e.target.closest("tr").remove();
                 console.log("🗑️ Termin gelöscht:", id);
+                const gruppeId = document.getElementById("gruppenForm_id")?.value || selectedGruppeId;
+                if (gruppeId) {
+                    await reloadGruppentermineAnwesenheit(gruppeId);
+                }
             } else {
                 alert("Fehler beim Löschen");
             }
