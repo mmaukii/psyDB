@@ -156,7 +156,7 @@ def add_kunde():
         doku=data.get("doku"),
         standort_id=data["standort_id"],
         druckvorlage_id=data.get("druckvorlage_id"),
-        therapieform=data["therapieform"],
+        therapieform=data.get("therapieform"),
         aktiv=data.get("aktiv", 1),
         svnr=data.get("svnr"),
         krankenkasse=data.get("krankenkasse"),
