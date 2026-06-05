@@ -241,14 +241,14 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
 
         const gruppentermineSorted = sortiereGruppentermine(gruppentermine);
 
-        // Statistik: vergangene, geplante und entfallene Termine
+        // Statistik: vergangene, geplante und abgesagte Termine
         const heute = new Date().toISOString().slice(0, 10);
         const vergangen = gruppentermine.filter(st => !st.entfallen && st.datum < heute).length;
         const geplant   = gruppentermine.filter(st => !st.entfallen && st.datum >= heute).length;
         const entfallen = gruppentermine.filter(st => !!st.entfallen).length;
         const statsEl = document.getElementById("gruppeTermineStats");
         if (statsEl) {
-            statsEl.textContent = `Abgehalten: ${vergangen} | Geplant: ${geplant} | Entfallen: ${entfallen}`;
+            statsEl.textContent = `Abgehalten: ${vergangen} | Geplant: ${geplant} | Abgesagt: ${entfallen}`;
         }
 
         if (gruppentermine.length === 0) {

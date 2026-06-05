@@ -215,6 +215,40 @@ async function reloadTermineFuerKunde(kundeId) {
         
         const termine = await response.json();
         console.log("Geladene Termine für Kunde", kundeId, termine);
+
+        // Statistik: aufgeteilt nach Einzel- und Gruppenterminen
+        const heute = new Date().toISOString().slice(0, 10);
+        const istGruppentermin = (st) => Boolean(st.gruppentermin_id) || Boolean(st.nur_gruppentermin);
+
+        const einzel = termine.filter(st => !istGruppentermin(st));
+        const gruppe = termine.filter(st => istGruppentermin(st));
+
+        const einzelVergangen = einzel.filter(st => !st.abgesagt && st.datum < heute).length;
+        const einzelGeplant = einzel.filter(st => !st.abgesagt && st.datum >= heute).length;
+        const einzelAbgesagt = einzel.filter(st => !!st.abgesagt).length;
+
+        const gruppeVergangen = gruppe.filter(st => !st.abgesagt && st.datum < heute).length;
+        const gruppeGeplant = gruppe.filter(st => !st.abgesagt && st.datum >= heute).length;
+        const gruppeAbgesagt = gruppe.filter(st => !!st.abgesagt).length;
+        const gruppeGefehl = gruppe.filter(st => Boolean(st.nur_gruppentermin) && !st.abgesagt && st.datum < heute).length;
+
+        const statsEl = document.getElementById("kundeTermineStats");
+        if (statsEl) {
+            const baueStatsText = (titel, werte) => {
+                const teile = [];
+                if (Number(werte.abgeh) > 0) teile.push(`Abgeh:${werte.abgeh}`);
+                if (Number(werte.gepl) > 0) teile.push(`Gepl:${werte.gepl}`);
+                if (Number(werte.abges) > 0) teile.push(`Abges:${werte.abges}`);
+                if (Number(werte.gefehl) > 0) teile.push(`Gefehl.:${werte.gefehl}`);
+                return teile.length ? `${titel} (${teile.join(" ")})` : "";
+            };
+
+            statsEl.textContent = [
+                baueStatsText("Einzel", { abgeh: einzelVergangen, gepl: einzelGeplant, abges: einzelAbgesagt }),
+                baueStatsText("Gruppe", { abgeh: gruppeVergangen, gepl: gruppeGeplant, abges: gruppeAbgesagt, gefehl: gruppeGefehl })
+            ].filter(Boolean).join(" | ");
+        }
+
         if (termine.length === 0) {
             termineProKundeListe.innerHTML =
                 `<tr><td colspan="6">Keine Termine vorhanden.</td></tr>`;
@@ -440,6 +474,8 @@ document.getElementById("neuBtn").addEventListener("click", () => {
 
     kundentabelle.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
     termineProKundeListe.innerHTML = "";
+    const kundeStatsEl = document.getElementById("kundeTermineStats");
+    if (kundeStatsEl) kundeStatsEl.textContent = "";
 
     // ✅ Kundenbereich einblenden
     setDetailsVisibility(true);
@@ -542,8 +578,11 @@ termineProKundeListeElement.addEventListener("click", async (e) => {
         try {
             const res =  await fetch(`api/termine/${id}`, { method: "DELETE" });
             if (res.ok) {
-                e.target.closest("tr").remove(); // Zeile aus Tabelle löschen
                 console.log(`🗑️ Termin ${id} gelöscht`);
+                const kundeId = form?.querySelector('[name="id"]')?.value || localStorage.getItem("selectedKundeId");
+                if (kundeId) {
+                    await reloadTermineFuerKunde(kundeId);
+                }
             } else {
                 alert("Fehler beim Löschen!");
             }
