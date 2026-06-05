@@ -7,6 +7,42 @@ from datetime import datetime, timezone
 
 kunden_bp = Blueprint("kunden", __name__)
 
+
+def _empty_to_none(value):
+    if value is None:
+        return None
+    if isinstance(value, str) and value.strip() == "":
+        return None
+    return value
+
+
+def _to_int_or_none(value):
+    value = _empty_to_none(value)
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _to_float_or_none(value):
+    value = _empty_to_none(value)
+    if value is None:
+        return None
+
+    if isinstance(value, str):
+        normalized = value.strip().replace(" ", "")
+        # deutsche Eingabe erlauben: 1.234,56 -> 1234.56
+        normalized = normalized.replace(".", "").replace(",", ".")
+    else:
+        normalized = value
+
+    try:
+        return float(normalized)
+    except (TypeError, ValueError):
+        return None
+
 # --- Alle Kunden ---
 @kunden_bp.get("/kunden")
 def get_all_kunden():
@@ -139,6 +175,14 @@ def add_kunde():
     if exists:
         return jsonify({"success": False, "error": "Kürzel bereits vergeben"}), 409
 
+    standort_id = _to_int_or_none(data.get("standort_id"))
+    if standort_id is None:
+        return jsonify({"success": False, "error": "Standort ist erforderlich"}), 400
+
+    druckvorlage_id = _to_int_or_none(data.get("druckvorlage_id"))
+    if druckvorlage_id is None:
+        return jsonify({"success": False, "error": "Druckvorlage ist erforderlich"}), 400
+
     k = Kunde(
         nachname=data["nachname"],
         vorname=data.get("vorname"),
@@ -146,23 +190,23 @@ def add_kunde():
         adresse=data.get("adresse"),
         plz=data.get("plz"),
         ort=data.get("ort"),
-        stundensatz=data.get("stundensatz"),
+        stundensatz=_to_float_or_none(data.get("stundensatz")),
         kuerzel=kuerzel,
         geschlecht=data.get("geschlecht"),
         gebdatum=data.get("gebdatum"),
-        ust=data.get("ust", 0),
+        ust=_to_int_or_none(data.get("ust", 0)) or 0,
         rechnungTextObenVorgabe=data.get("rechnungTextObenVorgabe"),
         rechnungTextUntenVorgabe=data.get("rechnungTextUntenVorgabe"),
         doku=data.get("doku"),
-        standort_id=data["standort_id"],
-        druckvorlage_id=data.get("druckvorlage_id"),
-        therapieform=data.get("therapieform"),
-        aktiv=data.get("aktiv", 1),
+        standort_id=standort_id,
+        druckvorlage_id=druckvorlage_id,
+        therapieform=_to_int_or_none(data.get("therapieform")),
+        aktiv=_to_int_or_none(data.get("aktiv", 1)) or 1,
         svnr=data.get("svnr"),
         krankenkasse=data.get("krankenkasse"),
         diagnose=data.get("diagnose"),
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        dauer_min=data.get("dauer_min")
+        dauer_min=_to_int_or_none(data.get("dauer_min"))
     )
 
     db.session.add(k)
@@ -192,7 +236,12 @@ def update_kunde(id):
         "svnr","krankenkasse","diagnose","dauer_min"
     ]:
         if field in data:
-            setattr(k, field, data[field])
+            if field == "stundensatz":
+                setattr(k, field, _to_float_or_none(data[field]))
+            elif field in {"ust", "standort_id", "druckvorlage_id", "therapieform", "aktiv", "dauer_min"}:
+                setattr(k, field, _to_int_or_none(data[field]))
+            else:
+                setattr(k, field, data[field])
 
     # changestamp immer setzen
     k.changestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
