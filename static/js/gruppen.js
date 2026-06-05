@@ -139,6 +139,52 @@ function activateRowEvents() {
 
 //laden anwesenheitstabelle Terminetabelle
 
+if (!window.termineGruppeSort) {
+    window.termineGruppeSort = { col: "datum", asc: false }; // Standard: jüngste oben
+}
+
+window.termineGruppeSortCol = function (colKey) {
+    if (!colKey) return;
+    if (window.termineGruppeSort.col === colKey) {
+        window.termineGruppeSort.asc = !window.termineGruppeSort.asc;
+    } else {
+        window.termineGruppeSort.col = colKey;
+        window.termineGruppeSort.asc = colKey === "datum" ? false : true;
+    }
+    const aktuelleGruppeId = document.getElementById("gruppenForm_id")?.value || selectedGruppeId;
+    if (aktuelleGruppeId) {
+        reloadGruppentermineAnwesenheit(aktuelleGruppeId);
+    }
+};
+
+function sortiereGruppentermine(termine) {
+    const sortState = window.termineGruppeSort || { col: "datum", asc: false };
+    const termineSorted = [...termine];
+
+    termineSorted.sort((a, b) => {
+        const col = sortState.col;
+        const asc = sortState.asc;
+
+        if (col === "datum") {
+            const va = `${a.datum || ""} ${a.startzeit || ""}`;
+            const vb = `${b.datum || ""} ${b.startzeit || ""}`;
+            return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+        }
+
+        if (col === "betrag") {
+            const va = parseFloat(a.betrag) || 0;
+            const vb = parseFloat(b.betrag) || 0;
+            return asc ? va - vb : vb - va;
+        }
+
+        const va = (a[col] || "").toString();
+        const vb = (b[col] || "").toString();
+        return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+
+    return termineSorted;
+}
+
 //laden der Terminetabelle/
 async function reloadGruppentermineAnwesenheit(gruppeId) {
     // Termine laden
@@ -176,12 +222,31 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
         const alleKunden = await kunden.json(); // enthält gruppe_id + kunde_id
         console.log("alleKunden", alleKunden)
 
+        // Sortierbare Spalten (wie bei Termine/Kunden)
+        const columns = [
+            { key: "datum", label: "Datum" },
+            { key: "startzeit", label: "Startzeit" },
+            { key: "endzeit", label: "Endzeit" },
+            { key: "beschreibung", label: "Beschreibung" },
+            { key: "betrag", label: "Betrag" },
+            { key: null, label: "Aktion" }
+        ];
+        const thead = document.querySelector("#termineproGruppeTabelle thead tr");
+        if (thead) {
+            thead.innerHTML = columns.map(col => {
+                if (!col.key) return `<th>${col.label}</th>`;
+                return `<th style="cursor:pointer;user-select:none;" onclick="window.termineGruppeSortCol && window.termineGruppeSortCol('${col.key}')">${col.label} <span style='font-size:0.8em;'>${window.termineGruppeSort.col===col.key?(window.termineGruppeSort.asc?'▲':'▼'):'↕'}</span></th>`;
+            }).join("");
+        }
+
+        const gruppentermineSorted = sortiereGruppentermine(gruppentermine);
+
         if (gruppentermine.length === 0) {
             termineProGruppeListe.innerHTML = `<tr><td colspan="3">Keine Termine vorhanden.</td></tr>`;
             termineProGruppeAnwesenheitsListe.innerHTML = `<tr><td colspan="3">Keine Termine vorhanden.</td></tr>`;
         } else {
 
-            termineProGruppeAnwesenheitsListe.innerHTML = gruppentermine
+            termineProGruppeAnwesenheitsListe.innerHTML = gruppentermineSorted
                 .filter(st => !st.entfallen) // Immer abgesagte/entfallene Termine ausblenden
                 .map(st => {
                     // Datum umformatieren von YYYY-MM-DD → Wochentag DD.MM.YY
@@ -242,7 +307,7 @@ async function reloadGruppentermineAnwesenheit(gruppeId) {
                 `;
                 }).join("");
 
-            termineProGruppeListe.innerHTML = gruppentermine.map(st => {
+            termineProGruppeListe.innerHTML = gruppentermineSorted.map(st => {
                 // Datum umformatieren von YYYY-MM-DD → Wochentag DD.MM.YY
                 const datumParts = st.datum.split("-");
                 const datumObj = new Date(Number(datumParts[0]), Number(datumParts[1]) - 1, Number(datumParts[2]));
